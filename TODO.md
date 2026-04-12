@@ -3,10 +3,10 @@
 ## 1. FRONTEND
 
 ### T1 - Configuración inicial
-- [ ] T1-1 Crear proyecto Vite + React con TypeScript
-- [ ] T1-2 Instalar dependencias (axios, react-router-dom, socket.io-client, Tailwind CSS)
-- [ ] T1-3 Configurar rutas y navegación (rutas en español)
-- [ ] T1-4 Configurar variables de entorno (.env)
+- [x] T1-1 Crear proyecto Vite + React con TypeScript
+- [x] T1-2 Instalar dependencias (axios, react-router-dom, socket.io-client, Tailwind CSS)
+- [x] T1-3 Configurar rutas y navegación (rutas en español)
+- [x] T1-4 Configurar variables de entorno (.env)
 
 ### T2 - Autenticación y Login
 - [ ] T2-1 Implementar página de login (email + contraseña)

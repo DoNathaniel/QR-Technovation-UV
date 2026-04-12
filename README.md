@@ -41,15 +41,19 @@ Sistema diseñado para mentores y coordinadores que necesitan registrar la asist
 
 ```
 QR-Technovation-UV/
-├── frontend/           # React + Vite + TypeScript + Tailwind CSS
+├── frontend/           # React + Vite + TypeScript + Tailwind CSS v4
 │   ├── src/
-│   │   ├── components/
-│   │   ├── pages/       # Rutas: /login, /panel, /estudiantes, etc.
-│   │   ├── context/
-│   │   ├── services/
-│   │   ├── hooks/
-│   │   └── types/
-│   └── ...
+│   │   ├── config/         # Variables de entorno
+│   │   ├── components/     # Componentes reutilizables
+│   │   ├── pages/         # Rutas: /iniciar-sesion, /panel, /estudiantes, etc.
+│   │   ├── context/       # Contextos (Auth, etc.)
+│   │   ├── services/      # Servicios API
+│   │   ├── hooks/        # Hooks personalizados
+│   │   ├── types/        # Tipos TypeScript
+│   │   ├── App.tsx       # Componente principal
+│   │   └── main.tsx      # Punto de entrada
+│   ├── vite.config.ts    # Configuración Vite + Tailwind v4
+│   └── package.json
 │
 ├── backend/            # Express + TypeScript + MySQL
 │   ├── src/
