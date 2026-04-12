@@ -42,32 +42,31 @@ function AppLayout() {
     setShowSeasonModal(false);
   };
 
-  const currentSeason = temporadas.find(t => t.id === currentSeasonId);
+  const currentSeason = temporadas.find(t => t.ID === currentSeasonId);
 
   return (
     <div className="min-h-screen bg-background">
       <header className="shadow-md" style={{ backgroundColor: colors.primary }}>
-        <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <img src="/uv.png" alt="UV" className="w-8 h-8" />
-            <h1 className="text-white text-lg font-bold">Sistema de Asistencia</h1>
-          </div>
-          <div className="flex items-center gap-3">
-            {temporadas.length > 1 && currentSeason && (
+        <div className="container mx-auto">
+          <div className="flex items-center justify-between px-4 py-3">
+            <img src="/technovationgirls-chile.png" alt="Technovation" className="h-10 w-auto" />
+            <div className="flex items-center gap-3">
+              {temporadas.length > 1 && currentSeason && (
+                <button 
+                  onClick={() => setShowSeasonModal(true)}
+                  className="text-white text-sm px-3 py-1 rounded"
+                  style={{ backgroundColor: colors.secondary }}
+                >
+                  {currentSeason.nombre}
+                </button>
+              )}
               <button 
-                onClick={() => setShowSeasonModal(true)}
-                className="text-white text-sm px-3 py-1 rounded"
-                style={{ backgroundColor: colors.secondary }}
+                onClick={handleLogout}
+                className="text-white text-sm hover:opacity-80"
               >
-                {currentSeason.nombre}
+                Cerrar Sesión
               </button>
-            )}
-            <button 
-              onClick={handleLogout}
-              className="text-white text-sm hover:opacity-80"
-            >
-              Cerrar Sesión
-            </button>
+            </div>
           </div>
         </div>
       </header>

@@ -1,5 +1,5 @@
 export interface User {
-  id: number;
+  ID: number;
   nombre: string;
   apellido: string;
   email: string;
@@ -26,8 +26,9 @@ export interface LoginResponse {
 }
 
 export interface Season {
-  id: number;
+  ID: number;
   nombre: string;
-  fecha_inicio: string;
-  fecha_fin: string;
+  fechaInicio: string;
+  fechaFin: string;
+  activa?: boolean;
 }

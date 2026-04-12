@@ -16,14 +16,14 @@ export default function SeasonSelector({ temporadas, onSelect, onClose }: Season
         <div className="space-y-3">
           {temporadas.map((temporada) => (
             <button
-              key={temporada.id}
-              onClick={() => onSelect(temporada.id)}
+              key={temporada.ID}
+              onClick={() => onSelect(temporada.ID)}
               className="w-full p-4 text-left rounded-lg border-2 border-gray-200 hover:border-accent transition-colors"
               style={{ borderColor: 'border-gray-200' }}
             >
               <div className="font-medium text-text">{temporada.nombre}</div>
               <div className="text-sm text-text-muted mt-1">
-                {new Date(temporada.fecha_inicio).toLocaleDateString('es-CL')} - {new Date(temporada.fecha_fin).toLocaleDateString('es-CL')}
+                {new Date(temporada.fechaInicio).toLocaleDateString('es-CL')} - {new Date(temporada.fechaFin).toLocaleDateString('es-CL')}
               </div>
             </button>
           ))}

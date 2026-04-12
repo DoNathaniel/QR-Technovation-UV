@@ -21,20 +21,20 @@
 ## FASE 2: Backend
 
 ### T12 - Configuración inicial del Backend
-- [ ] T12-1 Crear proyecto Express con TypeScript
-- [ ] T12-2 Configurar conexión a MySQL
-- [ ] T12-3 Configurar TypeORM/Sequelize
-- [ ] T12-4 Estructura de carpetas (controllers, routes, services, models, middleware)
-- [ ] T12-5 Configurar variables de entorno
+- [x] T12-1 Crear proyecto Express con TypeScript
+- [x] T12-2 Configurar conexión a MySQL
+- [x] T12-3 Configurar TypeORM
+- [x] T12-4 Estructura de carpetas (controllers, routes, services, models, middleware)
+- [x] T12-5 Configurar variables de entorno
 
-### T13 - Modelos de Base de Datos
-- [ ] T13-1 Modelo User (superadmin/admin/voluntario) → nombre, apellido, email, password, rol
-- [ ] T13-2 Modelo Season (temporada) → nombre, fecha_inicio, fecha_fin
-- [ ] T13-3 Modelo SeasonDate (fechas predefinidas de asistencia) → fecha, season_id
-- [ ] T13-4 Modelo Guardian (apoderado) → nombres, apellidos, email, teléfono, RUT, season_id
-- [ ] T13-5 Modelo Student → nombres, apellidos, email, rut, fecha_nac, categoria, season_id, retirado_apoderado, guardian_id (nullable)
-- [ ] T13-6 Modelo Attendance → student_id, season_date_id, tipo (entrada/salida), user_id (quien registró), hora
-- [ ] T13-7 Relaciones entre modelos
+### T13 - Modelos de Base de Datos (Actualizado: ID, camelCase)
+- [x] T13-1 Modelo User (ID, nombre, apellido, email, password, rol)
+- [x] T13-2 Modelo Season (ID, nombre, fechaInicio, fechaFin)
+- [x] T13-3 Modelo SeasonDate (ID, fecha, seasonID)
+- [x] T13-4 Modelo Guardian (ID, nombres, apellidos, email, telefono, rut, seasonID)
+- [x] T13-5 Modelo Student (ID, nombres, apellidos, email, fechaNac, rut, categoria, seasonID, retiradoApoderado, datosApoderado, guardianID)
+- [x] T13-6 Modelo Attendance (ID, tipo, hora, studentID, seasonDateID, userID)
+- [x] T13-7 Relaciones entre modelos
 
 ### T14 - Autenticación y Autorización (Backend)
 - [ ] T14-1 Endpoint POST /auth/login

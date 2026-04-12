@@ -1,11 +1,14 @@
-'use strict';
+require('dotenv').config();
 require('reflect-metadata');
+
+// CONFIG
 const express = require('express');
 const cors = require('cors');
-const dotenv = require('dotenv');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 const { AppDataSource } = require('./database/data-source');
+
+// ROUTES
 const authRoutes = require('./routes/auth');
 const seasonRoutes = require('./routes/seasons');
 const userRoutes = require('./routes/users');
@@ -13,8 +16,7 @@ const guardianRoutes = require('./routes/guardians');
 const studentRoutes = require('./routes/students');
 const attendanceRoutes = require('./routes/attendance');
 
-dotenv.config();
-
+// SERVER
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
@@ -24,6 +26,10 @@ const io = new Server(httpServer, {
   },
 });
 
+// MORGAN
+app.use(require("morgan")("dev"));
+
+// APP
 app.use(cors());
 app.use(express.json());
 

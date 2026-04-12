@@ -45,13 +45,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user: response.user,
       token: response.token,
       isAuthenticated: true,
-      currentSeasonId: response.temporadas[0]?.id || null,
+      currentSeasonId: response.temporadas[0]?.ID || null,
     });
     
     setTemporadas(response.temporadas);
     
     if (response.temporadas.length > 0) {
-      localStorage.setItem('currentSeasonId', response.temporadas[0].id.toString());
+      localStorage.setItem('currentSeasonId', response.temporadas[0].ID.toString());
     }
   };
 
