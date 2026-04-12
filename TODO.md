@@ -85,14 +85,14 @@
 - [x] T19-7 Validar rut único por temporada
 
 ### T20 - API de Asistencia
-- [ ] T20-1 POST /attendance - Registrar asistencia (escaneo QR)
-- [ ] T20-2 GET /attendance/date/:date - Ver asistencia por fecha
-- [ ] T20-3 GET /attendance/student/:studentId - Historial de estudiante
-- [ ] T20-4 GET /attendance/stats - Estadísticas de asistencia
-- [ ] T20-5 Lógica: Si ya tiene entrada → registrar salida
+- [x] T20-1 POST /attendance - Registrar asistencia (escaneo QR)
+- [x] T20-2 GET /attendance/date/:date - Ver asistencia por fecha
+- [x] T20-3 GET /attendance/student/:studentId - Historial de estudiante
+- [x] T20-4 GET /attendance/stats - Estadísticas de asistencia
+- [x] T20-5 Lógica: Si ya tiene entrada → registrar salida
 - [ ] T20-6 Lógica: Si estudiante tiene retiro con apoderado → incluir flag en respuesta
 - [ ] T20-7 Lógica: Verificar si hay otras estudiantes asociadas al mismo apoderado en la temporada
-- [ ] T20-8 Lógica: Si fecha no existe → crear nueva fecha de asistencia automáticamente
+- [x] T20-8 Lógica: Si fecha no existe → crear nueva fecha de asistencia automáticamente
 
 ### T21 - Generación de QR
 - [ ] T21-1 Generar QR único por estudiante (contiene student_id encriptado)
@@ -129,6 +129,17 @@
 - [x] T5-4 Eliminar usuario (solo superadmin puede eliminar admins)
 - [x] T5-5 Asignar temporadas a usuarios
 
+### T31 - Gestión de Equipos (Superadmin/Admin)
+- [x] T31-1 Listar equipos existentes por temporada y categoría
+- [x] T31-2 Crear, editar y eliminar equipo
+- [x] T31-3 Asignar y remover estudiantes en equipos (máx. 5 por equipo)
+- [x] T31-4 Asignar y remover mentores a equipos
+- [ ] T31-5 Mostrar estudiantes sin equipo y filtrar por categoría (parcial: lista mostrada, falta filtro por categoría en sidebar)
+- [ ] T31-6 Alertar si faltan equipos necesarios por categoría
+- [ ] T31-7 Drag & Drop para reordenar estudiantes dentro de equipos, entre equipos y para reordenar equipos (parcial: mover entre equipos funciona, falta reordenar dentro de un equipo y reordenar cards de equipos)
+- [ ] T31-8 Validar cantidad máxima/minima estudiantes por equipo (backend/front) (parcial: máximo 5 validado en backend y frontend, falta mínimo)
+- [ ] T31-9 Ver detalles de equipo (listado, mentores, categoría, ODS) (parcial: info visible en cards, falta vista/página dedicada de detalle)
+
 ### T6 - Gestión de Fechas de Asistencia (Superadmin)
 - [x] T6-1 Crear lista de fechas predefinidas por temporada
 - [x] T6-2 Agregar fechas manualmente
@@ -137,40 +148,40 @@
 - [x] T6-5 Previsualizar fechas (disponible para admin)
 
 ### T7 - Gestión de Estudiantes (Admin)
-- [ ] T7-1 Crear lista de estudiantes (solo admin)
-- [ ] T7-2 Formulario crear estudiante (nombres, apellidos, email, fecha_nac, rut, categoría, temporada, retirado_con_apoderado, datos_apoderado)
-- [ ] T7-3 En formulario: buscar/seleccionar apoderado existente o crear nuevo
-- [ ] T7-4 Editar estudiante
-- [ ] T7-5 Eliminar estudiante
-- [ ] T7-6 Botón re-enviar QR por email
-- [ ] T7-7 Validar RUT único por temporada
+- [x] T7-1 Crear lista de estudiantes (solo admin)
+- [x] T7-2 Formulario crear estudiante (nombres, apellidos, email, fecha_nac, rut, categoría, temporada, retirado_con_apoderado, datos_apoderado)
+- [x] T7-3 En formulario: buscar/seleccionar apoderado existente o crear nuevo
+- [x] T7-4 Editar estudiante
+- [x] T7-5 Eliminar estudiante
+- [x] T7-6 Botón re-enviar QR por email
+- [x] T7-7 Validar RUT único por temporada
 - [ ] T7-8 Mostrar mensaje si estudiante tiene hermanos en la misma temporada
 
 ### T8 - Lista de Estudiantes (Todos los roles)
-- [ ] T8-1 Mostrar lista de estudiantes (nombre, apellido, categoría)
-- [ ] T8-2 Filtrar por categoría (Beginner/Junior/Senior)
+- [x] T8-1 Mostrar lista de estudiantes (nombre, apellido, categoría)
+- [x] T8-2 Filtrar por categoría (Beginner/Junior/Senior)
 - [ ] T8-3 Mostrar fecha de hoy por defecto
 - [ ] T8-4 Navegar a fechas anteriores
-- [ ] T8-5 Vista de solo lectura para voluntarios (solo nombres, apellidos, categoría)
+- [x] T8-5 Vista de solo lectura para voluntarios (solo nombres, apellidos, categoría)
 - [ ] T8-6 Diseño optimizado para móvil
 
 ### T9 - Panel de Asistencia (Todos los roles)
-- [ ] T9-1 Mostrar lista de estudiantes presentes/hoy
-- [ ] T9-2 Indicador visual de entrada/salida
-- [ ] T9-3 Ver historial por fecha
-- [ ] T9-4 Actualización en tiempo real (socket)
-- [ ] T9-5 Diseño optimizado para móvil
-- [ ] T9-6 Integrar escaneo de QR en el mismo panel (debido a socket)
+- [x] T9-1 Mostrar lista de estudiantes presentes/hoy
+- [x] T9-2 Indicador visual de entrada/salida
+- [x] T9-3 Ver historial por fecha
+- [x] T9-4 Actualización en tiempo real (socket)
+- [x] T9-5 Diseño optimizado para móvil
+- [x] T9-6 Integrar escaneo de QR en el mismo panel (debido a socket)
 
 ### T10 - Escaneo de QR (Voluntario/Admin)
-- [ ] T10-1 Componente de escaneo con cámara
-- [ ] T10-2 Optimizar para dispositivos móviles
+- [x] T10-1 Componente de escaneo con cámara
+- [x] T10-2 Optimizar para dispositivos móviles
 - [ ] T10-3 Si estudiante ya marcó entrada → mostrar "Marcar salida"
 - [ ] T10-4 Si estudiante tiene retiro con apoderado → pedir confirmación visual de ver al apoderado
 - [ ] T10-5 Al confirmar retiro con apoderado, mostrar alerta si hay otras estudiantes asociadas al mismo apoderado
-- [ ] T10-6 Feedback visual (éxito/error/ya registrado)
+- [x] T10-6 Feedback visual (éxito/error/ya registrado)
 - [ ] T10-7 Sonido de feedback
-- [ ] T10-8 Manejar errores de cámara
+- [x] T10-8 Manejar errores de cámara
 
 ### T11 - Diseño Responsivo y UX
 - [ ] T11-1 Mobile-first styling
@@ -183,14 +194,14 @@
 ## FASE 4: Integración Frontend-Backend
 
 ### T23 - Conexión API
-- [ ] T23-1 Configurar Axios con base URL
-- [ ] T23-2 Interceptors para JWT
-- [ ] T23-3 Manejo centralizado de errores
+- [x] T23-1 Configurar Axios con base URL
+- [x] T23-2 Interceptors para JWT
+- [x] T23-3 Manejo centralizado de errores (401 auto-logout; otros errores por componente)
 - [ ] T23-4 Servicios API organizados por recurso
 
 ### T24 - Testing de Flujos
 - [ ] T24-1 Login → seleccionar temporada → dashboard
-- [ ] T24-2 Crear temporada → crear fechas → crear usuario → crear estudiante
+- [x] T24-2 Crear temporada → crear fechas → crear usuario → crear estudiante
 - [ ] T24-3 Escanear QR → marcar entrada → escanear again → marcar salida
 - [ ] T24-4 Flujo de errores (QR inválido, fecha no autorizada, etc.)
 - [ ] T24-5 Probar flujo de retiro con apoderado (verificar sisters)
@@ -210,15 +221,15 @@
 ## FASE 5: Socket Backend
 
 ### T27 - Configuración Socket.io
-- [ ] T27-1 Instalar socket.io
-- [ ] T27-2 Configurar servidor socket con Express
+- [x] T27-1 Instalar socket.io
+- [x] T27-2 Configurar servidor socket con Express
 - [ ] T27-3 Autenticación de conexiones socket (JWT)
 - [ ] T27-4 Namespace /attendance
 
 ### T28 - Eventos de Tiempo Real
-- [ ] T28-1 Evento: attendance.registered → emitir cuando se registra asistencia
+- [x] T28-1 Evento: attendance.registered → emitir cuando se registra asistencia
 - [ ] T28-2 Evento: attendance.updated → actualizar registro existente
-- [ ] T28-3 Room por temporada (season:id)
+- [x] T28-3 Room por temporada (season:id)
 - [ ] T28-4 Evento: students.online → usuarios conectados por sesión
 
 ---
@@ -226,16 +237,16 @@
 ## FASE 6: Socket Frontend
 
 ### T29 - Cliente Socket.io
-- [ ] T29-1 Instalar socket.io-client
+- [x] T29-1 Instalar socket.io-client
 - [ ] T29-2 Conectar al servidor socket con JWT
-- [ ] T29-3 Reconexión automática
-- [ ] T29-4 Hook useSocket personalizado
+- [x] T29-3 Reconexión automática (default de socket.io + botón manual de reconexión)
+- [x] T29-4 Hook useSocket personalizado
 
 ### T30 - UI en Tiempo Real
-- [ ] T30-1 Panel de asistencia actualiza automáticamente
-- [ ] T30-2 Notificación visual al registrar asistencia
-- [ ] T30-3 Actualizar contadores en tiempo real
-- [ ] T30-4 Feedback inmediato post-escanear
+- [x] T30-1 Panel de asistencia actualiza automáticamente
+- [ ] T30-2 Notificación visual al registrar asistencia (remota, desde otro dispositivo)
+- [x] T30-3 Actualizar contadores en tiempo real
+- [x] T30-4 Feedback inmediato post-escanear
 
 ---
 
