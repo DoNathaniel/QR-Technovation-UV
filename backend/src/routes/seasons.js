@@ -1,28 +1,13 @@
 'use strict';
 const express = require('express');
-const { AppDataSource } = require('../database/data-source');
-const SeasonSchema = require('../entities/Season');
+const seasonController = require('../controllers/seasonController');
 
 const router = express.Router();
-const seasonRepository = () => AppDataSource.getRepository(SeasonSchema);
 
-router.get('/', async (req, res) => {
-  try {
-    const seasons = await seasonRepository().find({ where: { activa: true } });
-    res.json(seasons);
-  } catch (error) {
-    res.status(500).json({ message: 'Error al obtener temporadas' });
-  }
-});
-
-router.post('/', async (req, res) => {
-  try {
-    const season = seasonRepository().create(req.body);
-    const result = await seasonRepository().save(season);
-    res.status(201).json(result);
-  } catch (error) {
-    res.status(500).json({ message: 'Error al crear temporada' });
-  }
-});
+router.get('/', seasonController.getAll);
+router.get('/:id', seasonController.getById);
+router.post('/', seasonController.create);
+router.put('/:id', seasonController.update);
+router.delete('/:id', seasonController.remove);
 
 module.exports = router;

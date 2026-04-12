@@ -1,20 +1,12 @@
 'use strict';
 const express = require('express');
-const { AppDataSource } = require('../database/data-source');
-const UserSchema = require('../entities/User');
+const userController = require('../controllers/userController');
 
 const router = express.Router();
-const userRepository = () => AppDataSource.getRepository(UserSchema);
 
-router.get('/', async (req, res) => {
-  try {
-    const users = await userRepository().find({
-      select: ['id', 'nombre', 'apellido', 'email', 'rol', 'temporadas'],
-    });
-    res.json(users);
-  } catch (error) {
-    res.status(500).json({ message: 'Error al obtener usuarios' });
-  }
-});
+router.get('/', userController.getAll);
+router.post('/', userController.create);
+router.put('/:id', userController.update);
+router.delete('/:id', userController.remove);
 
 module.exports = router;

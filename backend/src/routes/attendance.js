@@ -1,10 +1,11 @@
 'use strict';
 const express = require('express');
+const attendanceController = require('../controllers/attendanceController');
 
 const router = express.Router();
 
-router.post('/', async (req, res) => {
-  res.json({ message: 'Attendance endpoint placeholder' });
-});
+router.post('/', attendanceController.register);
+router.get('/date/:date', attendanceController.getByDate);
+router.get('/student/:studentID', attendanceController.getByStudent);
 
 module.exports = router;
