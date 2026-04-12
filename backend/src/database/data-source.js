@@ -6,6 +6,9 @@ const SeasonDateSchema = require('../entities/SeasonDate');
 const GuardianSchema = require('../entities/Guardian');
 const StudentSchema = require('../entities/Student');
 const AttendanceSchema = require('../entities/Attendance');
+const TeamSchema = require("../entities/Team");
+const TeamMentorSchema = require("../entities/TeamMentor");
+const TeamStudentSchema = require("../entities/TeamStudent");
 
 const AppDataSource = new DataSource({
   type: 'mysql',
@@ -16,7 +19,7 @@ const AppDataSource = new DataSource({
   database: process.env.DB_NAME || 'asistencia_db',
   synchronize: true,
   logging: false,
-  entities: [UserSchema, SeasonSchema, SeasonDateSchema, GuardianSchema, StudentSchema, AttendanceSchema],
+  entities: [UserSchema, SeasonSchema, SeasonDateSchema, GuardianSchema, StudentSchema, AttendanceSchema, TeamSchema, TeamMentorSchema, TeamStudentSchema],
   migrations: [],
   subscribers: [],
 });
