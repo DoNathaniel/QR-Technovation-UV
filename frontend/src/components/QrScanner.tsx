@@ -1,0 +1,261 @@
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { Html5Qrcode } from 'html5-qrcode';
+import api from '../services/api';
+import { colors } from '../config';
+import type { Attendance } from '../types';
+
+interface QrScannerProps {
+  userID: number;
+  connected: boolean;
+  onReconnect: () => void;
+  onRegistered?: (attendance: Attendance) => void;
+}
+
+type FeedbackState =
+  | { type: 'idle' }
+  | { type: 'success'; nombre: string; tipo: 'entrada' | 'salida' }
+  | { type: 'error'; message: string }
+  | { type: 'scanning' };
+
+const READER_ID = 'qr-reader';
+const COOLDOWN_MS = 2500; // prevent duplicate scans
+
+export default function QrScanner({ userID, connected, onReconnect, onRegistered }: QrScannerProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [feedback, setFeedback] = useState<FeedbackState>({ type: 'idle' });
+  const scannerRef = useRef<Html5Qrcode | null>(null);
+  const lastScannedRef = useRef<string>('');
+  const lastScannedTimeRef = useRef<number>(0);
+  const processingRef = useRef(false);
+
+  // Close scanner if connection drops while it's open
+  useEffect(() => {
+    if (!connected && isOpen) {
+      setIsOpen(false);
+    }
+  }, [connected, isOpen]);
+
+  // Start scanner when opened
+  useEffect(() => {
+    if (!isOpen) return;
+
+    let cancelled = false;
+
+    const startScanner = async () => {
+      // Small delay to let the DOM element render
+      await new Promise((r) => setTimeout(r, 100));
+      if (cancelled) return;
+
+      const el = document.getElementById(READER_ID);
+      if (!el) return;
+
+      const html5QrCode = new Html5Qrcode(READER_ID);
+      scannerRef.current = html5QrCode;
+
+      try {
+        await html5QrCode.start(
+          { facingMode: 'environment' },
+          {
+            fps: 10,
+            qrbox: { width: 250, height: 250 },
+            aspectRatio: 1,
+          },
+          (decodedText) => {
+            if (!cancelled) handleDecode(decodedText);
+          },
+          () => {
+            // ignore scan failures (no QR found in frame)
+          },
+        );
+      } catch (err) {
+        console.error('[QrScanner] Failed to start camera:', err);
+        if (!cancelled) {
+          setFeedback({
+            type: 'error',
+            message: 'No se pudo acceder a la camara. Verifica los permisos.',
+          });
+        }
+      }
+    };
+
+    startScanner();
+
+    return () => {
+      cancelled = true;
+      const scanner = scannerRef.current;
+      if (scanner) {
+        scanner
+          .stop()
+          .then(() => scanner.clear())
+          .catch(() => {});
+        scannerRef.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
+  const handleDecode = useCallback(
+    async (text: string) => {
+      // Cooldown: ignore same code scanned within COOLDOWN_MS
+      const now = Date.now();
+      if (text === lastScannedRef.current && now - lastScannedTimeRef.current < COOLDOWN_MS) {
+        return;
+      }
+      if (processingRef.current) return;
+
+      lastScannedRef.current = text;
+      lastScannedTimeRef.current = now;
+      processingRef.current = true;
+
+      setFeedback({ type: 'scanning' });
+
+      // Parse studentID from QR text
+      // Support formats: plain number "123", or JSON with studentID field
+      let studentID: number | null = null;
+
+      const asNumber = parseInt(text, 10);
+      if (!isNaN(asNumber) && String(asNumber) === text.trim()) {
+        studentID = asNumber;
+      } else {
+        try {
+          const parsed = JSON.parse(text);
+          if (parsed && typeof parsed.studentID === 'number') {
+            studentID = parsed.studentID;
+          }
+        } catch {
+          // not JSON
+        }
+      }
+
+      if (studentID === null) {
+        setFeedback({ type: 'error', message: `QR no valido: "${text.slice(0, 30)}"` });
+        processingRef.current = false;
+        setTimeout(() => setFeedback({ type: 'idle' }), 2500);
+        return;
+      }
+
+      try {
+        const res = await api.post<Attendance>('/attendance', { studentID, userID });
+        const attendance = res.data;
+        const nombre = attendance.student
+          ? `${attendance.student.nombres} ${attendance.student.apellidos}`
+          : `Estudiante #${studentID}`;
+
+        setFeedback({ type: 'success', nombre, tipo: attendance.tipo });
+        onRegistered?.(attendance);
+      } catch (err: unknown) {
+        const msg =
+          err && typeof err === 'object' && 'response' in err
+            ? (err as { response?: { data?: { message?: string } } }).response?.data?.message ??
+              'Error al registrar'
+            : 'Error de red';
+        setFeedback({ type: 'error', message: msg });
+      } finally {
+        processingRef.current = false;
+        setTimeout(() => setFeedback({ type: 'idle' }), 2500);
+      }
+    },
+    [userID, onRegistered],
+  );
+
+  const toggleOpen = () => {
+    if (!connected) return; // block opening when disconnected
+    setIsOpen((v) => !v);
+  };
+
+  return (
+    <div className="bg-surface rounded-lg shadow overflow-hidden">
+      {/* Header row: toggle + connection status */}
+      <div className="flex items-center justify-between px-4 py-3">
+        {/* Toggle button */}
+        <button
+          onClick={toggleOpen}
+          disabled={!connected}
+          className={`flex items-center gap-2 font-semibold text-sm ${!connected ? 'opacity-50 cursor-not-allowed' : ''}`}
+          style={{ color: colors.primary }}
+        >
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2M8 12h8M12 8v8"
+            />
+          </svg>
+          Escanear QR
+          {connected && (
+            <span className="text-xs font-normal text-text-muted">
+              {isOpen ? '\u25B2' : '\u25BC'}
+            </span>
+          )}
+        </button>
+
+        {/* Connection status */}
+        {connected ? (
+          <span className="flex items-center gap-1.5 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-full px-2.5 py-1">
+            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            Conectado
+          </span>
+        ) : (
+          <button
+            onClick={onReconnect}
+            className="flex items-center gap-1.5 text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded-full px-2.5 py-1 hover:bg-red-100 transition-colors"
+          >
+            <span className="w-2 h-2 rounded-full bg-red-500" />
+            Desconectado &middot; Reconectar
+          </button>
+        )}
+      </div>
+
+      {/* Disconnected warning */}
+      {!connected && (
+        <div className="px-4 pb-3">
+          <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">
+            No se puede escanear sin conexion al servidor. Presiona &quot;Reconectar&quot; para reintentar.
+          </div>
+        </div>
+      )}
+
+      {/* Scanner area */}
+      {isOpen && connected && (
+        <div className="px-4 pb-4">
+          {/* Feedback banner */}
+          {feedback.type === 'success' && (
+            <div className="mb-3 rounded-lg bg-green-50 border border-green-300 px-3 py-2 text-sm text-green-800 animate-pulse">
+              <span className="font-bold">
+                {feedback.tipo === 'entrada' ? 'Entrada' : 'Salida'}
+              </span>{' '}
+              registrada: {feedback.nombre}
+            </div>
+          )}
+          {feedback.type === 'error' && (
+            <div className="mb-3 rounded-lg bg-red-50 border border-red-300 px-3 py-2 text-sm text-red-800">
+              {feedback.message}
+            </div>
+          )}
+          {feedback.type === 'scanning' && (
+            <div className="mb-3 rounded-lg bg-blue-50 border border-blue-300 px-3 py-2 text-sm text-blue-800 animate-pulse">
+              Procesando...
+            </div>
+          )}
+
+          {/* Camera view */}
+          <div
+            id={READER_ID}
+            className="mx-auto rounded-lg overflow-hidden"
+            style={{ maxWidth: 350 }}
+          />
+
+          <p className="text-[11px] text-text-muted text-center mt-2">
+            Apunta la camara al codigo QR del estudiante
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
