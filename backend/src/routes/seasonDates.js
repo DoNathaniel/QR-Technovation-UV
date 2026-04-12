@@ -2,11 +2,12 @@
 const express = require('express');
 const { AppDataSource } = require('../database/data-source');
 const SeasonDateSchema = require('../entities/SeasonDate');
+const { authenticateToken, checkRole } = require('../middleware');
 
 const router = express.Router();
 const seasonDateRepository = () => AppDataSource.getRepository(SeasonDateSchema);
 
-router.get('/:seasonID/dates', async (req, res) => {
+router.get('/:seasonID/dates', authenticateToken, async (req, res) => {
   try {
     const { seasonID } = req.params;
     const dates = await seasonDateRepository().find({ where: { seasonID: parseInt(seasonID) } });
@@ -16,7 +17,7 @@ router.get('/:seasonID/dates', async (req, res) => {
   }
 });
 
-router.post('/:seasonID/dates', async (req, res) => {
+router.post('/:seasonID/dates', authenticateToken, checkRole('superadmin'), async (req, res) => {
   try {
     const { seasonID } = req.params;
     const { fecha } = req.body;
@@ -28,7 +29,7 @@ router.post('/:seasonID/dates', async (req, res) => {
   }
 });
 
-router.post('/:seasonID/dates/bulk', async (req, res) => {
+router.post('/:seasonID/dates/bulk', authenticateToken, checkRole('superadmin'), async (req, res) => {
   try {
     const { seasonID } = req.params;
     const { fechaInicio, fechaFin } = req.body;
