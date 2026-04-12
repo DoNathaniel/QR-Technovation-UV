@@ -1,9 +1,23 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #1a365d;
-  --color-secondary: #2c5282;
-  --color-accent: #805ad5;
+  /* Escuela Informática Colors */
+  --color-school-dark: #1B3A59;
+  --color-school-light: #3D7EB5;
+  --color-school-white: #FFFFFF;
+  
+  /* Technovation Girls Chile Colors */
+  --color-tng-pink: #D4007A;
+  --color-tng-purple: #7B2D8E;
+  --color-tng-teal: #00A19C;
+  --color-tng-white: #FFFFFF;
+  
+  /* Semantic Colors */
+  --color-primary: #1B3A59;
+  --color-secondary: #3D7EB5;
+  --color-accent: #D4007A;
+  --color-accent-alt: #7B2D8E;
+  --color-teal: #00A19C;
   --color-success: #38a169;
   --color-warning: #d69e2e;
   --color-danger: #e53e3e;
