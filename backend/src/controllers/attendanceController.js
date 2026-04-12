@@ -2,9 +2,11 @@
 const { AppDataSource } = require('../database/data-source');
 const AttendanceSchema = require('../entities/Attendance');
 const SeasonDateSchema = require('../entities/SeasonDate');
+const StudentSchema = require('../entities/Student');
 
 const attendanceRepository = () => AppDataSource.getRepository(AttendanceSchema);
 const seasonDateRepository = () => AppDataSource.getRepository(SeasonDateSchema);
+const studentRepository = () => AppDataSource.getRepository(StudentSchema);
 
 async function register(req, res) {
   try {
@@ -75,4 +77,57 @@ async function getByStudent(req, res) {
   }
 }
 
-module.exports = { register, getByDate, getByStudent };
+async function getStats(req, res) {
+  try {
+    const { seasonID } = req.query;
+    const today = new Date().toISOString().split('T')[0];
+    
+    const totalEstudiantes = await studentRepository().count({
+      where: { seasonID: parseInt(seasonID) }
+    });
+
+    const seasonDate = await seasonDateRepository().findOne({ 
+      where: { fecha: today, seasonID: parseInt(seasonID) } 
+    });
+
+    if (!seasonDate) {
+      return res.json({
+        totalEstudiantes,
+        presentesHoy: 0,
+        entradasHoy: 0,
+        salidasHoy: 0
+      });
+    }
+
+    const allAttendances = await attendanceRepository().find({
+      where: { seasonDateID: seasonDate.ID }
+    });
+
+    const estudiantesPresentes = new Set();
+    let entradasHoy = 0;
+    let salidasHoy = 0;
+
+    allAttendances.forEach(att => {
+      if (att.tipo === 'entrada') {
+        entradasHoy++;
+        estudiantesPresentes.add(att.studentID);
+      } else {
+        salidasHoy++;
+        if (estudiantesPresentes.has(att.studentID)) {
+          estudiantesPresentes.delete(att.studentID);
+        }
+      }
+    });
+
+    res.json({
+      totalEstudiantes,
+      presentesHoy: estudiantesPresentes.size,
+      entradasHoy,
+      salidasHoy
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener estadísticas', error: error.message });
+  }
+}
+
+module.exports = { register, getByDate, getByStudent, getStats };
