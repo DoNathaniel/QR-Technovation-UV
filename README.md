@@ -41,10 +41,10 @@ Sistema diseñado para mentores y coordinadores que necesitan registrar la asist
 
 ```
 QR-Technovation-UV/
-├── frontend/           # React + Vite + TypeScript
+├── frontend/           # React + Vite + TypeScript + Tailwind CSS
 │   ├── src/
 │   │   ├── components/
-│   │   ├── pages/
+│   │   ├── pages/       # Rutas: /login, /panel, /estudiantes, etc.
 │   │   ├── context/
 │   │   ├── services/
 │   │   ├── hooks/
@@ -70,10 +70,10 @@ QR-Technovation-UV/
 ### Frontend
 - React 18+ con TypeScript
 - Vite
-- React Router DOM
+- React Router DOM (rutas en español)
 - Axios
 - Socket.io-client
-- Tailwind CSS (opcional)
+- Tailwind CSS
 
 ### Backend
 - Express.js con TypeScript
@@ -214,7 +214,7 @@ npm run dev
 ## Pendientes
 
 - [ ] Integración con CDN para almacenamiento de imágenes QR (detalles por definir)
-- [ ] Sistema de emails para re-envío de QR
+- [x] Sistema de emails para re-envío de QR (IP: http://51.222.141.196:1011/)
 
 ## Licencia
 

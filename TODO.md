@@ -4,8 +4,8 @@
 
 ### T1 - Configuración inicial
 - [ ] T1-1 Crear proyecto Vite + React con TypeScript
-- [ ] T1-2 Instalar dependencias (axios, react-router-dom, socket.io-client, etc.)
-- [ ] T1-3 Configurar rutas y navegación
+- [ ] T1-2 Instalar dependencias (axios, react-router-dom, socket.io-client, Tailwind CSS)
+- [ ] T1-3 Configurar rutas y navegación (rutas en español)
 - [ ] T1-4 Configurar variables de entorno (.env)
 
 ### T2 - Autenticación y Login
@@ -66,6 +66,7 @@
 - [ ] T9-3 Ver historial por fecha
 - [ ] T9-4 Actualización en tiempo real (socket)
 - [ ] T9-5 Diseño optimizado para móvil
+- [ ] T9-6 Integrar escaneo de QR en el mismo panel (debido a socket)
 
 ### T10 - Escaneo de QR (Voluntario/Admin)
 - [ ] T10-1 Componente de escaneo con cámara
@@ -156,7 +157,7 @@
 - [ ] T21-1 Generar QR único por estudiante (contiene student_id encriptado)
 - [ ] T21-2 Endpoint GET /students/:id/qr - Devolver imagen QR
 - [ ] T21-3 Integrar con CDN para almacenar imágenes QR (PENDIENTE - detalles por definir)
-- [ ] T21-4 Endpoint POST /students/:id/resend-qr - Re-enviar QR por email
+- [ ] T21-4 Integrar sistema de correos para re-enviar QR (IP: http://51.222.141.196:1011/)
 
 ### T22 - Validaciones de Negocio
 - [ ] T22-1 Verificar estudiante pertenece a la temporada actual del usuario
@@ -233,3 +234,129 @@
 - T27 depende de T12
 - T29 depende de T27
 - T21-3 (CDN) está pendiente de detalles por definir
+
+---
+
+# Plan de Integración - T1: Configuración Inicial del Frontend
+
+## Subtareas de T1
+
+### T1-1: Crear proyecto Vite + React con TypeScript
+
+**Acciones requeridas:**
+1. Ejecutar `npm create vite@latest frontend -- --template react-ts` en la raíz del proyecto
+2. Esto generará la estructura base con:
+   - `package.json` con dependencias de React y TypeScript
+   - Archivos de configuración TypeScript (`tsconfig.json`, `tsconfig.app.json`, `tsconfig.node.json`)
+   - `vite.config.ts` preconfigurado
+   - `index.html` y estructura `src/` básica
+
+**Dependencias:** Ninguna (requiere solo Node.js instalado)
+
+---
+
+### T1-2: Instalar dependencias
+
+**Dependencias principales a instalar:**
+```bash
+cd frontend
+npm install axios react-router-dom socket.io-client
+```
+
+**Instalar Tailwind CSS:**
+```bash
+npm install -D tailwindcss postcss autoprefixer
+npx tailwindcss init -p
+```
+
+**Configurar Tailwind:**
+1. Editar `tailwind.config.js`:
+   ```javascript
+   export default {
+     content: [
+       "./index.html",
+       "./src/**/*.{js,ts,jsx,tsx}",
+     ],
+     theme: { extend: {} },
+     plugins: [],
+   }
+   ```
+2. Agregar directivas en `src/index.css`:
+   ```css
+   @tailwind base;
+   @tailwind components;
+   @tailwind utilities;
+   ```
+
+**Dependencias de desarrollo opcionales:**
+```bash
+npm install -D eslint prettier eslint-plugin-react eslint-config-prettier
+```
+
+---
+
+### T1-3: Configurar rutas y navegación (en español)
+
+**Acciones requeridas:**
+1. Instalar `react-router-dom` (si no se hizo en T1-2)
+2. Crear estructura de carpetas para rutas:
+   ```
+   src/
+   ├── pages/
+   │   ├── Login.tsx
+   │   ├── Dashboard.tsx
+   │   └── ...
+   ├── components/
+   └── App.tsx
+   ```
+3. Configurar `BrowserRouter` en `main.tsx` o `App.tsx`
+4. Definir rutas principales (en español):
+   - `/iniciar-sesion` - Página de login
+   - `/panel` - Dashboard principal
+   - `/temporadas` - Gestión de temporadas (superadmin)
+   - `/usuarios` - Gestión de usuarios
+   - `/estudiantes` - Lista de estudiantes
+   - `/asistencia` - Panel de asistencia (incluye escaneo QR)
+
+---
+
+### T1-4: Configurar variables de entorno
+
+**Acciones requeridas:**
+1. Crear archivo `.env` en la raíz de `frontend/`:
+   ```
+   VITE_API_URL=http://localhost:3000
+   VITE_SOCKET_URL=http://localhost:3000
+   VITE_EMAIL_API_URL=http://51.222.141.196:1011/
+   ```
+2. Crear `.env.example` con las mismas variables (sin valores reales) para documentación
+3. Crear archivo `src/config/index.ts` para exportar las variables:
+   ```typescript
+   export const API_URL = import.meta.env.VITE_API_URL;
+   export const SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
+   export const EMAIL_API_URL = import.meta.env.VITE_EMAIL_API_URL;
+   ```
+
+---
+
+## Orden de Ejecución Sugerido
+
+1. **T1-1** → Crear proyecto base
+2. **T1-4** → Configurar variables de entorno (antes de instalar más deps, para tener limpio el setup)
+3. **T1-2** → Instalar todas las dependencias necesarias (incluye Tailwind)
+4. **T1-3** → Configurar navegación básica (Router) con rutas en español
+
+---
+
+## Dependencias con otras tareas
+
+- **T1 debe completarse antes que T2** (Autenticación y Login)
+- La navegación configurada en T1-3 será la base para todas las páginas futuras
+
+---
+
+## Notas Adicionales
+
+- El escaneo de QR se integrará en el mismo panel de asistencia (T9-6) debido a la funcionalidad de Socket.io
+- El sistema de correos para re-envío de QR usará la API en `http://51.222.141.196:1011/`
+- Todos los estilos usarán Tailwind CSS
