@@ -1,4 +1,6 @@
 'use strict';
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const { AppDataSource } = require('../database/data-source');
 const UserSchema = require('../entities/User');
 
@@ -17,8 +19,28 @@ async function getAll(req, res) {
 
 async function create(req, res) {
   try {
-    const user = userRepository().create(req.body);
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.replace('Bearer ', '');
+    const decoded = token ? jwt.verify(token, process.env.JWT_SECRET || 'secret_key') : null;
+    
+    const { password, rol, ...rest } = req.body;
+    
+    if (decoded?.rol !== 'superadmin' && rol === 'superadmin') {
+      return res.status(403).json({ message: 'No tienes permiso para crear superadmin' });
+    }
+    
+    if (decoded?.rol === 'admin' && rol === 'superadmin') {
+      return res.status(403).json({ message: 'No tienes permiso para crear superadmin' });
+    }
+    
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = userRepository().create({
+      ...rest,
+      password: hashedPassword,
+      rol: rol || 'voluntario',
+    });
     const result = await userRepository().save(user);
+    delete result.password;
     res.status(201).json(result);
   } catch (error) {
     res.status(500).json({ message: 'Error al crear usuario', error: error.message });
@@ -32,8 +54,29 @@ async function update(req, res) {
     if (!user) {
       return res.status(404).json({ message: 'Usuario no encontrado' });
     }
-    Object.assign(user, req.body);
+    
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.replace('Bearer ', '');
+    const decoded = token ? jwt.verify(token, process.env.JWT_SECRET || 'secret_key') : null;
+    
+    const { password, rol, ...rest } = req.body;
+    
+    if (rol && rol !== user.rol) {
+      if (decoded?.rol !== 'superadmin') {
+        return res.status(403).json({ message: 'No tienes permiso para cambiar el rol' });
+      }
+      if (decoded?.rol === 'admin' && rol === 'superadmin') {
+        return res.status(403).json({ message: 'No puedes asignar rol superadmin' });
+      }
+      user.rol = rol;
+    }
+    
+    if (password) {
+      user.password = await bcrypt.hash(password, 10);
+    }
+    Object.assign(user, rest);
     const result = await userRepository().save(user);
+    delete result.password;
     res.json(result);
   } catch (error) {
     res.status(500).json({ message: 'Error al actualizar usuario', error: error.message });

@@ -2,6 +2,8 @@ import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import SeasonsPage from './pages/SeasonsPage';
+import UsersPage from './pages/UsersPage';
 import SeasonSelector from './components/SeasonSelector';
 import { colors } from './config';
 import { useState } from 'react';
@@ -74,6 +76,8 @@ function AppLayout() {
       <main className="container mx-auto px-4 py-6">
         <Routes>
           <Route path="/panel" element={<Dashboard />} />
+          <Route path="/temporadas" element={<SeasonsPage />} />
+          <Route path="/usuarios" element={<UsersPage />} />
           <Route path="*" element={<Navigate to="/panel" replace />} />
         </Routes>
       </main>
