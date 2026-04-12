@@ -1,6 +1,8 @@
 'use strict';
 const { AppDataSource } = require('../database/data-source');
 const StudentSchema = require('../entities/Student');
+const { generateQR } = require('../services/qrService');
+const { sendQREmail } = require('../services/emailService');
 
 const studentRepository = () => AppDataSource.getRepository(StudentSchema);
 
@@ -88,6 +90,39 @@ async function create(req, res) {
       datosApoderado: datosApoderado && datosApoderado.nombres ? datosApoderado : null,
     });
     const result = await studentRepository().save(student);
+
+    // Generar QR automaticamente al crear estudiante y subirlo al CDN
+    let cdnUrl = null;
+    try {
+      cdnUrl = await generateQR(seasonID, result.ID);
+      result.qrUrl = cdnUrl;
+      await studentRepository().save(result);
+      console.log(`[QR] QR generado y subido al CDN para estudiante ${result.ID}`);
+    } catch (qrError) {
+      console.error(`[QR] Error generando QR para estudiante ${result.ID}:`, qrError.message);
+      // No bloquear la creacion del estudiante si falla el QR
+    }
+
+    // Enviar QR por email al estudiante y al apoderado (sin duplicados)
+    if (cdnUrl) {
+      const studentName = `${result.nombres} ${result.apellidos}`;
+      const studentEmail = result.email || null;
+      const guardianEmail = (datosApoderado && datosApoderado.email) || null;
+
+      const recipients = new Set();
+      if (studentEmail) recipients.add(studentEmail);
+      if (guardianEmail) recipients.add(guardianEmail);
+
+      for (const email of recipients) {
+        try {
+          await sendQREmail(email, studentName, cdnUrl);
+        } catch (emailError) {
+          console.error(`[Email] Error enviando QR a ${email}:`, emailError.message);
+          // No bloquear la creacion del estudiante si falla el email
+        }
+      }
+    }
+
     res.status(201).json(result);
   } catch (error) {
     console.error('Error creating student:', error);
@@ -169,11 +204,66 @@ async function resendQR(req, res) {
     if (!student) {
       return res.status(404).json({ message: 'Estudiante no encontrado' });
     }
-    console.log(`QR reenviado para estudiante ID: ${id} - ${student.nombres} ${student.apellidos}`);
-    res.json({ message: 'QR reenviado exitosamente' });
+
+    // Si no tiene QR en CDN, generarlo ahora
+    let qrUrl = student.qrUrl;
+    if (!qrUrl) {
+      qrUrl = await generateQR(student.seasonID, student.ID);
+      student.qrUrl = qrUrl;
+      await studentRepository().save(student);
+    }
+
+    // Enviar QR al estudiante y al apoderado (sin duplicados)
+    const studentEmail = student.email || null;
+    const guardianEmail = (student.datosApoderado && student.datosApoderado.email) || null;
+
+    const recipients = new Set();
+    if (studentEmail) recipients.add(studentEmail);
+    if (guardianEmail) recipients.add(guardianEmail);
+
+    if (recipients.size === 0) {
+      return res.status(400).json({
+        message: 'No hay email disponible para este estudiante ni su apoderado',
+      });
+    }
+
+    const studentName = `${student.nombres} ${student.apellidos}`;
+    const sent = [];
+    for (const email of recipients) {
+      await sendQREmail(email, studentName, qrUrl);
+      sent.push(email);
+    }
+
+    console.log(`[QR] Reenviado para estudiante ID: ${id} - ${studentName} a ${sent.join(', ')}`);
+    res.json({ message: `QR reenviado exitosamente a ${sent.join(', ')}` });
   } catch (error) {
+    console.error('[QR] Error al reenviar QR:', error.message);
     res.status(500).json({ message: 'Error al reenviar QR', error: error.message });
   }
 }
 
-module.exports = { getAll, getById, create, update, remove, resendQR };
+async function getQR(req, res) {
+  try {
+    const { id } = req.params;
+    const student = await studentRepository().findOne({ where: { ID: parseInt(id) } });
+    if (!student) {
+      return res.status(404).json({ message: 'Estudiante no encontrado' });
+    }
+
+    // Si no tiene QR en CDN, generarlo ahora
+    let qrUrl = student.qrUrl;
+    if (!qrUrl) {
+      qrUrl = await generateQR(student.seasonID, student.ID);
+      student.qrUrl = qrUrl;
+      await studentRepository().save(student);
+    }
+
+    // Redirect a la URL del CDN
+    res.redirect(qrUrl);
+  } catch (error) {
+    console.error('[QR] Error al obtener QR:', error.message);
+    res.status(500).json({ message: 'Error al obtener QR', error: error.message });
+  }
+}
+
+module.exports = { getAll, getById, create, update, remove, resendQR, getQR };

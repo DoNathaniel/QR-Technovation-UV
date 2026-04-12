@@ -2,11 +2,11 @@
 
 ## Pendiente para mañana
 
-- Verificar que el modelo de Student y los endpoints de creación/edición reciban y guarden correctamente el campo de URL del QR subido por el frontend (campo sugerido: `qrUrl`).
-- Comprobar/ajustar la validación del campo (debe ser una URL válida).
-- En la documentación de endpoints, especificar que la URL del QR debe venir en el body al crear/modificar estudiantes.
-- Actualizar el flujo/documentación si hace falta para aclarar que la subida al CDN ahora la realiza el frontend y solo pasa la URL.
-- Testear el flujo end-to-end subiendo un QR, obteniendo la URL desde el frontend y verificando que llegue y se guarde en el backend correctamente junto al estudiante. 
+- ~~Verificar que el modelo de Student y los endpoints de creación/edición reciban y guarden correctamente el campo de URL del QR subido por el frontend (campo sugerido: `qrUrl`).~~ → Resuelto: QR se genera en backend automáticamente al crear estudiante, se guarda en `qrs/season_{id}/student_{id}.png`.
+- ~~Comprobar/ajustar la validación del campo (debe ser una URL válida).~~ → Ya no aplica, el QR se genera server-side.
+- ~~En la documentación de endpoints, especificar que la URL del QR debe venir en el body al crear/modificar estudiantes.~~ → Ya no aplica.
+- ~~Actualizar el flujo/documentación si hace falta para aclarar que la subida al CDN ahora la realiza el frontend y solo pasa la URL.~~ → Cambiado: almacenamiento local, no CDN.
+- ~~Testear el flujo end-to-end subiendo un QR, obteniendo la URL desde el frontend y verificando que llegue y se guarde en el backend correctamente junto al estudiante.~~ → Testear: crear estudiante y verificar que se genera QR en disco y se envia por email.
 - Marcar estos pasos como completados en esta sección cuando se validen.
 
 ## FASE 1: Frontend Básico (Completado ✅)
@@ -95,10 +95,11 @@
 - [x] T20-8 Lógica: Si fecha no existe → crear nueva fecha de asistencia automáticamente
 
 ### T21 - Generación de QR
-- [ ] T21-1 Generar QR único por estudiante (contiene student_id encriptado)
-- [ ] T21-2 Endpoint GET /students/:id/qr - Devolver imagen QR
-- [ ] T21-3 Integrar con CDN para almacenar imágenes QR (PENDIENTE - detalles por definir)
-- [ ] T21-4 Integrar sistema de correos para re-enviar QR (IP: http://51.222.141.196:1011/)
+- [x] T21-1 Generar QR único por estudiante (contenido: season_{id}/student_{id}.png)
+- [x] T21-2 Endpoint GET /students/:id/qr - Devolver imagen QR (redirect al CDN)
+- [x] T21-3 Integrar con CDN cdn.donath.us (path: /_UV_QR-TECHNOVATION_/season_{id}/) + campo qrUrl en Student
+- [x] T21-4 Integrar sistema de correos para re-enviar QR (IP: http://51.222.141.196:1011/)
+- [x] T21-5 Envío dual: email al estudiante + apoderado (deduplicado si son iguales)
 
 ### T22 - Validaciones de Negocio
 - [ ] T22-1 Verificar estudiante pertenece a la temporada actual del usuario
@@ -258,4 +259,4 @@
 - T23 depende de T2 y T12
 - T27 depende de T12
 - T29 depende de T27
-- T21-3 (CDN) está pendiente de detalles por definir
+- T21-3 (CDN) → Integrado con cdn.donath.us (completado)

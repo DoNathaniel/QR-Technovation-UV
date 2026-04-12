@@ -50,6 +50,11 @@ const StudentSchema = new EntitySchema({
       type: 'int',
       nullable: true,
     },
+    qrUrl: {
+      type: 'varchar',
+      length: 500,
+      nullable: true,
+    },
     createdAt: {
       type: 'timestamp',
       createDate: true,

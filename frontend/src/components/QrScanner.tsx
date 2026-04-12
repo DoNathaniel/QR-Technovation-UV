@@ -110,20 +110,28 @@ export default function QrScanner({ userID, connected, onReconnect, onRegistered
       setFeedback({ type: 'scanning' });
 
       // Parse studentID from QR text
-      // Support formats: plain number "123", or JSON with studentID field
+      // Support formats:
+      //   1. "season_{id}/student_{id}.png" (nuevo formato T21)
+      //   2. plain number "123"
+      //   3. JSON with studentID field
       let studentID: number | null = null;
 
-      const asNumber = parseInt(text, 10);
-      if (!isNaN(asNumber) && String(asNumber) === text.trim()) {
-        studentID = asNumber;
+      const qrPathMatch = text.match(/^season_(\d+)\/student_(\d+)\.png$/);
+      if (qrPathMatch) {
+        studentID = parseInt(qrPathMatch[2], 10);
       } else {
-        try {
-          const parsed = JSON.parse(text);
-          if (parsed && typeof parsed.studentID === 'number') {
-            studentID = parsed.studentID;
+        const asNumber = parseInt(text, 10);
+        if (!isNaN(asNumber) && String(asNumber) === text.trim()) {
+          studentID = asNumber;
+        } else {
+          try {
+            const parsed = JSON.parse(text);
+            if (parsed && typeof parsed.studentID === 'number') {
+              studentID = parsed.studentID;
+            }
+          } catch {
+            // not JSON
           }
-        } catch {
-          // not JSON
         }
       }
 
