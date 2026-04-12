@@ -13,12 +13,18 @@ async function register(req, res) {
     const { studentID, userID } = req.body;
     const today = new Date().toISOString().split('T')[0];
 
+    // Load student to get seasonID for the socket room
+    const student = await studentRepository().findOne({ where: { ID: studentID } });
+    if (!student) {
+      return res.status(404).json({ message: 'Estudiante no encontrada' });
+    }
+
     let seasonDate = await seasonDateRepository().findOne({ 
       where: { fecha: today } 
     });
 
     if (!seasonDate) {
-      seasonDate = seasonDateRepository().create({ fecha: today });
+      seasonDate = seasonDateRepository().create({ fecha: today, seasonID: student.seasonID });
       seasonDate = await seasonDateRepository().save(seasonDate);
     }
 
@@ -39,6 +45,15 @@ async function register(req, res) {
     });
 
     const result = await attendanceRepository().save(attendance);
+
+    // Attach student data for the socket event and response
+    result.student = student;
+
+    // Emit real-time event to all clients in the season room
+    if (req.io) {
+      req.io.to(`season:${student.seasonID}`).emit('attendance-registered', result);
+    }
+
     res.status(201).json(result);
   } catch (error) {
     res.status(500).json({ message: 'Error al registrar asistencia', error: error.message });
