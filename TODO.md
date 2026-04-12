@@ -1,6 +1,6 @@
 # TODO - Sistema de Toma de Asistencia Estudiantil
 
-## 1. FRONTEND
+## FASE 1: Frontend Básico (Completado ✅)
 
 ### T1 - Configuración inicial
 - [x] T1-1 Crear proyecto Vite + React con TypeScript
@@ -9,12 +9,97 @@
 - [x] T1-4 Configurar variables de entorno (.env)
 
 ### T2 - Autenticación y Login
-- [ ] T2-1 Implementar página de login (email + contraseña)
-- [ ] T2-2 Crear AuthContext para manejo de sesión
-- [ ] T2-3 Implementar protección de rutas (solo usuarios autenticados)
-- [ ] T2-4 Manejar JWT y almacenamiento en localStorage
-- [ ] T2-5 Implementar selector de temporada post-login (si tiene más de una)
-- [ ] T2-6 Crear página de logout
+- [x] T2-1 Implementar página de login (email + contraseña)
+- [x] T2-2 Crear AuthContext para manejo de sesión
+- [x] T2-3 Implementar protección de rutas (solo usuarios autenticados)
+- [x] T2-4 Manejar JWT y almacenamiento en localStorage
+- [x] T2-5 Implementar selector de temporada post-login (si tiene más de una)
+- [x] T2-6 Crear página de logout
+
+---
+
+## FASE 2: Backend
+
+### T12 - Configuración inicial del Backend
+- [ ] T12-1 Crear proyecto Express con TypeScript
+- [ ] T12-2 Configurar conexión a MySQL
+- [ ] T12-3 Configurar TypeORM/Sequelize
+- [ ] T12-4 Estructura de carpetas (controllers, routes, services, models, middleware)
+- [ ] T12-5 Configurar variables de entorno
+
+### T13 - Modelos de Base de Datos
+- [ ] T13-1 Modelo User (superadmin/admin/voluntario) → nombre, apellido, email, password, rol
+- [ ] T13-2 Modelo Season (temporada) → nombre, fecha_inicio, fecha_fin
+- [ ] T13-3 Modelo SeasonDate (fechas predefinidas de asistencia) → fecha, season_id
+- [ ] T13-4 Modelo Guardian (apoderado) → nombres, apellidos, email, teléfono, RUT, season_id
+- [ ] T13-5 Modelo Student → nombres, apellidos, email, rut, fecha_nac, categoria, season_id, retirado_apoderado, guardian_id (nullable)
+- [ ] T13-6 Modelo Attendance → student_id, season_date_id, tipo (entrada/salida), user_id (quien registró), hora
+- [ ] T13-7 Relaciones entre modelos
+
+### T14 - Autenticación y Autorización (Backend)
+- [ ] T14-1 Endpoint POST /auth/login
+- [ ] T14-2 Generar JWT con payload (user_id, rol, temporadas)
+- [ ] T14-3 Middleware authenticateToken
+- [ ] T14-4 Middleware checkRole (superadmin/admin/voluntario)
+- [ ] T14-5 Encriptar contraseñas (bcrypt)
+
+### T15 - API de Temporadas
+- [ ] T15-1 GET /seasons - Listar temporadas
+- [ ] T15-2 POST /seasons - Crear temporada (superadmin)
+- [ ] T15-3 PUT /seasons/:id - Editar temporada
+- [ ] T15-4 DELETE /seasons/:id - Eliminar temporada
+
+### T16 - API de Fechas de Asistencia
+- [ ] T16-1 GET /seasons/:id/dates - Ver fechas de una temporada
+- [ ] T16-2 POST /seasons/:id/dates - Agregar fecha (superadmin)
+- [ ] T16-3 POST /seasons/:id/dates/bulk - Importar rango de fechas
+
+### T17 - API de Usuarios
+- [ ] T17-1 GET /users - Listar usuarios (superadmin/admin)
+- [ ] T17-2 POST /users - Crear usuario (superadmin puede crear hasta superadmin, admin hasta admin)
+- [ ] T17-3 PUT /users/:id - Editar usuario
+- [ ] T17-4 DELETE /users/:id - Eliminar usuario (superadmin)
+
+### T18 - API de Apoderados
+- [ ] T18-1 GET /guardians - Listar apoderados por temporada
+- [ ] T18-2 POST /guardians - Crear/editar apoderado
+- [ ] T18-3 GET /guardians/:id/students - Ver estudiantes asociadas al mismo apoderado (hermanas)
+- [ ] T18-4 DELETE /guardians/:id - Eliminar apoderado
+
+### T19 - API de Estudiantes
+- [ ] T19-1 GET /students - Listar estudiantes (filtro por temporada)
+- [ ] T19-2 GET /students?categoria= - Filtrar por categoría
+- [ ] T19-3 POST /students - Crear estudiante (admin)
+- [ ] T19-4 PUT /students/:id - Editar estudiante
+- [ ] T19-5 DELETE /students/:id - Eliminar estudiante
+- [ ] T19-6 GET /students/:id - Obtener estudiante específico
+- [ ] T19-7 Validar rut único por temporada
+
+### T20 - API de Asistencia
+- [ ] T20-1 POST /attendance - Registrar asistencia (escaneo QR)
+- [ ] T20-2 GET /attendance/date/:date - Ver asistencia por fecha
+- [ ] T20-3 GET /attendance/student/:studentId - Historial de estudiante
+- [ ] T20-4 GET /attendance/stats - Estadísticas de asistencia
+- [ ] T20-5 Lógica: Si ya tiene entrada → registrar salida
+- [ ] T20-6 Lógica: Si estudiante tiene retiro con apoderado → incluir flag en respuesta
+- [ ] T20-7 Lógica: Verificar si hay otras estudiantes asociadas al mismo apoderado en la temporada
+- [ ] T20-8 Lógica: Si fecha no existe → crear nueva fecha de asistencia automáticamente
+
+### T21 - Generación de QR
+- [ ] T21-1 Generar QR único por estudiante (contiene student_id encriptado)
+- [ ] T21-2 Endpoint GET /students/:id/qr - Devolver imagen QR
+- [ ] T21-3 Integrar con CDN para almacenar imágenes QR (PENDIENTE - detalles por definir)
+- [ ] T21-4 Integrar sistema de correos para re-enviar QR (IP: http://51.222.141.196:1011/)
+
+### T22 - Validaciones de Negocio
+- [ ] T22-1 Verificar estudiante pertenece a la temporada actual del usuario
+- [ ] T22-2 Validar que fecha de asistencia exista o crear nueva si no existe
+- [ ] T22-3 Validar permisos según rol del usuario autenticado
+- [ ] T22-4 Validar que RUT no se repita en la misma temporada
+
+---
+
+## FASE 3: Frontend remaining (Depende de Backend)
 
 ### T3 - Dashboard Principal
 - [ ] T3-1 Crear Dashboard según rol (superadmin/admin/voluntario)
@@ -86,88 +171,7 @@
 
 ---
 
-## 2. BACKEND
-
-### T12 - Configuración inicial
-- [ ] T12-1 Crear proyecto Express con TypeScript
-- [ ] T12-2 Configurar conexión a MySQL
-- [ ] T12-3 Configurar TypeORM/Sequelize
-- [ ] T12-4 Estructura de carpetas (controllers, routes, services, models, middleware)
-- [ ] T12-5 Configurar variables de entorno
-
-### T13 - Modelos de Base de Datos
-- [ ] T13-1 Modelo User (superadmin/admin/voluntario) → nombre, apellido, email, password, rol
-- [ ] T13-2 Modelo Season (temporada) → nombre, fecha_inicio, fecha_fin
-- [ ] T13-3 Modelo SeasonDate (fechas predefinidas de asistencia) → fecha, season_id
-- [ ] T13-4 Modelo Guardian (apoderado) → nombres, apellidos, email, teléfono, RUT, season_id
-- [ ] T13-5 Modelo Student → nombres, apellidos, email, rut, fecha_nac, categoria, season_id, retirado_apoderado, guardian_id (nullable)
-- [ ] T13-6 Modelo Attendance → student_id, season_date_id, tipo (entrada/salida), user_id (quien registró), hora
-- [ ] T13-7 Relaciones entre modelos
-
-### T14 - Autenticación y Autorización
-- [ ] T14-1 Endpoint POST /auth/login
-- [ ] T14-2 Generar JWT con payload (user_id, rol, temporadas)
-- [ ] T14-3 Middleware authenticateToken
-- [ ] T14-4 Middleware checkRole (superadmin/admin/voluntario)
-- [ ] T14-5 Encriptar contraseñas (bcrypt)
-
-### T15 - API de Temporadas
-- [ ] T15-1 GET /seasons - Listar temporadas
-- [ ] T15-2 POST /seasons - Crear temporada (superadmin)
-- [ ] T15-3 PUT /seasons/:id - Editar temporada
-- [ ] T15-4 DELETE /seasons/:id - Eliminar temporada
-
-### T16 - API de Fechas de Asistencia
-- [ ] T16-1 GET /seasons/:id/dates - Ver fechas de una temporada
-- [ ] T16-2 POST /seasons/:id/dates - Agregar fecha (superadmin)
-- [ ] T16-3 POST /seasons/:id/dates/bulk - Importar rango de fechas
-
-### T17 - API de Usuarios
-- [ ] T17-1 GET /users - Listar usuarios (superadmin/admin)
-- [ ] T17-2 POST /users - Crear usuario (superadmin puede crear hasta superadmin, admin hasta admin)
-- [ ] T17-3 PUT /users/:id - Editar usuario
-- [ ] T17-4 DELETE /users/:id - Eliminar usuario (superadmin)
-
-### T18 - API de Apoderados
-- [ ] T18-1 GET /guardians - Listar apoderados por temporada
-- [ ] T18-2 POST /guardians - Crear/editar apoderado
-- [ ] T18-3 GET /guardians/:id/students - Ver estudiantes asociadas al mismo apoderado (hermanas)
-- [ ] T18-4 DELETE /guardians/:id - Eliminar apoderado
-
-### T19 - API de Estudiantes
-- [ ] T19-1 GET /students - Listar estudiantes (filtro por temporada)
-- [ ] T19-2 GET /students?categoria= - Filtrar por categoría
-- [ ] T19-3 POST /students - Crear estudiante (admin)
-- [ ] T19-4 PUT /students/:id - Editar estudiante
-- [ ] T19-5 DELETE /students/:id - Eliminar estudiante
-- [ ] T19-6 GET /students/:id - Obtener estudiante específico
-- [ ] T19-7 Validar rut único por temporada
-
-### T20 - API de Asistencia
-- [ ] T20-1 POST /attendance - Registrar asistencia (escaneo QR)
-- [ ] T20-2 GET /attendance/date/:date - Ver asistencia por fecha
-- [ ] T20-3 GET /attendance/student/:studentId - Historial de estudiante
-- [ ] T20-4 GET /attendance/stats - Estadísticas de asistencia
-- [ ] T20-5 Lógica: Si ya tiene entrada → registrar salida
-- [ ] T20-6 Lógica: Si estudiante tiene retiro con apoderado → incluir flag en respuesta
-- [ ] T20-7 Lógica: Verificar si hay otras estudiantes asociadas al mismo apoderado en la temporada
-- [ ] T20-8 Lógica: Si fecha no existe → crear nueva fecha de asistencia automáticamente
-
-### T21 - Generación de QR
-- [ ] T21-1 Generar QR único por estudiante (contiene student_id encriptado)
-- [ ] T21-2 Endpoint GET /students/:id/qr - Devolver imagen QR
-- [ ] T21-3 Integrar con CDN para almacenar imágenes QR (PENDIENTE - detalles por definir)
-- [ ] T21-4 Integrar sistema de correos para re-enviar QR (IP: http://51.222.141.196:1011/)
-
-### T22 - Validaciones de Negocio
-- [ ] T22-1 Verificar estudiante pertenece a la temporada actual del usuario
-- [ ] T22-2 Validar que fecha de asistencia exista o crear nueva si no existe
-- [ ] T22-3 Validar permisos según rol del usuario autenticado
-- [ ] T22-4 Validar que RUT no se repita en la misma temporada
-
----
-
-## 3. INTEGRACIÓN FRONTEND-BACKEND
+## FASE 4: Integración Frontend-Backend
 
 ### T23 - Conexión API
 - [ ] T23-1 Configurar Axios con base URL
@@ -180,7 +184,7 @@
 - [ ] T24-2 Crear temporada → crear fechas → crear usuario → crear estudiante
 - [ ] T24-3 Escanear QR → marcar entrada → escanear again → marcar salida
 - [ ] T24-4 Flujo de errores (QR inválido, fecha no autorizada, etc.)
-- [ ] T24-5 Probar flujo de retiro con apoderado (verificar hermanas)
+- [ ] T24-5 Probar flujo de retiro con apoderado (verificar sisters)
 
 ### T25 - Seguridad
 - [ ] T25-1 Proteger todas las rutas de API
@@ -194,7 +198,7 @@
 
 ---
 
-## 4. SOCKET BACKEND
+## FASE 5: Socket Backend
 
 ### T27 - Configuración Socket.io
 - [ ] T27-1 Instalar socket.io
@@ -210,7 +214,7 @@
 
 ---
 
-## 5. SOCKET FRONTEND
+## FASE 6: Socket Frontend
 
 ### T29 - Cliente Socket.io
 - [ ] T29-1 Instalar socket.io-client
@@ -228,135 +232,10 @@
 
 ## Notas de Dependencias
 
-- T1 → T2 → T3
-- T12 → T13 → T14 → T15, T16, T17, T18, T19, T20, T21
+- T1 → T2 (Completados)
+- T12 → T13 → T14 → T15, T16, T17, T18, T19, T20, T21 (Backend)
+- T3-T11 requieren T14 completado (auth funcionando)
 - T23 depende de T2 y T12
 - T27 depende de T12
 - T29 depende de T27
 - T21-3 (CDN) está pendiente de detalles por definir
-
----
-
-# Plan de Integración - T1: Configuración Inicial del Frontend
-
-## Subtareas de T1
-
-### T1-1: Crear proyecto Vite + React con TypeScript
-
-**Acciones requeridas:**
-1. Ejecutar `npm create vite@latest frontend -- --template react-ts` en la raíz del proyecto
-2. Esto generará la estructura base con:
-   - `package.json` con dependencias de React y TypeScript
-   - Archivos de configuración TypeScript (`tsconfig.json`, `tsconfig.app.json`, `tsconfig.node.json`)
-   - `vite.config.ts` preconfigurado
-   - `index.html` y estructura `src/` básica
-
-**Dependencias:** Ninguna (requiere solo Node.js instalado)
-
----
-
-### T1-2: Instalar dependencias
-
-**Dependencias principales a instalar:**
-```bash
-cd frontend
-npm install axios react-router-dom socket.io-client
-```
-
-**Instalar Tailwind CSS:**
-```bash
-npm install -D tailwindcss postcss autoprefixer
-npx tailwindcss init -p
-```
-
-**Configurar Tailwind:**
-1. Editar `tailwind.config.js`:
-   ```javascript
-   export default {
-     content: [
-       "./index.html",
-       "./src/**/*.{js,ts,jsx,tsx}",
-     ],
-     theme: { extend: {} },
-     plugins: [],
-   }
-   ```
-2. Agregar directivas en `src/index.css`:
-   ```css
-   @tailwind base;
-   @tailwind components;
-   @tailwind utilities;
-   ```
-
-**Dependencias de desarrollo opcionales:**
-```bash
-npm install -D eslint prettier eslint-plugin-react eslint-config-prettier
-```
-
----
-
-### T1-3: Configurar rutas y navegación (en español)
-
-**Acciones requeridas:**
-1. Instalar `react-router-dom` (si no se hizo en T1-2)
-2. Crear estructura de carpetas para rutas:
-   ```
-   src/
-   ├── pages/
-   │   ├── Login.tsx
-   │   ├── Dashboard.tsx
-   │   └── ...
-   ├── components/
-   └── App.tsx
-   ```
-3. Configurar `BrowserRouter` en `main.tsx` o `App.tsx`
-4. Definir rutas principales (en español):
-   - `/iniciar-sesion` - Página de login
-   - `/panel` - Dashboard principal
-   - `/temporadas` - Gestión de temporadas (superadmin)
-   - `/usuarios` - Gestión de usuarios
-   - `/estudiantes` - Lista de estudiantes
-   - `/asistencia` - Panel de asistencia (incluye escaneo QR)
-
----
-
-### T1-4: Configurar variables de entorno
-
-**Acciones requeridas:**
-1. Crear archivo `.env` en la raíz de `frontend/`:
-   ```
-   VITE_API_URL=http://localhost:3000
-   VITE_SOCKET_URL=http://localhost:3000
-   VITE_EMAIL_API_URL=http://51.222.141.196:1011/
-   ```
-2. Crear `.env.example` con las mismas variables (sin valores reales) para documentación
-3. Crear archivo `src/config/index.ts` para exportar las variables:
-   ```typescript
-   export const API_URL = import.meta.env.VITE_API_URL;
-   export const SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
-   export const EMAIL_API_URL = import.meta.env.VITE_EMAIL_API_URL;
-   ```
-
----
-
-## Orden de Ejecución Sugerido
-
-1. **T1-1** → Crear proyecto base
-2. **T1-4** → Configurar variables de entorno (antes de instalar más deps, para tener limpio el setup)
-3. **T1-2** → Instalar todas las dependencias necesarias (incluye Tailwind)
-4. **T1-3** → Configurar navegación básica (Router) con rutas en español
-
----
-
-## Dependencias con otras tareas
-
-- **T1 debe completarse antes que T2** (Autenticación y Login)
-- La navegación configurada en T1-3 será la base para todas las páginas futuras
-
----
-
-## Notas Adicionales
-
-- El escaneo de QR se integrará en el mismo panel de asistencia (T9-6) debido a la funcionalidad de Socket.io
-- El sistema de correos para re-envío de QR usará la API en `http://51.222.141.196:1011/`
-- Todos los estilos usarán Tailwind CSS
