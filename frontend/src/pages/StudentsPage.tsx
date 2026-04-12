@@ -38,7 +38,6 @@ export default function StudentsPage() {
   const navigate = useNavigate();
   const [students, setStudents] = useState<Student[]>([]);
   const [guardians, setGuardians] = useState<Guardian[]>([]);
-  const [currentSeasonId, setCurrentSeasonId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
@@ -65,7 +64,6 @@ export default function StudentsPage() {
   useEffect(() => {
     const seasonId = localStorage.getItem('currentSeasonId');
     if (seasonId) {
-      setCurrentSeasonId(parseInt(seasonId));
       setFormData(prev => ({ ...prev, seasonID: parseInt(seasonId) }));
     }
     loadGuardians();
@@ -133,6 +131,13 @@ export default function StudentsPage() {
 
   const handleEdit = (student: Student) => {
     setEditingStudent(student);
+    const datosApoderado = {
+      nombres: student.datosApoderado?.nombres || '',
+      apellidos: student.datosApoderado?.apellidos || '',
+      email: student.datosApoderado?.email || '',
+      telefono: student.datosApoderado?.telefono || '',
+      rut: student.datosApoderado?.rut || '',
+    };
     setFormData({
       nombres: student.nombres,
       apellidos: student.apellidos,
@@ -142,7 +147,7 @@ export default function StudentsPage() {
       categoria: student.categoria,
       seasonID: student.seasonID,
       retiradoApoderado: student.retiradoApoderado,
-      datosApoderado: student.datosApoderado || { nombres: '', apellidos: '', email: '', telefono: '', rut: '' },
+      datosApoderado,
       guardianID: student.guardianID,
     });
     setShowForm(true);
