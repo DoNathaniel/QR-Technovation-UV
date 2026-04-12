@@ -1,5 +1,14 @@
 # TODO - Sistema de Toma de Asistencia Estudiantil
 
+## Pendiente para mañana
+
+- Verificar que el modelo de Student y los endpoints de creación/edición reciban y guarden correctamente el campo de URL del QR subido por el frontend (campo sugerido: `qrUrl`).
+- Comprobar/ajustar la validación del campo (debe ser una URL válida).
+- En la documentación de endpoints, especificar que la URL del QR debe venir en el body al crear/modificar estudiantes.
+- Actualizar el flujo/documentación si hace falta para aclarar que la subida al CDN ahora la realiza el frontend y solo pasa la URL.
+- Testear el flujo end-to-end subiendo un QR, obteniendo la URL desde el frontend y verificando que llegue y se guarde en el backend correctamente junto al estudiante. 
+- Marcar estos pasos como completados en esta sección cuando se validen.
+
 ## FASE 1: Frontend Básico (Completado ✅)
 
 ### T1 - Configuración inicial
