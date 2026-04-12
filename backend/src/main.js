@@ -16,6 +16,7 @@ const userRoutes = require('./routes/users');
 const guardianRoutes = require('./routes/guardians');
 const studentRoutes = require('./routes/students');
 const attendanceRoutes = require('./routes/attendance');
+const teamsRoutes = require('./routes/teams');
 
 // SERVER
 const app = express();
@@ -34,6 +35,12 @@ app.use(require("morgan")("dev"));
 app.use(cors());
 app.use(express.json());
 
+// Make socket.io accessible from route handlers via req.io
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/seasons', seasonRoutes);
 app.use('/api/seasons', seasonDatesRoutes);
@@ -41,6 +48,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/guardians', guardianRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/attendance', attendanceRoutes);
+app.use('/api/teams', teamsRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
