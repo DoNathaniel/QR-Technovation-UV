@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import SeasonsPage from './pages/SeasonsPage';
 import UsersPage from './pages/UsersPage';
+import DatesPage from './pages/DatesPage';
 import SeasonSelector from './components/SeasonSelector';
 import { colors } from './config';
 import { useState } from 'react';
@@ -78,6 +79,7 @@ function AppLayout() {
           <Route path="/panel" element={<Dashboard />} />
           <Route path="/temporadas" element={<SeasonsPage />} />
           <Route path="/usuarios" element={<UsersPage />} />
+          <Route path="/fechas" element={<DatesPage />} />
           <Route path="*" element={<Navigate to="/panel" replace />} />
         </Routes>
       </main>
