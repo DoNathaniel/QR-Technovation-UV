@@ -108,24 +108,24 @@
 - [ ] T3-4 Diseño responsivo (mobile-first para escaneo QR)
 
 ### T4 - Gestión de Temporadas (Superadmin)
-- [ ] T4-1 Crear formulario para nueva temporada (nombre, fechas predefinidas)
-- [ ] T4-2 Listar temporadas existentes
-- [ ] T4-3 Editar temporada
-- [ ] T4-4 Eliminar temporada (solo si no tiene datos asociados)
+- [x] T4-1 Crear formulario para nueva temporada (nombre, fechas predefinidas)
+- [x] T4-2 Listar temporadas existentes
+- [x] T4-3 Editar temporada
+- [x] T4-4 Eliminar temporada (solo si no tiene datos asociados)
 
 ### T5 - Gestión de Usuarios (Superadmin/Admin)
-- [ ] T5-1 Crear lista de usuarios con filtros por rol
-- [ ] T5-2 Formulario crear usuario (nombre, apellido, email, contraseña, rol, temporadas)
-- [ ] T5-3 Editar usuario
-- [ ] T5-4 Eliminar usuario (solo superadmin puede eliminar admins)
-- [ ] T5-5 Asignar temporadas a usuarios
+- [x] T5-1 Crear lista de usuarios con filtros por rol
+- [x] T5-2 Formulario crear usuario (nombre, apellido, email, contraseña, rol, temporadas)
+- [x] T5-3 Editar usuario
+- [x] T5-4 Eliminar usuario (solo superadmin puede eliminar admins)
+- [x] T5-5 Asignar temporadas a usuarios
 
 ### T6 - Gestión de Fechas de Asistencia (Superadmin)
-- [ ] T6-1 Crear lista de fechas predefinidas por temporada
-- [ ] T6-2 Agregar fechas manualmente
-- [ ] T6-3 Importar rango de fechas
-- [ ] T6-4 Ver fechas por temporada
-- [ ] T6-5 Previsualizar fechas (disponible para admin)
+- [x] T6-1 Crear lista de fechas predefinidas por temporada
+- [x] T6-2 Agregar fechas manualmente
+- [x] T6-3 Importar rango de fechas
+- [x] T6-4 Ver fechas por temporada
+- [x] T6-5 Previsualizar fechas (disponible para admin)
 
 ### T7 - Gestión de Estudiantes (Admin)
 - [ ] T7-1 Crear lista de estudiantes (solo admin)

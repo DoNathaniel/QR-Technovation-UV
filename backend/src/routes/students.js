@@ -9,5 +9,6 @@ router.get('/:id', studentController.getById);
 router.post('/', studentController.create);
 router.put('/:id', studentController.update);
 router.delete('/:id', studentController.remove);
+router.post('/:id/resend-qr', studentController.resendQR);
 
 module.exports = router;
