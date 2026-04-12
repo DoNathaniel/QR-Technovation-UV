@@ -37,43 +37,43 @@
 - [x] T13-7 Relaciones entre modelos
 
 ### T14 - Autenticación y Autorización (Backend)
-- [ ] T14-1 Endpoint POST /auth/login
-- [ ] T14-2 Generar JWT con payload (user_id, rol, temporadas)
-- [ ] T14-3 Middleware authenticateToken
-- [ ] T14-4 Middleware checkRole (superadmin/admin/voluntario)
-- [ ] T14-5 Encriptar contraseñas (bcrypt)
+- [x] T14-1 Endpoint POST /auth/login
+- [x] T14-2 Generar JWT con payload (user_id, rol, temporadas)
+- [x] T14-3 Middleware authenticateToken
+- [x] T14-4 Middleware checkRole (superadmin/admin/voluntario)
+- [x] T14-5 Encriptar contraseñas (bcrypt)
 
 ### T15 - API de Temporadas
-- [ ] T15-1 GET /seasons - Listar temporadas
-- [ ] T15-2 POST /seasons - Crear temporada (superadmin)
-- [ ] T15-3 PUT /seasons/:id - Editar temporada
-- [ ] T15-4 DELETE /seasons/:id - Eliminar temporada
+- [x] T15-1 GET /seasons - Listar temporadas
+- [x] T15-2 POST /seasons - Crear temporada (superadmin)
+- [x] T15-3 PUT /seasons/:id - Editar temporada
+- [x] T15-4 DELETE /seasons/:id - Eliminar temporada
 
 ### T16 - API de Fechas de Asistencia
-- [ ] T16-1 GET /seasons/:id/dates - Ver fechas de una temporada
-- [ ] T16-2 POST /seasons/:id/dates - Agregar fecha (superadmin)
-- [ ] T16-3 POST /seasons/:id/dates/bulk - Importar rango de fechas
+- [x] T16-1 GET /seasons/:id/dates - Ver fechas de una temporada
+- [x] T16-2 POST /seasons/:id/dates - Agregar fecha (superadmin)
+- [x] T16-3 POST /seasons/:id/dates/bulk - Importar rango de fechas
 
 ### T17 - API de Usuarios
-- [ ] T17-1 GET /users - Listar usuarios (superadmin/admin)
-- [ ] T17-2 POST /users - Crear usuario (superadmin puede crear hasta superadmin, admin hasta admin)
-- [ ] T17-3 PUT /users/:id - Editar usuario
-- [ ] T17-4 DELETE /users/:id - Eliminar usuario (superadmin)
+- [x] T17-1 GET /users - Listar usuarios (superadmin/admin)
+- [x] T17-2 POST /users - Crear usuario (superadmin puede crear hasta superadmin, admin hasta admin)
+- [x] T17-3 PUT /users/:id - Editar usuario
+- [x] T17-4 DELETE /users/:id - Eliminar usuario (superadmin)
 
 ### T18 - API de Apoderados
-- [ ] T18-1 GET /guardians - Listar apoderados por temporada
-- [ ] T18-2 POST /guardians - Crear/editar apoderado
-- [ ] T18-3 GET /guardians/:id/students - Ver estudiantes asociadas al mismo apoderado (hermanas)
-- [ ] T18-4 DELETE /guardians/:id - Eliminar apoderado
+- [x] T18-1 GET /guardians - Listar apoderados por temporada
+- [x] T18-2 POST /guardians - Crear/editar apoderado
+- [x] T18-3 GET /guardians/:id/students - Ver estudiantes asociadas al mismo apoderado (hermanas)
+- [x] T18-4 DELETE /guardians/:id - Eliminar apoderado
 
 ### T19 - API de Estudiantes
-- [ ] T19-1 GET /students - Listar estudiantes (filtro por temporada)
-- [ ] T19-2 GET /students?categoria= - Filtrar por categoría
-- [ ] T19-3 POST /students - Crear estudiante (admin)
-- [ ] T19-4 PUT /students/:id - Editar estudiante
-- [ ] T19-5 DELETE /students/:id - Eliminar estudiante
-- [ ] T19-6 GET /students/:id - Obtener estudiante específico
-- [ ] T19-7 Validar rut único por temporada
+- [x] T19-1 GET /students - Listar estudiantes (filtro por temporada)
+- [x] T19-2 GET /students?categoria= - Filtrar por categoría
+- [x] T19-3 POST /students - Crear estudiante (admin)
+- [x] T19-4 PUT /students/:id - Editar estudiante
+- [x] T19-5 DELETE /students/:id - Eliminar estudiante
+- [x] T19-6 GET /students/:id - Obtener estudiante específico
+- [x] T19-7 Validar rut único por temporada
 
 ### T20 - API de Asistencia
 - [ ] T20-1 POST /attendance - Registrar asistencia (escaneo QR)
