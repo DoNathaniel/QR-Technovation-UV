@@ -5,7 +5,7 @@ const GuardianSchema = new EntitySchema({
   name: 'Guardian',
   tableName: 'guardians',
   columns: {
-    id: {
+    ID: {
       type: 'int',
       primary: true,
       generated: true,
@@ -33,7 +33,7 @@ const GuardianSchema = new EntitySchema({
       length: 20,
       nullable: true,
     },
-    seasonId: {
+    seasonID: {
       type: 'int',
     },
     createdAt: {

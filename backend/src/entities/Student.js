@@ -5,7 +5,7 @@ const StudentSchema = new EntitySchema({
   name: 'Student',
   tableName: 'students',
   columns: {
-    id: {
+    ID: {
       type: 'int',
       primary: true,
       generated: true,
@@ -23,7 +23,7 @@ const StudentSchema = new EntitySchema({
       length: 255,
       nullable: true,
     },
-    fecha_nac: {
+    fechaNac: {
       type: 'date',
       nullable: true,
     },
@@ -35,18 +35,18 @@ const StudentSchema = new EntitySchema({
       type: 'enum',
       enum: ['Beginner', 'Junior', 'Senior'],
     },
-    seasonId: {
+    seasonID: {
       type: 'int',
     },
-    retirado_apoderado: {
+    retiradoApoderado: {
       type: 'boolean',
       default: false,
     },
-    datos_apoderado: {
+    datosApoderado: {
       type: 'json',
       nullable: true,
     },
-    guardianId: {
+    guardianID: {
       type: 'int',
       nullable: true,
     },
@@ -63,13 +63,13 @@ const StudentSchema = new EntitySchema({
     season: {
       type: 'many-to-one',
       target: 'Season',
-      joinColumn: { name: 'seasonId' },
+      joinColumn: { name: 'seasonID' },
       onDelete: 'CASCADE',
     },
     guardian: {
       type: 'many-to-one',
       target: 'Guardian',
-      joinColumn: { name: 'guardianId' },
+      joinColumn: { name: 'guardianID' },
       nullable: true,
     },
     attendances: {

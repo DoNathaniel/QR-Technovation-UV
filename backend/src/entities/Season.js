@@ -5,7 +5,7 @@ const SeasonSchema = new EntitySchema({
   name: 'Season',
   tableName: 'seasons',
   columns: {
-    id: {
+    ID: {
       type: 'int',
       primary: true,
       generated: true,
@@ -14,10 +14,10 @@ const SeasonSchema = new EntitySchema({
       type: 'varchar',
       length: 255,
     },
-    fecha_inicio: {
+    fechaInicio: {
       type: 'date',
     },
-    fecha_fin: {
+    fechaFin: {
       type: 'date',
     },
     activa: {

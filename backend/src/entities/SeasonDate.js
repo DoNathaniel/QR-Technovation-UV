@@ -5,7 +5,7 @@ const SeasonDateSchema = new EntitySchema({
   name: 'SeasonDate',
   tableName: 'season_dates',
   columns: {
-    id: {
+    ID: {
       type: 'int',
       primary: true,
       generated: true,
@@ -17,7 +17,7 @@ const SeasonDateSchema = new EntitySchema({
       type: 'boolean',
       default: true,
     },
-    seasonId: {
+    seasonID: {
       type: 'int',
     },
   },
@@ -25,7 +25,7 @@ const SeasonDateSchema = new EntitySchema({
     season: {
       type: 'many-to-one',
       target: 'Season',
-      joinColumn: { name: 'seasonId' },
+      joinColumn: { name: 'seasonID' },
       onDelete: 'CASCADE',
     },
   },

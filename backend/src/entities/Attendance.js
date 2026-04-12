@@ -5,7 +5,7 @@ const AttendanceSchema = new EntitySchema({
   name: 'Attendance',
   tableName: 'attendance',
   columns: {
-    id: {
+    ID: {
       type: 'int',
       primary: true,
       generated: true,
@@ -17,13 +17,13 @@ const AttendanceSchema = new EntitySchema({
     hora: {
       type: 'time',
     },
-    studentId: {
+    studentID: {
       type: 'int',
     },
-    seasonDateId: {
+    seasonDateID: {
       type: 'int',
     },
-    userId: {
+    userID: {
       type: 'int',
     },
     createdAt: {
@@ -35,13 +35,13 @@ const AttendanceSchema = new EntitySchema({
     student: {
       type: 'many-to-one',
       target: 'Student',
-      joinColumn: { name: 'studentId' },
+      joinColumn: { name: 'studentID' },
       onDelete: 'CASCADE',
     },
     seasonDate: {
       type: 'many-to-one',
       target: 'SeasonDate',
-      joinColumn: { name: 'seasonDateId' },
+      joinColumn: { name: 'seasonDateID' },
     },
   },
 });
