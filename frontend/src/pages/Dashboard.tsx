@@ -124,6 +124,23 @@ export default function Dashboard() {
           <>
             <div className="bg-surface rounded-lg shadow p-6">
               <div className="flex justify-between items-start mb-4">
+                <h3 className="font-semibold text-text">Gestión de Equipos</h3>
+                <span className="text-xs px-2 py-1 rounded bg-gray-100 text-text-muted">
+                  Superadmin
+                </span>
+              </div>
+              <p className="text-text-muted text-sm mb-4">Crear equipos, asignar estudiantes y mentores.</p>
+              <Link 
+                to="/equipos"
+                className="inline-block px-4 py-2 rounded text-white text-sm"
+                style={{ backgroundColor: colors.secondary }}
+              >
+                Gestionar
+              </Link>
+            </div>
+
+            <div className="bg-surface rounded-lg shadow p-6">
+              <div className="flex justify-between items-start mb-4">
                 <h3 className="font-semibold text-text">Gestión de Temporadas</h3>
                 <span className="text-xs px-2 py-1 rounded bg-gray-100 text-text-muted">
                   Superadmin
