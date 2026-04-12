@@ -63,3 +63,38 @@ export interface TeamMentor {
   seasonID: number;
   createdAt: string;
 }
+
+// TIPOS ASISTENCIA
+export interface Student {
+  ID: number;
+  nombres: string;
+  apellidos: string;
+  email: string | null;
+  fechaNac: string | null;
+  rut: string;
+  categoria: Categoria;
+  seasonID: number;
+  retiradoApoderado: boolean;
+  datosApoderado: Record<string, unknown> | null;
+  guardianID: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Attendance {
+  ID: number;
+  tipo: 'entrada' | 'salida';
+  hora: string;
+  studentID: number;
+  seasonDateID: number;
+  userID: number;
+  createdAt: string;
+  student?: Student;
+}
+
+export interface AttendanceStats {
+  totalEstudiantes: number;
+  presentesHoy: number;
+  entradasHoy: number;
+  salidasHoy: number;
+}
