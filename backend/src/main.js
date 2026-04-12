@@ -11,6 +11,7 @@ const { AppDataSource } = require('./database/data-source');
 // ROUTES
 const authRoutes = require('./routes/auth');
 const seasonRoutes = require('./routes/seasons');
+const seasonDatesRoutes = require('./routes/seasonDates');
 const userRoutes = require('./routes/users');
 const guardianRoutes = require('./routes/guardians');
 const studentRoutes = require('./routes/students');
@@ -35,6 +36,7 @@ app.use(express.json());
 
 app.use('/api/auth', authRoutes);
 app.use('/api/seasons', seasonRoutes);
+app.use('/api/seasons', seasonDatesRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/guardians', guardianRoutes);
 app.use('/api/students', studentRoutes);
