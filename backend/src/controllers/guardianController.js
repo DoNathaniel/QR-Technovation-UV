@@ -1,8 +1,10 @@
 'use strict';
 const { AppDataSource } = require('../database/data-source');
 const GuardianSchema = require('../entities/Guardian');
+const StudentSchema = require('../entities/Student');
 
 const guardianRepository = () => AppDataSource.getRepository(GuardianSchema);
+const studentRepository = () => AppDataSource.getRepository(StudentSchema);
 
 async function getAll(req, res) {
   try {
@@ -28,6 +30,21 @@ async function getById(req, res) {
     res.json(guardian);
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener apoderado', error: error.message });
+  }
+}
+
+async function getStudentsByGuardianId(req, res) {
+  try {
+    const { id } = req.params;
+    const { seasonID } = req.query;
+    if (!seasonID) {
+      return res.status(400).json({ message: 'seasonID es requerido' });
+    }
+    // Busca estudiantes con el guardianID y la temporada indicada
+    const students = await studentRepository().find({ where: { guardianID: parseInt(id), seasonID: parseInt(seasonID) } });
+    res.json(students);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener estudiantes hermanas', error: error.message });
   }
 }
 
@@ -66,4 +83,4 @@ async function remove(req, res) {
   }
 }
 
-module.exports = { getAll, getById, create, update, remove };
+module.exports = { getAll, getById, getStudentsByGuardianId, create, update, remove };
