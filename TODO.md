@@ -270,3 +270,11 @@
 - T27 depende de T12
 - T29 depende de T27
 - T21-3 (CDN) → Integrado con cdn.donath.us (completado)
+
+---
+
+## Fixes
+
+- [ ] Verificar RUT duplicado de estudiantes por temporada
+- [ ] Enviar correo a Guardian ya creado al momento de crear un estudiante
+- [ ] Añadir loadings a botones para evitar doubles clicks
