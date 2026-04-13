@@ -86,6 +86,14 @@ const assignStudent = async (req, res) => {
 
     const rel = teamStudentRepository().create({ studentID, teamID, seasonID });
     await teamStudentRepository().save(rel);
+
+    // Also update the student's teamID in the Student table
+    const student = await studentRepository().findOne({ where: { ID: studentID } });
+    if (student) {
+      student.teamID = teamID;
+      await studentRepository().save(student);
+    }
+
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -97,6 +105,14 @@ const removeStudent = async (req, res) => {
   try {
     const { studentID, seasonID } = req.body;
     const result = await teamStudentRepository().delete({ studentID, seasonID });
+    
+    // Also clear the student's teamID in the Student table
+    const student = await studentRepository().findOne({ where: { ID: studentID } });
+    if (student) {
+      student.teamID = null;
+      await studentRepository().save(student);
+    }
+    
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ message: err.message });
