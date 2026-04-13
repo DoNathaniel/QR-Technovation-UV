@@ -90,6 +90,8 @@ export interface Attendance {
   userID: number;
   createdAt: string;
   student?: Student;
+  requeridoApoderado?: boolean;  // T20-6: flag para verificar si requiere confirmacion visual
+  sisters?: { ID: number; nombres: string; apellidos: string }[];  // T20-7: sisters del mismo apoderado
 }
 
 export interface AttendanceStats {
