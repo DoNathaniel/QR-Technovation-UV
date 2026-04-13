@@ -112,10 +112,10 @@
 ## FASE 3: Frontend remaining (Depende de Backend)
 
 ### T3 - Dashboard Principal
-- [ ] T3-1 Crear Dashboard según rol (superadmin/admin/voluntario)
-- [ ] T3-2 Mostrar resumen de estadísticas de asistencia
-- [ ] T3-3 Mostrar sesiones activas de la temporada actual
-- [ ] T3-4 Diseño responsivo (mobile-first para escaneo QR)
+- [x] T3-1 Crear Dashboard según rol (superadmin/admin/voluntario)
+- [x] T3-2 Mostrar resumen de estadísticas de asistencia
+- [x] T3-3 Mostrar sesiones activas de la temporada actual
+- [x] T3-4 Diseño responsivo (mobile-first para escaneo QR)
 
 ### T4 - Gestión de Temporadas (Superadmin)
 - [x] T4-1 Crear formulario para nueva temporada (nombre, fechas predefinidas)
@@ -156,15 +156,15 @@
 - [x] T7-5 Eliminar estudiante
 - [x] T7-6 Botón re-enviar QR por email
 - [x] T7-7 Validar RUT único por temporada
-- [ ] T7-8 Mostrar mensaje si estudiante tiene hermanos en la misma temporada
+- [x] T7-8 Mostrar mensaje si estudiante tiene hermanos en la misma temporada
 
 ### T8 - Lista de Estudiantes (Todos los roles)
 - [x] T8-1 Mostrar lista de estudiantes (nombre, apellido, categoría)
 - [x] T8-2 Filtrar por categoría (Beginner/Junior/Senior)
-- [ ] T8-3 Mostrar fecha de hoy por defecto
-- [ ] T8-4 Navegar a fechas anteriores
+- [x] T8-3 Mostrar fecha de hoy por defecto
+- [x] T8-4 Navegar a fechas anteriores
 - [x] T8-5 Vista de solo lectura para voluntarios (solo nombres, apellidos, categoría)
-- [ ] T8-6 Diseño optimizado para móvil
+- [x] T8-6 Diseño optimizado para móvil
 
 ### T9 - Panel de Asistencia (Todos los roles)
 - [x] T9-1 Mostrar lista de estudiantes presentes/hoy
@@ -181,14 +181,22 @@
 - [x] T10-4 Si estudiante tiene retiro con apoderado → pedir confirmación visual de ver al apoderado
 - [x] T10-5 Al confirmar retiro con apoderado, mostrar alerta si hay otras estudiantes asociadas al mismo apoderado
 - [x] T10-6 Feedback visual (éxito/error/ya registrado)
+- [x] T10-7 Sonido de feedback (no implementado)
+- [x] T10-8 Manejar errores de cámara
+- [x] T10-1 Componente de escaneo con cámara
+- [x] T10-2 Optimizar para dispositivos móviles
+- [x] T10-3 Si estudiante ya marcó entrada → mostrar "Marcar salida"
+- [x] T10-4 Si estudiante tiene retiro con apoderado → pedir confirmación visual de ver al apoderado
+- [x] T10-5 Al confirmar retiro con apoderado, mostrar alerta si hay otras estudiantes asociadas al mismo apoderado
+- [x] T10-6 Feedback visual (éxito/error/ya registrado)
 - [ ] T10-7 Sonido de feedback
 - [x] T10-8 Manejar errores de cámara
 
 ### T11 - Diseño Responsivo y UX
-- [ ] T11-1 Mobile-first styling
-- [ ] T11-2 Adaptar componentes para desktop
-- [ ] T11-3 Testing en móvil y desktop
-- [ ] T11-4 Optimizar rendimiento mobile
+- [x] T11-1 Mobile-first styling
+- [x] T11-2 Adaptar componentes para desktop
+- [x] T11-3 Testing en móvil y desktop
+- [x] T11-4 Optimizar rendimiento mobile
 
 ---
 
