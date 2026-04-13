@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { colors } from '../config';
@@ -16,6 +16,7 @@ export default function Dashboard() {
   const currentSeason = temporadas.find(t => t.ID === currentSeasonId);
   const [stats, setStats] = useState<AttendanceStats | null>(null);
   const [loading, setLoading] = useState(false);
+  const fetchedRef = useRef(false);
 
   const roleLabels = {
     superadmin: 'Super Administrador',
@@ -29,13 +30,14 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    if (currentSeasonId) {
-      setLoading(true);
-      api.get(`/attendance/stats?seasonID=${currentSeasonId}`)
-        .then(res => setStats(res.data))
-        .catch(() => setStats(null))
-        .finally(() => setLoading(false));
-    }
+    if (!currentSeasonId || fetchedRef.current) return;
+    
+    fetchedRef.current = true;
+    setLoading(true);
+    api.get(`/attendance/stats?seasonID=${currentSeasonId}`)
+      .then(res => setStats(res.data))
+      .catch(() => setStats(null))
+      .finally(() => setLoading(false));
   }, [currentSeasonId]);
 
   return (

@@ -302,7 +302,7 @@ export default function AttendancePage() {
         </div>
       </div>
 
-      {/* QR Scanner — only shown when viewing today */}
+      {/* QR Scanner — solo disponible el día de hoy */}
       {isToday && user && (
         <QrScanner userID={user.ID} connected={connected} onReconnect={reconnect} />
       )}
