@@ -5,6 +5,7 @@ import { colors } from '../config';
 import type { Team, TeamStudent, TeamMentor, Categoria } from '../types';
 import { DragDropProvider, useDraggable, useDroppable } from '@dnd-kit/react';
 import type { DragStartEvent, DragEndEvent } from '@dnd-kit/react';
+import { toast } from '../App';
 
 // Extract the event parameter types from the callback signatures
 type DragStartParam = Parameters<DragStartEvent>[0];
@@ -432,7 +433,7 @@ export default function TeamsPage() {
         const without = prev.filter((a) => a.studentID !== studentID);
         return existing ? [...without, existing] : without;
       });
-      alert(error?.response?.data?.message || 'Error al asignar estudiante');
+      toast.error(error?.response?.data?.message || 'Error al asignar estudiante');
     }
   };
 
@@ -588,13 +589,13 @@ export default function TeamsPage() {
 
       const teamStudentCount = assignments.filter((a) => a.teamID === teamID).length;
       if (teamStudentCount >= 5) {
-        alert('Este equipo ya tiene 5 estudiantes');
+        toast.warning('Este equipo ya tiene 5 estudiantes');
         return;
       }
 
       const studentObj = draggedStudent || students.find((s) => s.ID === studentID);
       if (!studentObj || studentObj.categoria !== teamObj.categoria) {
-        alert('La categoria de la estudiante no coincide con este equipo');
+        toast.warning('La categoría de la estudiante no coincide con este equipo');
         return;
       }
 
@@ -820,7 +821,7 @@ export default function TeamsPage() {
               Estudiantes sin equipo
             </h2>
             <p className="text-[10px] text-text-muted mb-2">
-              Arrastra a un equipo o usa el selector. Max 5 por equipo, misma categoria.
+              Arrastra a un equipo o usa el selector.
             </p>
             <UnassignedStudentsDropZone>
               {unassignedStudents.map((s) => (

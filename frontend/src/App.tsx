@@ -1,6 +1,14 @@
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { sileo, Toaster } from 'sileo';
 import Login from './pages/Login';
+
+export const toast = {
+  success: (message: string) => sileo.success({ title: message }),
+  error: (message: string) => sileo.error({ title: message }),
+  warning: (message: string) => sileo.warning({ title: message }),
+  info: (message: string) => sileo.info({ title: message }),
+};
 import Dashboard from './pages/Dashboard';
 import SeasonsPage from './pages/SeasonsPage';
 import UsersPage from './pages/UsersPage';
@@ -150,6 +158,7 @@ function AppRoutes() {
 export default function App() {
   return (
     <AuthProvider>
+      <Toaster />
       <AppRoutes />
     </AuthProvider>
   );

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { colors } from '../config';
+import { toast } from '../App';
 
 interface Student {
   ID: number;
@@ -103,7 +104,7 @@ export default function StudentsPage() {
     e.preventDefault();
     
     if (!validateRUT(formData.rut)) {
-      alert('RUT inválido. Formato: 00.000.000-0');
+      toast.warning('RUT inválido. Formato: 00.000.000-0');
       return;
     }
     
@@ -182,10 +183,10 @@ export default function StudentsPage() {
   const handleResendQR = async (studentId: number) => {
     try {
       await api.post(`/students/${studentId}/resend-qr`);
-      alert('QR reenviado correctamente');
+      toast.success('QR reenviado correctamente');
     } catch (error) {
       console.error('Error resending QR:', error);
-      alert('Error al reenviar QR');
+      toast.error('Error al reenviar QR');
     }
   };
 
