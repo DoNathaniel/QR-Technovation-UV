@@ -10,8 +10,8 @@ const studentRepository = () => AppDataSource.getRepository(StudentSchema);
 
 async function register(req, res) {
   try {
-    const { studentID, userID } = req.body;
-    const today = new Date().toISOString().split('T')[0];
+    const { studentID, userID, fecha } = req.body;
+    const targetDate = fecha || new Date().toISOString().split('T')[0];
 
     // Load student to get seasonID for the socket room
     const student = await studentRepository().findOne({ where: { ID: studentID } });
@@ -20,11 +20,11 @@ async function register(req, res) {
     }
 
     let seasonDate = await seasonDateRepository().findOne({ 
-      where: { fecha: today } 
+      where: { fecha: targetDate } 
     });
 
     if (!seasonDate) {
-      seasonDate = seasonDateRepository().create({ fecha: today, seasonID: student.seasonID });
+      seasonDate = seasonDateRepository().create({ fecha: targetDate, seasonID: student.seasonID });
       seasonDate = await seasonDateRepository().save(seasonDate);
     }
 
@@ -46,8 +46,24 @@ async function register(req, res) {
 
     const result = await attendanceRepository().save(attendance);
 
-    // Attach student data for the socket event and response
+    // Attach student data + retiredApoderado flag for the socket event and response
     result.student = student;
+    result.retiradoApoderado = student.retiradoApoderado;
+
+    // T20-7: Get sisters (other students with same guardian in same season)
+    let sisters = [];
+    if (student.guardianID) {
+      const allSisters = await studentRepository().find({
+        where: {
+          guardianID: student.guardianID,
+          seasonID: student.seasonID,
+        },
+      });
+      sisters = allSisters
+        .filter(s => s.ID !== student.ID)
+        .map(s => ({ ID: s.ID, nombres: s.nombres, apellidos: s.apellidos }));
+    }
+    result.sisters = sisters;
 
     // Emit real-time event to all clients in the season room
     if (req.io) {
