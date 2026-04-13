@@ -9,18 +9,20 @@ interface QrScannerProps {
   connected: boolean;
   onReconnect: () => void;
   onRegistered?: (attendance: Attendance) => void;
+  date?: string;
 }
 
 type FeedbackState =
   | { type: 'idle' }
-  | { type: 'success'; nombre: string; tipo: 'entrada' | 'salida' }
+  | { type: 'success'; nombre: string; tipo: 'entrada' | 'salida'; requiereApoderado: boolean; sisters: { nombre: string }[] }
   | { type: 'error'; message: string }
-  | { type: 'scanning' };
+  | { type: 'scanning' }
+  | { type: 'confirmApoderado'; nombre: string; studentID: number; requiereConfirmar: boolean };
 
 const READER_ID = 'qr-reader';
 const COOLDOWN_MS = 2500; // prevent duplicate scans
 
-export default function QrScanner({ userID, connected, onReconnect, onRegistered }: QrScannerProps) {
+export default function QrScanner({ userID, connected, onReconnect, onRegistered, date }: QrScannerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [feedback, setFeedback] = useState<FeedbackState>({ type: 'idle' });
   const scannerRef = useRef<Html5Qrcode | null>(null);
@@ -143,13 +145,47 @@ export default function QrScanner({ userID, connected, onReconnect, onRegistered
       }
 
       try {
-        const res = await api.post<Attendance>('/attendance', { studentID, userID });
+        // T10-4: Primero consultamos si requiere confirmacion de retiro con apoderado
+        // Hacemos un GET para obtener datos del estudiante sin registrar asistencia aun
+        const studentRes = await api.get<{ ID: number; nombres: string; apellidos: string; requeridoApoderado: boolean; guardianID: number | null; seasonID: number }>(`/students/${studentID}`);
+        const studentData = studentRes.data;
+        
+        // Obtener la asistencia para la fecha seleccionada para saber si es entrada o salida
+        const targetDate = date || new Date().toISOString().split('T')[0];
+        const attRes = await api.get<{ tipo: string; createdAt: string }[]>(`/attendance/student/${studentID}`);
+        const dateAttendances = attRes.data.filter((a: { createdAt: string }) => a.createdAt.startsWith(targetDate));
+        const lastAttendance = dateAttendances[0];
+        const tipoActual = lastAttendance && lastAttendance.tipo === 'entrada' ? 'salida' : 'entrada';
+
+        // Si es salida Y tiene retiro con apoderado, pedir confirmacion antes de registrar
+        // Note: API returns 'retiradoApoderado', not 'requeridoApoderado'
+        const requiereApoderado = (studentData as any).retiradoApoderado ?? false;
+        
+        if (tipoActual === 'salida' && requiereApoderado) {
+          const nombre = `${studentData.nombres} ${studentData.apellidos}`;
+          setFeedback({ 
+            type: 'confirmApoderado', 
+            nombre, 
+            studentID,
+            requiereConfirmar: true
+          });
+          processingRef.current = false;
+          return;
+        }
+
+        // Registro normal (con la fecha seleccionada)
+        const res = await api.post<Attendance>('/attendance', { studentID, userID, fecha: targetDate });
         const attendance = res.data;
         const nombre = attendance.student
           ? `${attendance.student.nombres} ${attendance.student.apellidos}`
           : `Estudiante #${studentID}`;
 
-        setFeedback({ type: 'success', nombre, tipo: attendance.tipo });
+        const sisters = (attendance as Attendance & { sisters?: { ID: number; nombres: string; apellidos: string }[] }).sisters ?? [];
+        const sistersInfo = sisters.length > 0 
+          ? sisters.map(s => ({ nombre: `${s.nombres} ${s.apellidos}` })) 
+          : [];
+
+        setFeedback({ type: 'success', nombre, tipo: attendance.tipo, requiereApoderado: false, sisters: sistersInfo });
         onRegistered?.(attendance);
       } catch (err: unknown) {
         const msg =
@@ -158,9 +194,9 @@ export default function QrScanner({ userID, connected, onReconnect, onRegistered
               'Error al registrar'
             : 'Error de red';
         setFeedback({ type: 'error', message: msg });
+        setTimeout(() => setFeedback({ type: 'idle' }), 3000);
       } finally {
         processingRef.current = false;
-        setTimeout(() => setFeedback({ type: 'idle' }), 2500);
       }
     },
     [userID, onRegistered],
@@ -169,6 +205,34 @@ export default function QrScanner({ userID, connected, onReconnect, onRegistered
   const toggleOpen = () => {
     if (!connected) return; // block opening when disconnected
     setIsOpen((v) => !v);
+  };
+
+  const handleConfirmApoderado = async () => {
+    if (feedback.type !== 'confirmApoderado') return;
+    const { nombre, studentID } = feedback;
+    
+    // Registrar la salida solo cuando confirma
+    try {
+      const res = await api.post<Attendance>('/attendance', { studentID, userID });
+      const attendance = res.data;
+      const sisters = (attendance as Attendance & { sisters?: { ID: number; nombres: string; apellidos: string }[] }).sisters ?? [];
+      const sistersInfo = sisters.length > 0 
+        ? sisters.map(s => ({ nombre: `${s.nombres} ${s.apellidos}` })) 
+        : [];
+      setFeedback({ type: 'success', nombre, tipo: attendance.tipo, requiereApoderado: true, sisters: sistersInfo });
+      onRegistered?.(attendance);
+    } catch (err) {
+      setFeedback({ type: 'error', message: 'Error al registrar salida' });
+      setTimeout(() => setFeedback({ type: 'idle' }), 3000);
+    }
+  };
+
+  const handleDismissSuccess = () => {
+    setFeedback({ type: 'idle' });
+  };
+
+  const handleCancelApoderado = () => {
+    setFeedback({ type: 'idle' });
   };
 
   return (
@@ -235,10 +299,25 @@ export default function QrScanner({ userID, connected, onReconnect, onRegistered
           {/* Feedback banner */}
           {feedback.type === 'success' && (
             <div className="mb-3 rounded-lg bg-green-50 border border-green-300 px-3 py-2 text-sm text-green-800 animate-pulse">
-              <span className="font-bold">
-                {feedback.tipo === 'entrada' ? 'Entrada' : 'Salida'}
-              </span>{' '}
-              registrada: {feedback.nombre}
+              <div className="flex items-center justify-between gap-2">
+                <span>
+                  <span className="font-bold">
+                    {feedback.tipo === 'entrada' ? 'Entrada' : 'Salida'}
+                  </span>{' '}
+                  registrada: {feedback.nombre}
+                </span>
+                <button
+                  onClick={handleDismissSuccess}
+                  className="text-green-700 hover:text-green-900 font-bold text-lg leading-none"
+                >
+                  ×
+                </button>
+              </div>
+              {feedback.sisters.length > 0 && feedback.tipo === 'salida' && (
+                <div className="mt-2 text-xs bg-amber-50 border border-amber-200 rounded p-1.5">
+                  <strong>Aviso:</strong> Esta estudiante tiene sisters en la temporada: {feedback.sisters.map(s => s.nombre).join(', ')}
+                </div>
+              )}
             </div>
           )}
           {feedback.type === 'error' && (
@@ -249,6 +328,31 @@ export default function QrScanner({ userID, connected, onReconnect, onRegistered
           {feedback.type === 'scanning' && (
             <div className="mb-3 rounded-lg bg-blue-50 border border-blue-300 px-3 py-2 text-sm text-blue-800 animate-pulse">
               Procesando...
+            </div>
+          )}
+          {feedback.type === 'confirmApoderado' && (
+            <div className="mb-3 rounded-lg bg-amber-50 border border-amber-300 px-3 py-3 text-sm text-amber-900">
+              <div className="font-bold mb-2">
+                Confirmar retiro con apoderado
+              </div>
+              <div className="mb-3">
+                {feedback.nombre} tiene registrado <strong>retiro con apoderado</strong>. 
+                ¿Confirmas que viste al apoderado?
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleConfirmApoderado}
+                  className="flex-1 bg-green-600 text-white font-semibold py-1.5 px-3 rounded hover:bg-green-700 transition-colors text-xs"
+                >
+                  Lo vi
+                </button>
+                <button
+                  onClick={handleCancelApoderado}
+                  className="flex-1 bg-red-100 text-red-700 font-semibold py-1.5 px-3 rounded hover:bg-red-200 transition-colors text-xs"
+                >
+                  Cancelar
+                </button>
+              </div>
             </div>
           )}
 
