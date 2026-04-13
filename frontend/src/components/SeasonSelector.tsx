@@ -1,4 +1,5 @@
 import type { Season } from '../types';
+import { colors } from '../config';
 
 interface SeasonSelectorProps {
   temporadas: Season[];
@@ -8,22 +9,27 @@ interface SeasonSelectorProps {
 
 export default function SeasonSelector({ temporadas, onSelect, onClose }: SeasonSelectorProps) {
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-surface rounded-lg shadow-xl max-w-md w-full p-6">
-        <h2 className="text-xl font-bold text-text mb-4">Seleccionar Temporada</h2>
-        <p className="text-text-muted mb-4">Por favor selecciona una temporada para continuar:</p>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
+        <h2 className="text-2xl font-bold text-gray-800 mb-2 text-center">
+          Selecciona una Temporada
+        </h2>
+        <p className="text-gray-500 text-center mb-6">
+          Elige la temporada con la que trabajarás
+        </p>
         
         <div className="space-y-3">
           {temporadas.map((temporada) => (
             <button
               key={temporada.ID}
               onClick={() => onSelect(temporada.ID)}
-              className="w-full p-4 text-left rounded-lg border-2 border-gray-200 hover:border-accent transition-colors"
-              style={{ borderColor: 'border-gray-200' }}
+              className="w-full p-5 text-left rounded-xl border-2 border-gray-100 hover:border-blue-400 hover:bg-blue-50 transition-all group"
             >
-              <div className="font-medium text-text">{temporada.nombre}</div>
-              <div className="text-sm text-text-muted mt-1">
-                {new Date(temporada.fechaInicio).toLocaleDateString('es-CL')} - {new Date(temporada.fechaFin).toLocaleDateString('es-CL')}
+              <div className="font-semibold text-lg text-gray-800 group-hover:text-blue-600">
+                {temporada.nombre}
+              </div>
+              <div className="text-sm text-gray-500 mt-1">
+                {new Date(temporada.fechaInicio).toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' })} - {new Date(temporada.fechaFin).toLocaleDateString('es-CL', { day: 'numeric', month: 'long', year: 'numeric' })}
               </div>
             </button>
           ))}
@@ -32,7 +38,7 @@ export default function SeasonSelector({ temporadas, onSelect, onClose }: Season
         {onClose && (
           <button
             onClick={onClose}
-            className="mt-4 w-full text-center text-text-muted hover:text-text"
+            className="mt-6 w-full py-3 text-center text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
           >
             Cancelar
           </button>

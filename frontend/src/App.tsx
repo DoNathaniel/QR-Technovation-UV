@@ -34,7 +34,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function AppLayout() {
-  const { logout, temporadas, currentSeasonId, setCurrentSeason } = useAuth();
+  const { user, logout, temporadas, currentSeasonId, setCurrentSeason } = useAuth();
   const navigate = useNavigate();
   const [showSeasonModal, setShowSeasonModal] = useState(false);
 
@@ -50,34 +50,58 @@ function AppLayout() {
 
   const currentSeason = temporadas.find(t => t.ID === currentSeasonId);
 
+  const userRoleLabels: Record<string, string> = {
+    superadmin: 'Super Administrador',
+    admin: 'Administrador',
+    voluntario: 'Voluntario',
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      <header className="shadow-md" style={{ backgroundColor: colors.primary }}>
-        <div className="container mx-auto">
-          <div className="flex items-center justify-between px-4 py-3">
-            <img src="/technovationgirls-chile.png" alt="Technovation" className="h-10 w-auto" />
-            <div className="flex items-center gap-3">
-              {temporadas.length > 1 && currentSeason && (
-                <button 
-                  onClick={() => setShowSeasonModal(true)}
-                  className="text-white text-sm px-3 py-1 rounded"
-                  style={{ backgroundColor: colors.secondary }}
-                >
-                  {currentSeason.nombre}
-                </button>
-              )}
-              <button 
-                onClick={handleLogout}
-                className="text-white text-sm hover:opacity-80"
+      {/* Header */}
+      <header className="shadow-md sticky top-0 z-30" style={{ backgroundColor: '#1e3a5f' }}>
+        <div className="flex items-center justify-between px-4 py-3">
+          {/* Logos */}
+          <div className="flex items-center gap-3">
+            <img src="/escuela-informatica-blanco.png" alt="Escuela Informatica" className="h-12" />
+            <img src="/technovationgirls-chile.png" alt="Technovation" className="h-10" />
+          </div>
+
+          {/* User Menu */}
+          <div className="flex items-center gap-3">
+            {temporadas.length > 1 && currentSeason && (
+              <button
+                onClick={() => setShowSeasonModal(true)}
+                className="hidden sm:flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg border border-white/30 text-white hover:bg-white/10"
               >
-                Cerrar Sesión
+                📅 {currentSeason.nombre}
               </button>
+            )}
+            <div className="text-right">
+              <div className="text-sm font-medium text-white">
+                {user?.nombre} {user?.apellido}
+              </div>
+              <div className="text-xs text-white/70">
+                {userRoleLabels[user?.rol || 'voluntario']}
+              </div>
             </div>
+
+            {/* Logout */}
+            <button 
+              onClick={handleLogout}
+              className="p-2 text-white/70 hover:text-white transition-colors"
+              title="Cerrar sesión"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+            </button>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-6">
+      {/* Page Content */}
+      <main className="p-4 md:p-6">
         <Routes>
           <Route path="/panel" element={<Dashboard />} />
           <Route path="/temporadas" element={<SeasonsPage />} />

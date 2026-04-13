@@ -42,158 +42,154 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-surface rounded-lg shadow p-6">
-        <h2 className="text-2xl font-bold text-text mb-2">
-          Bienvenido, {user?.nombre} {user?.apellido}
+      <div 
+        className="rounded-xl p-8 text-white text-center"
+        style={{ background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)` }}
+      >
+        <h2 className="text-3xl font-bold mb-2">
+          Hola, {user?.nombre}! 👋
         </h2>
-        <p className="text-text-muted">
-          Rol: <span className="font-medium">{roleLabels[user?.rol || 'voluntario']}</span>
+        <p className="opacity-90 text-lg">
+          {roleLabels[user?.rol || 'voluntario']} · {currentSeason?.nombre}
         </p>
-        {currentSeason && (
-          <p className="text-text-muted mt-1">
-            Temporada: <span className="font-medium">{currentSeason.nombre}</span>
-          </p>
-        )}
       </div>
 
       {currentSeasonId && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-surface rounded-lg shadow p-4 text-center">
-            <div className="text-3xl font-bold" style={{ color: colors.primary }}>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 text-center hover:shadow-md transition-shadow">
+            <div className="text-4xl font-bold" style={{ color: colors.primary }}>
               {loading ? '...' : stats?.totalEstudiantes || 0}
             </div>
-            <div className="text-sm text-text-muted mt-1">Total Estudiantes</div>
+            <div className="text-sm text-gray-500 mt-2">Total Estudiantes</div>
           </div>
-          <div className="bg-surface rounded-lg shadow p-4 text-center">
-            <div className="text-3xl font-bold" style={{ color: colors.success }}>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 text-center hover:shadow-md transition-shadow">
+            <div className="text-4xl font-bold" style={{ color: colors.success }}>
               {loading ? '...' : stats?.presentesHoy || 0}
             </div>
-            <div className="text-sm text-text-muted mt-1">Presentes Hoy</div>
+            <div className="text-sm text-gray-500 mt-2">Presentes Hoy</div>
           </div>
-          <div className="bg-surface rounded-lg shadow p-4 text-center">
-            <div className="text-3xl font-bold" style={{ color: colors.secondary }}>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 text-center hover:shadow-md transition-shadow">
+            <div className="text-4xl font-bold" style={{ color: colors.secondary }}>
               {loading ? '...' : stats?.entradasHoy || 0}
             </div>
-            <div className="text-sm text-text-muted mt-1">Entradas Hoy</div>
+            <div className="text-sm text-gray-500 mt-2">Entradas Hoy</div>
           </div>
-          <div className="bg-surface rounded-lg shadow p-4 text-center">
-            <div className="text-3xl font-bold" style={{ color: colors.accent }}>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 text-center hover:shadow-md transition-shadow">
+            <div className="text-4xl font-bold" style={{ color: colors.accent }}>
               {loading ? '...' : stats?.salidasHoy || 0}
             </div>
-            <div className="text-sm text-text-muted mt-1">Salidas Hoy</div>
+            <div className="text-sm text-gray-500 mt-2">Salidas Hoy</div>
           </div>
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div className="bg-surface rounded-lg shadow p-6">
-          <div className="flex justify-between items-start mb-4">
-            <h3 className="font-semibold text-text">Panel de Asistencia</h3>
-            <span className="text-xs px-2 py-1 rounded bg-gray-100 text-text-muted">
-              Voluntario / Admin / Superadmin
-            </span>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <Link 
+          to="/asistencia" 
+          className="group bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-lg hover:border-blue-200 transition-all"
+        >
+          <div className="flex items-center gap-4">
+            <div className="p-3 rounded-xl" style={{ backgroundColor: colors.accent + '20' }}>
+              <svg className="w-7 h-7" style={{ color: colors.accent }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h2M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="font-semibold text-lg text-gray-800 group-hover:text-blue-600 transition-colors">Panel de Asistencia</h3>
+              <p className="text-sm text-gray-500">Escanea QR y registra asistencia</p>
+            </div>
           </div>
-          <p className="text-text-muted text-sm mb-4">Escanea QR y gestiona la asistencia en tiempo real</p>
-          <Link 
-            to="/asistencia"
-            className="inline-block px-4 py-2 rounded text-white text-sm"
-            style={{ backgroundColor: colors.accent }}
-          >
-            Ir al Panel
-          </Link>
-        </div>
+        </Link>
 
         {canAccess(['superadmin', 'admin']) && (
-          <div className="bg-surface rounded-lg shadow p-6">
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="font-semibold text-text">Lista de Estudiantes</h3>
-              <span className="text-xs px-2 py-1 rounded bg-gray-100 text-text-muted">
-                Admin / Superadmin
-              </span>
+          <Link 
+            to="/estudiantes" 
+            className="group bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-lg hover:border-purple-200 transition-all"
+          >
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-xl" style={{ backgroundColor: colors.secondary + '20' }}>
+                <svg className="w-7 h-7" style={{ color: colors.secondary }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg text-gray-800 group-hover:text-purple-600 transition-colors">Lista de Estudiantes</h3>
+                <p className="text-sm text-gray-500">Ver y gestionar estudiantes</p>
+              </div>
             </div>
-            <p className="text-text-muted text-sm mb-4">Ver y gestionar estudiantes</p>
-            <Link 
-              to="/estudiantes"
-              className="inline-block px-4 py-2 rounded text-white text-sm"
-              style={{ backgroundColor: colors.secondary }}
-            >
-              Ver Estudiantes
-            </Link>
-          </div>
+          </Link>
         )}
 
         {canAccess(['superadmin']) && (
           <>
-            <div className="bg-surface rounded-lg shadow p-6">
-              <div className="flex justify-between items-start mb-4">
-                <h3 className="font-semibold text-text">Gestión de Equipos</h3>
-                <span className="text-xs px-2 py-1 rounded bg-gray-100 text-text-muted">
-                  Superadmin
-                </span>
-              </div>
-              <p className="text-text-muted text-sm mb-4">Crear equipos, asignar estudiantes y mentores.</p>
-              <Link 
-                to="/equipos"
-                className="inline-block px-4 py-2 rounded text-white text-sm"
-                style={{ backgroundColor: colors.secondary }}
-              >
-                Gestionar
-              </Link>
-            </div>
-
-            <div className="bg-surface rounded-lg shadow p-6">
-              <div className="flex justify-between items-start mb-4">
-                <h3 className="font-semibold text-text">Gestión de Temporadas</h3>
-                <span className="text-xs px-2 py-1 rounded bg-gray-100 text-text-muted">
-                  Superadmin
-                </span>
-              </div>
-              <p className="text-text-muted text-sm mb-4">Crear y editar temporadas</p>
-              <Link 
-                to="/temporadas"
-                className="inline-block px-4 py-2 rounded text-white text-sm"
-                style={{ backgroundColor: colors.primary }}
-              >
-                Gestionar
-              </Link>
-            </div>
-
-            <div className="bg-surface rounded-lg shadow p-6">
-              <div className="flex justify-between items-start mb-4">
-                <h3 className="font-semibold text-text">Gestión de Usuarios</h3>
-                <span className="text-xs px-2 py-1 rounded bg-gray-100 text-text-muted">
-                  Superadmin
-                </span>
-              </div>
-              <p className="text-text-muted text-sm mb-4">Crear y editar usuarios del sistema</p>
-              <Link 
-                to="/usuarios"
-                className="inline-block px-4 py-2 rounded text-white text-sm"
-                style={{ backgroundColor: colors.primary }}
-              >
-                Gestionar
-              </Link>
-            </div>
-          </>
-        )}
-
-        {canAccess(['superadmin']) && (
-          <div className="bg-surface rounded-lg shadow p-6">
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="font-semibold text-text">Fechas de Asistencia</h3>
-              <span className="text-xs px-2 py-1 rounded bg-gray-100 text-text-muted">
-                Superadmin
-              </span>
-            </div>
-            <p className="text-text-muted text-sm mb-4">Definir fechas predefinidas por temporada</p>
             <Link 
-              to="/fechas"
-              className="inline-block px-4 py-2 rounded text-white text-sm"
-              style={{ backgroundColor: colors.primary }}
+              to="/equipos" 
+              className="group bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-lg hover:border-green-200 transition-all"
             >
-              Gestionar
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl" style={{ backgroundColor: colors.primary + '20' }}>
+                  <svg className="w-7 h-7" style={{ color: colors.primary }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg text-gray-800 group-hover:text-green-600 transition-colors">Gestión de Equipos</h3>
+                  <p className="text-sm text-gray-500">Crear equipos y mentores</p>
+                </div>
+              </div>
             </Link>
-          </div>
+
+            <Link 
+              to="/temporadas" 
+              className="group bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-lg hover:border-yellow-200 transition-all"
+            >
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl" style={{ backgroundColor: colors.warning + '20' }}>
+                  <svg className="w-7 h-7" style={{ color: colors.warning }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg text-gray-800 group-hover:text-yellow-600 transition-colors">Temporadas</h3>
+                  <p className="text-sm text-gray-500">Crear y editar temporadas</p>
+                </div>
+              </div>
+            </Link>
+
+            <Link 
+              to="/usuarios" 
+              className="group bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-lg hover:border-pink-200 transition-all"
+            >
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl" style={{ backgroundColor: colors.primary + '20' }}>
+                  <svg className="w-7 h-7" style={{ color: colors.primary }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg text-gray-800 group-hover:text-pink-600 transition-colors">Usuarios</h3>
+                  <p className="text-sm text-gray-500">Gestionar usuarios del sistema</p>
+                </div>
+              </div>
+            </Link>
+
+            <Link 
+              to="/fechas" 
+              className="group bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-lg hover:border-indigo-200 transition-all"
+            >
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl" style={{ backgroundColor: colors.primary + '20' }}>
+                  <svg className="w-7 h-7" style={{ color: colors.primary }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg text-gray-800 group-hover:text-indigo-600 transition-colors">Fechas</h3>
+                  <p className="text-sm text-gray-500">Definir fechas por temporada</p>
+                </div>
+              </div>
+            </Link>
+          </>
         )}
       </div>
     </div>
