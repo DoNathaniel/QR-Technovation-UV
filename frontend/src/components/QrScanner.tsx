@@ -25,10 +25,18 @@ const COOLDOWN_MS = 2500; // prevent duplicate scans
 export default function QrScanner({ userID, connected, onReconnect, onRegistered, date }: QrScannerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [feedback, setFeedback] = useState<FeedbackState>({ type: 'idle' });
+  const [showModal, setShowModal] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const lastScannedRef = useRef<string>('');
   const lastScannedTimeRef = useRef<number>(0);
   const processingRef = useRef(false);
+
+  // Show modal when there's feedback
+  useEffect(() => {
+    if (feedback.type !== 'idle') {
+      setShowModal(true);
+    }
+  }, [feedback]);
 
   // Close scanner if connection drops while it's open
   useEffect(() => {
@@ -96,6 +104,8 @@ export default function QrScanner({ userID, connected, onReconnect, onRegistered
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
+  const audio = new Audio('/scanner.mp3');
+
   const handleDecode = useCallback(
     async (text: string) => {
       // Cooldown: ignore same code scanned within COOLDOWN_MS
@@ -108,6 +118,9 @@ export default function QrScanner({ userID, connected, onReconnect, onRegistered
       lastScannedRef.current = text;
       lastScannedTimeRef.current = now;
       processingRef.current = true;
+
+      audio.volume = 0.5;
+      audio.play().catch(() => {});
 
       setFeedback({ type: 'scanning' });
 
@@ -210,6 +223,7 @@ export default function QrScanner({ userID, connected, onReconnect, onRegistered
   const handleConfirmApoderado = async () => {
     if (feedback.type !== 'confirmApoderado') return;
     const { nombre, studentID } = feedback;
+    setFeedback({ type: "scanning" });
     
     // Registrar la salida solo cuando confirma
     try {
@@ -225,14 +239,6 @@ export default function QrScanner({ userID, connected, onReconnect, onRegistered
       setFeedback({ type: 'error', message: 'Error al registrar salida' });
       setTimeout(() => setFeedback({ type: 'idle' }), 3000);
     }
-  };
-
-  const handleDismissSuccess = () => {
-    setFeedback({ type: 'idle' });
-  };
-
-  const handleCancelApoderado = () => {
-    setFeedback({ type: 'idle' });
   };
 
   return (
@@ -296,66 +302,6 @@ export default function QrScanner({ userID, connected, onReconnect, onRegistered
       {/* Scanner area */}
       {isOpen && connected && (
         <div className="px-4 pb-4">
-          {/* Feedback banner */}
-          {feedback.type === 'success' && (
-            <div className="mb-3 rounded-lg bg-green-50 border border-green-300 px-3 py-2 text-sm text-green-800 animate-pulse">
-              <div className="flex items-center justify-between gap-2">
-                <span>
-                  <span className="font-bold">
-                    {feedback.tipo === 'entrada' ? 'Entrada' : 'Salida'}
-                  </span>{' '}
-                  registrada: {feedback.nombre}
-                </span>
-                <button
-                  onClick={handleDismissSuccess}
-                  className="text-green-700 hover:text-green-900 font-bold text-lg leading-none"
-                >
-                  ×
-                </button>
-              </div>
-              {feedback.sisters.length > 0 && feedback.tipo === 'salida' && (
-                <div className="mt-2 text-xs bg-amber-50 border border-amber-200 rounded p-1.5">
-                  <strong>Aviso:</strong> Esta estudiante tiene sisters en la temporada: {feedback.sisters.map(s => s.nombre).join(', ')}
-                </div>
-              )}
-            </div>
-          )}
-          {feedback.type === 'error' && (
-            <div className="mb-3 rounded-lg bg-red-50 border border-red-300 px-3 py-2 text-sm text-red-800">
-              {feedback.message}
-            </div>
-          )}
-          {feedback.type === 'scanning' && (
-            <div className="mb-3 rounded-lg bg-blue-50 border border-blue-300 px-3 py-2 text-sm text-blue-800 animate-pulse">
-              Procesando...
-            </div>
-          )}
-          {feedback.type === 'confirmApoderado' && (
-            <div className="mb-3 rounded-lg bg-amber-50 border border-amber-300 px-3 py-3 text-sm text-amber-900">
-              <div className="font-bold mb-2">
-                Confirmar retiro con apoderado
-              </div>
-              <div className="mb-3">
-                {feedback.nombre} tiene registrado <strong>retiro con apoderado</strong>. 
-                ¿Confirmas que viste al apoderado?
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={handleConfirmApoderado}
-                  className="flex-1 bg-green-600 text-white font-semibold py-1.5 px-3 rounded hover:bg-green-700 transition-colors text-xs"
-                >
-                  Lo vi
-                </button>
-                <button
-                  onClick={handleCancelApoderado}
-                  className="flex-1 bg-red-100 text-red-700 font-semibold py-1.5 px-3 rounded hover:bg-red-200 transition-colors text-xs"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </div>
-          )}
-
           {/* Camera view */}
           <div
             id={READER_ID}
@@ -366,6 +312,94 @@ export default function QrScanner({ userID, connected, onReconnect, onRegistered
           <p className="text-[11px] text-text-muted text-center mt-2">
             Apunta la camara al codigo QR del estudiante
           </p>
+        </div>
+      )}
+
+      {/* Modal for feedback */}
+      {showModal && feedback.type !== 'idle' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={feedback.type === 'scanning' ? undefined : () => setShowModal(false)}>
+          <div className="bg-white rounded-lg shadow-xl max-w-sm w-full p-4" onClick={e => e.stopPropagation()}>
+            {feedback.type === 'scanning' && (
+              <div className="text-center py-4">
+                <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-blue-100 flex items-center justify-center">
+                  <svg className="w-8 h-8 text-blue-600 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </div>
+                <div className="text-lg font-bold text-blue-800 mb-1">Procesando...</div>
+                <div className="text-gray-500 text-sm">Verificando informacion del estudiante</div>
+              </div>
+            )}
+            {feedback.type === 'success' && (
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-green-100 flex items-center justify-center">
+                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <div className="text-lg font-bold text-green-800 mb-1">
+                  {feedback.tipo === 'entrada' ? 'Entrada' : 'Salida'} registrada
+                </div>
+                <div className="text-gray-600 mb-3">{feedback.nombre}</div>
+                {feedback.sisters.length > 0 && feedback.tipo === 'salida' && (
+                  <div className="text-xs bg-amber-50 border border-amber-200 rounded p-2 mb-3">
+                    <strong>Aviso:</strong> El apoderado de la estudiante, tambien es apoderado de: {feedback.sisters.map(s => s.nombre).join(', ')}
+                  </div>
+                )}
+                <button
+                  onClick={() => { setShowModal(false); setFeedback({ type: 'idle' }); }}
+                  className="w-full bg-green-600 text-white font-semibold py-2 px-4 rounded hover:bg-green-700"
+                >
+                  Aceptar
+                </button>
+              </div>
+            )}
+            {feedback.type === 'error' && (
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-red-100 flex items-center justify-center">
+                  <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </div>
+                <div className="text-lg font-bold text-red-800 mb-1">Error</div>
+                <div className="text-gray-600 mb-3">{feedback.message}</div>
+                <button
+                  onClick={() => { setShowModal(false); setFeedback({ type: 'idle' }); }}
+                  className="w-full bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded hover:bg-gray-300"
+                >
+                  Cerrar
+                </button>
+              </div>
+            )}
+            {feedback.type === 'confirmApoderado' && (
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-amber-100 flex items-center justify-center">
+                  <svg className="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <div className="text-lg font-bold text-amber-800 mb-2">Confirmar retiro con apoderado</div>
+                <div className="text-gray-600 mb-3">
+                  {feedback.nombre} tiene registrado <strong>retiro con apoderado</strong>. 
+                  ¿Confirmas que viste al apoderado?
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => { setShowModal(false); handleConfirmApoderado(); }}
+                    className="flex-1 bg-green-600 text-white font-semibold py-2 px-4 rounded hover:bg-green-700"
+                  >
+                    Lo vi
+                  </button>
+                  <button
+                    onClick={() => { setShowModal(false); setFeedback({ type: 'idle' }); }}
+                    className="flex-1 bg-red-100 text-red-700 font-semibold py-2 px-4 rounded hover:bg-red-200"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
