@@ -9,7 +9,6 @@ import StudentsPage from './pages/StudentsPage';
 import TeamsPage from './pages/TeamsPage';
 import AttendancePage from './pages/AttendancePage';
 import SeasonSelector from './components/SeasonSelector';
-import { colors } from './config';
 import { useState } from 'react';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {

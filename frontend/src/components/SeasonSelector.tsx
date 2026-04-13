@@ -1,5 +1,4 @@
 import type { Season } from '../types';
-import { colors } from '../config';
 
 interface SeasonSelectorProps {
   temporadas: Season[];
