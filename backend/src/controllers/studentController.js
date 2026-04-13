@@ -20,8 +20,18 @@ async function getAll(req, res) {
     if (seasonID) where.seasonID = parseInt(seasonID);
     if (categoria) where.categoria = categoria;
 
-    const students = await studentRepository().find({ where });
-    res.json(students);
+    const students = await studentRepository().find({ 
+      where,
+      relations: ['team']
+    });
+    
+    const result = students.map(s => ({
+      ...s,
+      teamID: s.team?.ID || null,
+      teamNombre: s.team?.nombre || null,
+    }));
+    
+    res.json(result);
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener estudiantes', error: error.message });
   }

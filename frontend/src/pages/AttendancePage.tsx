@@ -31,12 +31,6 @@ function todayStr(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-function shiftDate(dateStr: string, days: number): string {
-  const d = new Date(dateStr + 'T12:00:00'); // noon to avoid DST issues
-  d.setDate(d.getDate() + days);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
-
 function formatDateDisplay(dateStr: string): string {
   const d = new Date(dateStr + 'T12:00:00');
   return d.toLocaleDateString('es-CL', {
@@ -72,7 +66,7 @@ function categoriaBadge(cat: Categoria) {
 export default function AttendancePage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [selectedDate, setSelectedDate] = useState(todayStr);
+  const [selectedDate] = useState(todayStr);
   const [attendances, setAttendances] = useState<Attendance[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterCategoria, setFilterCategoria] = useState<Categoria | 'todas'>('todas');
@@ -81,11 +75,13 @@ export default function AttendancePage() {
   const [allStudents, setAllStudents] = useState<
     { ID: number; nombres: string; apellidos: string; categoria: Categoria; retiradoApoderado: boolean }[]
   >([]);
+  const [seasonDates, setSeasonDates] = useState<string[]>([]);
+  const [dateInPlanification, setDateInPlanification] = useState(false);
 
   const seasonIdStr = localStorage.getItem('currentSeasonId');
   const seasonID = seasonIdStr ? parseInt(seasonIdStr, 10) : null;
 
-  const isToday = selectedDate === todayStr();
+  const isToday = true;
 
   // ── Socket.io real-time updates ──
   const { on, connected, reconnect } = useSocket(seasonID);
@@ -116,6 +112,24 @@ export default function AttendancePage() {
       .then((res) => setAllStudents(res.data))
       .catch((err) => console.error('Error loading students:', err));
   }, [seasonID]);
+
+  // Load season dates for planification check
+  useEffect(() => {
+    if (!seasonID) return;
+    api
+      .get<{ fecha: string }[]>(`/seasons/${seasonID}/dates`)
+      .then((res) => {
+        const dates = res.data.map((d) => d.fecha);
+        setSeasonDates(dates);
+        setDateInPlanification(dates.includes(selectedDate));
+      })
+      .catch((err) => console.error('Error loading season dates:', err));
+  }, [seasonID]);
+
+  // Update date in planification when selectedDate changes
+  useEffect(() => {
+    setDateInPlanification(seasonDates.includes(selectedDate));
+  }, [selectedDate, seasonDates]);
 
   // Load attendance for the selected date
   useEffect(() => {
@@ -257,49 +271,21 @@ export default function AttendancePage() {
         </div>
       </div>
 
-      {/* Date navigation */}
-      <div className="bg-surface rounded-lg shadow p-3 flex items-center justify-between gap-2 flex-wrap">
-        <button
-          onClick={() => setSelectedDate((d) => shiftDate(d, -1))}
-          className="px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 text-sm font-medium"
-        >
-          &larr; Anterior
-        </button>
-
-        <div className="flex items-center gap-2 flex-wrap justify-center">
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="px-2 py-1.5 border border-gray-300 rounded-lg text-sm"
-          />
-          <span className="text-sm text-text-muted capitalize hidden sm:inline">
-            {formatDateDisplay(selectedDate)}
+      {/* Date display - only today allowed */}
+      <div className="bg-surface rounded-lg shadow p-3">
+        <div className="flex items-center justify-center gap-2">
+          <span className="text-lg font-semibold text-text">
+            {formatDateDisplay(todayStr())}
           </span>
-          {isToday && (
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-800">
-              HOY
-            </span>
-          )}
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-800">
+            HOY
+          </span>
         </div>
-
-        <div className="flex gap-2">
-          <button
-            onClick={() => setSelectedDate((d) => shiftDate(d, 1))}
-            className="px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 text-sm font-medium"
-          >
-            Siguiente &rarr;
-          </button>
-          {!isToday && (
-            <button
-              onClick={() => setSelectedDate(todayStr())}
-              className="px-3 py-1.5 rounded-lg text-white text-sm font-medium"
-              style={{ backgroundColor: colors.accent }}
-            >
-              Hoy
-            </button>
-          )}
-        </div>
+        {!dateInPlanification && (
+          <div className="mt-2 text-xs bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-amber-800 text-center">
+            <strong>Aviso:</strong> Esta fecha no esta registrada en la planificacion de la temporada
+          </div>
+        )}
       </div>
 
       {/* QR Scanner — solo disponible el día de hoy */}

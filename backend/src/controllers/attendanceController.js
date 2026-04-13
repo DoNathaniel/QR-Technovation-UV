@@ -161,4 +161,34 @@ async function getStats(req, res) {
   }
 }
 
-module.exports = { register, getByDate, getByStudent, getStats };
+async function getBySeason(req, res) {
+  try {
+    const { seasonID } = req.params;
+    
+    const seasonDates = await seasonDateRepository().find({
+      where: { seasonID: parseInt(seasonID) },
+      order: { fecha: 'ASC' }
+    });
+
+    const attendances = await attendanceRepository().find({
+      relations: ['student'],
+    });
+
+    const filtered = attendances.filter(att => {
+      const sd = seasonDates.find(sd => sd.ID === att.seasonDateID);
+      return sd !== undefined;
+    });
+
+    const result = filtered.map(att => ({
+      studentID: att.studentID,
+      fecha: seasonDates.find(sd => sd.ID === att.seasonDateID)?.fecha,
+      tipo: att.tipo
+    }));
+
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener asistencia por temporada', error: error.message });
+  }
+}
+
+module.exports = { register, getByDate, getByStudent, getStats, getBySeason };

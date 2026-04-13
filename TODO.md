@@ -181,16 +181,18 @@
 - [x] T10-4 Si estudiante tiene retiro con apoderado → pedir confirmación visual de ver al apoderado
 - [x] T10-5 Al confirmar retiro con apoderado, mostrar alerta si hay otras estudiantes asociadas al mismo apoderado
 - [x] T10-6 Feedback visual (éxito/error/ya registrado)
-- [x] T10-7 Sonido de feedback (no implementado)
+- [x] T10-7 Sonido de feedback
 - [x] T10-8 Manejar errores de cámara
-- [x] T10-1 Componente de escaneo con cámara
-- [x] T10-2 Optimizar para dispositivos móviles
-- [x] T10-3 Si estudiante ya marcó entrada → mostrar "Marcar salida"
-- [x] T10-4 Si estudiante tiene retiro con apoderado → pedir confirmación visual de ver al apoderado
-- [x] T10-5 Al confirmar retiro con apoderado, mostrar alerta si hay otras estudiantes asociadas al mismo apoderado
-- [x] T10-6 Feedback visual (éxito/error/ya registrado)
-- [ ] T10-7 Sonido de feedback
-- [x] T10-8 Manejar errores de cámara
+- [x] T10-9 Restringir fecha a solo "hoy" en pasar asistencia
+- [x] T10-10 Mostrar aviso si el día no está registrado en la planificación de la temporada
+
+### T32 - Informe de Asistencia (Todos los roles)
+- [ ] T32-1 Crear nueva página/ruta para informe de asistencia
+- [ ] T32-2 Obtener lista de todas las estudiantes con su equipo y categoría
+- [ ] T32-3 Obtener todos los días registrados en la temporada con asistencia
+- [ ] T32-4 Mostrar tabla con columnas: estudiante, equipo, categoría, y días de asistencia
+- [ ] T32-5 Colores de estado: gris = ausente, naranja = solo entrada, verde = entrada y salida
+- [ ] T32-6 Accesible para cualquier usuario autenticado
 
 ### T11 - Diseño Responsivo y UX
 - [x] T11-1 Mobile-first styling

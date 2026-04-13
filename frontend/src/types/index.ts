@@ -77,6 +77,8 @@ export interface Student {
   retiradoApoderado: boolean;
   datosApoderado: Record<string, unknown> | null;
   guardianID: number | null;
+  teamID?: number | null;
+  teamNombre?: string | null;
   createdAt: string;
   updatedAt: string;
 }

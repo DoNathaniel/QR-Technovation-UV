@@ -8,6 +8,7 @@ import DatesPage from './pages/DatesPage';
 import StudentsPage from './pages/StudentsPage';
 import TeamsPage from './pages/TeamsPage';
 import AttendancePage from './pages/AttendancePage';
+import AttendanceReportPage from './pages/AttendanceReportPage';
 import SeasonSelector from './components/SeasonSelector';
 import { useState } from 'react';
 
@@ -109,6 +110,7 @@ function AppLayout() {
           <Route path="/estudiantes" element={<StudentsPage />} />
           <Route path="/equipos" element={<TeamsPage />} />
           <Route path="/asistencia" element={<AttendancePage />} />
+          <Route path="/informe-asistencia" element={<AttendanceReportPage />} />
           <Route path="*" element={<Navigate to="/panel" replace />} />
         </Routes>
       </main>

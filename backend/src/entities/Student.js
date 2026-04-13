@@ -55,6 +55,10 @@ const StudentSchema = new EntitySchema({
       length: 500,
       nullable: true,
     },
+    teamID: {
+      type: 'int',
+      nullable: true,
+    },
     createdAt: {
       type: 'timestamp',
       createDate: true,
@@ -75,6 +79,12 @@ const StudentSchema = new EntitySchema({
       type: 'many-to-one',
       target: 'Guardian',
       joinColumn: { name: 'guardianID' },
+      nullable: true,
+    },
+    team: {
+      type: 'many-to-one',
+      target: 'Team',
+      joinColumn: { name: 'teamID' },
       nullable: true,
     },
     attendances: {
