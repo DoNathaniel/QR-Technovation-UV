@@ -90,8 +90,8 @@
 - [x] T20-3 GET /attendance/student/:studentId - Historial de estudiante
 - [x] T20-4 GET /attendance/stats - Estadísticas de asistencia
 - [x] T20-5 Lógica: Si ya tiene entrada → registrar salida
-- [ ] T20-6 Lógica: Si estudiante tiene retiro con apoderado → incluir flag en respuesta
-- [ ] T20-7 Lógica: Verificar si hay otras estudiantes asociadas al mismo apoderado en la temporada
+- [x] T20-6 Lógica: Si estudiante tiene retiro con apoderado → incluir flag en respuesta
+- [x] T20-7 Lógica: Verificar si hay otras estudiantes asociadas al mismo apoderado en la temporada
 - [x] T20-8 Lógica: Si fecha no existe → crear nueva fecha de asistencia automáticamente
 
 ### T21 - Generación de QR
@@ -177,9 +177,9 @@
 ### T10 - Escaneo de QR (Voluntario/Admin)
 - [x] T10-1 Componente de escaneo con cámara
 - [x] T10-2 Optimizar para dispositivos móviles
-- [ ] T10-3 Si estudiante ya marcó entrada → mostrar "Marcar salida"
-- [ ] T10-4 Si estudiante tiene retiro con apoderado → pedir confirmación visual de ver al apoderado
-- [ ] T10-5 Al confirmar retiro con apoderado, mostrar alerta si hay otras estudiantes asociadas al mismo apoderado
+- [x] T10-3 Si estudiante ya marcó entrada → mostrar "Marcar salida"
+- [x] T10-4 Si estudiante tiene retiro con apoderado → pedir confirmación visual de ver al apoderado
+- [x] T10-5 Al confirmar retiro con apoderado, mostrar alerta si hay otras estudiantes asociadas al mismo apoderado
 - [x] T10-6 Feedback visual (éxito/error/ya registrado)
 - [ ] T10-7 Sonido de feedback
 - [x] T10-8 Manejar errores de cámara
