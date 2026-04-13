@@ -28,8 +28,11 @@ const io = new Server(httpServer, {
   },
 });
 
-// MORGAN
-app.use(require("morgan")("dev"));
+// MORGAN - formato personalizado que ignora OPTIONS
+const morgan = require('morgan');
+const customFormat = ':method :url :status :res[content-length] - :response-time ms';
+const skipOptions = (req) => req.method === 'OPTIONS';
+app.use(morgan(customFormat, { skip: skipOptions }));
 
 // APP
 app.use(cors());
