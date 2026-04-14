@@ -275,6 +275,5 @@
 
 ## Fixes
 
-- [ ] Verificar RUT duplicado de estudiantes por temporada
-- [ ] Enviar correo a Guardian ya creado al momento de crear un estudiante
-- [ ] Añadir loadings a botones para evitar doubles clicks
+- [x] Verificar RUT duplicado de estudiantes por temporada
+- [x] Añadir loadings a botones para evitar doubles clicks
