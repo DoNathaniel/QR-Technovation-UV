@@ -16,6 +16,8 @@ export default function UsersPage() {
   const navigate = useNavigate();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [formData, setFormData] = useState({
@@ -43,6 +45,7 @@ export default function UsersPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitting(true);
     try {
       if (editingUser) {
         const updateData: any = { nombre: formData.nombre, apellido: formData.apellido, email: formData.email, rol: formData.rol };
@@ -59,6 +62,8 @@ export default function UsersPage() {
       setFormData({ nombre: '', apellido: '', email: '', password: '', rol: 'voluntario' });
     } catch (error) {
       console.error('Error saving user:', error);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -76,11 +81,14 @@ export default function UsersPage() {
 
   const handleDelete = async (id: number) => {
     if (!confirm('¿Estás seguro de eliminar este usuario?')) return;
+    setDeletingId(id);
     try {
       await api.delete(`/users/${id}`);
       loadUsers();
     } catch (error) {
       console.error('Error deleting user:', error);
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -182,15 +190,17 @@ export default function UsersPage() {
             <div className="flex gap-2">
               <button
                 type="submit"
-                className="px-4 py-2 rounded text-white text-sm"
+                disabled={submitting}
+                className="px-4 py-2 rounded text-white text-sm disabled:opacity-50"
                 style={{ backgroundColor: colors.primary }}
               >
-                {editingUser ? 'Actualizar' : 'Crear'}
+                {submitting ? 'Guardando...' : (editingUser ? 'Actualizar' : 'Crear')}
               </button>
               <button
                 type="button"
+                disabled={submitting}
                 onClick={() => setShowForm(false)}
-                className="px-4 py-2 border border-gray-300 rounded text-sm"
+                className="px-4 py-2 border border-gray-300 rounded text-sm disabled:opacity-50"
               >
                 Cancelar
               </button>
@@ -234,9 +244,10 @@ export default function UsersPage() {
                   </button>
                   <button
                     onClick={() => handleDelete(user.ID)}
-                    className="text-red-600 hover:text-red-800 text-sm"
+                    disabled={deletingId === user.ID}
+                    className="text-red-600 hover:text-red-800 text-sm disabled:opacity-50"
                   >
-                    Eliminar
+                    {deletingId === user.ID ? 'Eliminando...' : 'Eliminar'}
                   </button>
                 </td>
               </tr>

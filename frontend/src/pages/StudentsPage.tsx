@@ -40,6 +40,9 @@ export default function StudentsPage() {
   const [students, setStudents] = useState<Student[]>([]);
   const [guardians, setGuardians] = useState<Guardian[]>([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [resendingQRId, setResendingQRId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [filterCategoria, setFilterCategoria] = useState<string>('');
@@ -108,6 +111,7 @@ export default function StudentsPage() {
       return;
     }
     
+    setSubmitting(true);
     try {
       const seasonId = localStorage.getItem('currentSeasonId');
       const payload = {
@@ -127,6 +131,8 @@ export default function StudentsPage() {
       resetForm();
     } catch (error) {
       console.error('Error saving student:', error);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -156,11 +162,14 @@ export default function StudentsPage() {
 
   const handleDelete = async (id: number) => {
     if (!confirm('¿Estás seguro de eliminar este estudiante?')) return;
+    setDeletingId(id);
     try {
       await api.delete(`/students/${id}`);
       loadStudents();
     } catch (error) {
       console.error('Error deleting student:', error);
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -181,12 +190,15 @@ export default function StudentsPage() {
   };
 
   const handleResendQR = async (studentId: number) => {
+    setResendingQRId(studentId);
     try {
       await api.post(`/students/${studentId}/resend-qr`);
       toast.success('QR reenviado correctamente');
     } catch (error) {
       console.error('Error resending QR:', error);
       toast.error('Error al reenviar QR');
+    } finally {
+      setResendingQRId(null);
     }
   };
 
@@ -389,10 +401,20 @@ export default function StudentsPage() {
             </div>
 
             <div className="flex gap-2 pt-4">
-              <button type="submit" className="px-4 py-2 rounded text-white text-sm" style={{ backgroundColor: colors.primary }}>
-                {editingStudent ? 'Actualizar' : 'Crear'}
+              <button 
+                type="submit" 
+                disabled={submitting}
+                className="px-4 py-2 rounded text-white text-sm disabled:opacity-50" 
+                style={{ backgroundColor: colors.primary }}
+              >
+                {submitting ? 'Guardando...' : (editingStudent ? 'Actualizar' : 'Crear')}
               </button>
-              <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 border border-gray-300 rounded text-sm">
+              <button 
+                type="button" 
+                disabled={submitting}
+                onClick={() => setShowForm(false)} 
+                className="px-4 py-2 border border-gray-300 rounded text-sm disabled:opacity-50"
+              >
                 Cancelar
               </button>
             </div>
@@ -431,14 +453,22 @@ export default function StudentsPage() {
                   {student.retiradoApoderado ? 'Con Apoderado' : 'Solo'}
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <button onClick={() => handleResendQR(student.ID)} className="text-blue-600 hover:text-blue-800 text-sm mr-3">
-                    Reenviar QR
+                  <button 
+                    onClick={() => handleResendQR(student.ID)} 
+                    disabled={resendingQRId === student.ID}
+                    className="text-blue-600 hover:text-blue-800 text-sm mr-3 disabled:opacity-50"
+                  >
+                    {resendingQRId === student.ID ? 'Enviando...' : 'Reenviar QR'}
                   </button>
                   <button onClick={() => handleEdit(student)} className="text-blue-600 hover:text-blue-800 text-sm mr-3">
                     Editar
                   </button>
-                  <button onClick={() => handleDelete(student.ID)} className="text-red-600 hover:text-red-800 text-sm">
-                    Eliminar
+                  <button 
+                    onClick={() => handleDelete(student.ID)} 
+                    disabled={deletingId === student.ID}
+                    className="text-red-600 hover:text-red-800 text-sm disabled:opacity-50"
+                  >
+                    {deletingId === student.ID ? 'Eliminando...' : 'Eliminar'}
                   </button>
                 </td>
               </tr>

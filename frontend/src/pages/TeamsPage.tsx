@@ -300,6 +300,7 @@ export default function TeamsPage() {
   const [mentors, setMentors] = useState<Mentor[]>([]);
   const [mentorAssignments, setMentorAssignments] = useState<TeamMentor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
   const [formData, setFormData] = useState<{
@@ -354,6 +355,7 @@ export default function TeamsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!seasonID) return;
+    setSubmitting(true);
     try {
       const payload = {
         nombre: formData.nombre,
@@ -372,6 +374,8 @@ export default function TeamsPage() {
       setFormData({ nombre: '', ods: 'ODS1', categoria: 'Beginner' });
     } catch (error) {
       console.error('Error saving team:', error);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -796,15 +800,17 @@ export default function TeamsPage() {
               <div className="flex gap-2">
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-lg text-white text-sm"
+                  disabled={submitting}
+                  className="px-4 py-2 rounded-lg text-white text-sm disabled:opacity-50"
                   style={{ backgroundColor: colors.primary }}
                 >
-                  {editingTeam ? 'Actualizar' : 'Crear'}
+                  {submitting ? 'Guardando...' : (editingTeam ? 'Actualizar' : 'Crear')}
                 </button>
                 <button
                   type="button"
+                  disabled={submitting}
                   onClick={() => setShowForm(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-sm"
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-sm disabled:opacity-50"
                 >
                   Cancelar
                 </button>

@@ -15,6 +15,8 @@ export default function SeasonsPage() {
   const navigate = useNavigate();
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingSeason, setEditingSeason] = useState<Season | null>(null);
   const [formData, setFormData] = useState({
@@ -40,6 +42,7 @@ export default function SeasonsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitting(true);
     try {
       if (editingSeason) {
         await api.put(`/seasons/${editingSeason.ID}`, formData);
@@ -52,6 +55,8 @@ export default function SeasonsPage() {
       setFormData({ nombre: '', fechaInicio: '', fechaFin: '' });
     } catch (error) {
       console.error('Error saving season:', error);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -67,11 +72,14 @@ export default function SeasonsPage() {
 
   const handleDelete = async (id: number) => {
     if (!confirm('¿Estás seguro de eliminar esta temporada?')) return;
+    setDeletingId(id);
     try {
       await api.delete(`/seasons/${id}`);
       loadSeasons();
     } catch (error) {
       console.error('Error deleting season:', error);
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -143,15 +151,17 @@ export default function SeasonsPage() {
             <div className="flex gap-2">
               <button
                 type="submit"
-                className="px-4 py-2 rounded text-white text-sm"
+                disabled={submitting}
+                className="px-4 py-2 rounded text-white text-sm disabled:opacity-50"
                 style={{ backgroundColor: colors.primary }}
               >
-                {editingSeason ? 'Actualizar' : 'Crear'}
+                {submitting ? 'Guardando...' : (editingSeason ? 'Actualizar' : 'Crear')}
               </button>
               <button
                 type="button"
+                disabled={submitting}
                 onClick={() => setShowForm(false)}
-                className="px-4 py-2 border border-gray-300 rounded text-sm"
+                className="px-4 py-2 border border-gray-300 rounded text-sm disabled:opacity-50"
               >
                 Cancelar
               </button>
@@ -195,9 +205,10 @@ export default function SeasonsPage() {
                   </button>
                   <button
                     onClick={() => handleDelete(season.ID)}
-                    className="text-red-600 hover:text-red-800 text-sm"
+                    disabled={deletingId === season.ID}
+                    className="text-red-600 hover:text-red-800 text-sm disabled:opacity-50"
                   >
-                    Eliminar
+                    {deletingId === season.ID ? 'Eliminando...' : 'Eliminar'}
                   </button>
                 </td>
               </tr>

@@ -21,6 +21,8 @@ export default function DatesPage() {
   const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
   const [dates, setDates] = useState<SeasonDate[]>([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [showBulkForm, setShowBulkForm] = useState(false);
   const [formData, setFormData] = useState({ fecha: '' });
@@ -62,6 +64,7 @@ export default function DatesPage() {
 
   const handleAddDate = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitting(true);
     try {
       const fechaLocal = new Date(formData.fecha + 'T00:00:00');
       const fechaISO = fechaLocal.toISOString().split('T')[0];
@@ -72,11 +75,14 @@ export default function DatesPage() {
       setFormData({ fecha: '' });
     } catch (error) {
       console.error('Error adding date:', error);
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handleBulkAdd = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitting(true);
     try {
       const fechaInicioLocal = new Date(bulkData.fechaInicio + 'T00:00:00');
       const fechaFinLocal = new Date(bulkData.fechaFin + 'T00:00:00');
@@ -92,16 +98,21 @@ export default function DatesPage() {
       setBulkData({ fechaInicio: '', fechaFin: '' });
     } catch (error) {
       console.error('Error adding bulk dates:', error);
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handleDelete = async (id: number) => {
     if (!confirm('¿Estás seguro de eliminar esta fecha?')) return;
+    setDeletingId(id);
     try {
       await api.delete(`/seasons/${selectedSeason}/dates/${id}`);
       loadDates();
     } catch (error) {
       console.error('Error deleting date:', error);
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -170,15 +181,17 @@ export default function DatesPage() {
             <div className="flex gap-2">
               <button
                 type="submit"
-                className="px-4 py-2 rounded text-white text-sm"
+                disabled={submitting}
+                className="px-4 py-2 rounded text-white text-sm disabled:opacity-50"
                 style={{ backgroundColor: colors.primary }}
               >
-                Agregar
+                {submitting ? 'Guardando...' : 'Agregar'}
               </button>
               <button
                 type="button"
+                disabled={submitting}
                 onClick={() => setShowForm(false)}
-                className="px-4 py-2 border border-gray-300 rounded text-sm"
+                className="px-4 py-2 border border-gray-300 rounded text-sm disabled:opacity-50"
               >
                 Cancelar
               </button>
@@ -216,15 +229,17 @@ export default function DatesPage() {
             <div className="flex gap-2">
               <button
                 type="submit"
-                className="px-4 py-2 rounded text-white text-sm"
+                disabled={submitting}
+                className="px-4 py-2 rounded text-white text-sm disabled:opacity-50"
                 style={{ backgroundColor: colors.primary }}
               >
-                Importar
+                {submitting ? 'Importando...' : 'Importar'}
               </button>
               <button
                 type="button"
+                disabled={submitting}
                 onClick={() => setShowBulkForm(false)}
-                className="px-4 py-2 border border-gray-300 rounded text-sm"
+                className="px-4 py-2 border border-gray-300 rounded text-sm disabled:opacity-50"
               >
                 Cancelar
               </button>
@@ -264,9 +279,10 @@ export default function DatesPage() {
                   <td className="px-4 py-3 text-right">
                     <button
                       onClick={() => handleDelete(date.ID)}
-                      className="text-red-600 hover:text-red-800 text-sm"
+                      disabled={deletingId === date.ID}
+                      className="text-red-600 hover:text-red-800 text-sm disabled:opacity-50"
                     >
-                      Eliminar
+                      {deletingId === date.ID ? 'Eliminando...' : 'Eliminar'}
                     </button>
                   </td>
                 </tr>
