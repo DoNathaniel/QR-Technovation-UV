@@ -29,7 +29,7 @@ async function sendQREmail(to, studentName, qrUrl) {
       </p>
       <p style="margin: 0 0 18px 0;">
         Adjuntamos tu <b>código QR personal</b> para el registro de asistencia. <br>
-        Preséntalo cada vez que llegues a la Facultad y antes de irte de la misma.
+        Preséntalo cada vez que llegues a la Facultad de Ingeniería y antes de irte de la misma.
       </p>
       <div style="display: flex; flex-direction: column; align-items: center; margin: 32px 0 16px 0;">
         <div style="box-shadow: 0 6px 26px #20629b19;">
