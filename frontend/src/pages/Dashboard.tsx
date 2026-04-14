@@ -19,9 +19,9 @@ export default function Dashboard() {
   const fetchedRef = useRef(false);
 
   const roleLabels = {
-    superadmin: 'Super Administrador',
-    admin: 'Administrador',
-    voluntario: 'Voluntario',
+    superadmin: 'Super Administrador/a',
+    admin: 'Administrador/a',
+    voluntario: 'Mentora',
   };
 
   const canAccess = (requiredRoles: string[]) => {
