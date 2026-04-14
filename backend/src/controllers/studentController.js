@@ -69,7 +69,8 @@ async function create(req, res) {
     }
     
     let guardianID = req.body.guardianID;
-    
+    let guardian_email = null;
+
     if (datosApoderado && datosApoderado.nombres) {
       const GuardianSchema = require('../entities/Guardian');
       const guardianRepo = AppDataSource.getRepository(GuardianSchema);
@@ -89,9 +90,20 @@ async function create(req, res) {
           seasonID: req.body.seasonID,
         });
         guardian = await guardianRepo.save(guardian);
+      } else {
+        guardian_email = guardian.email;
       }
       
       guardianID = guardian.ID;
+    } else if(guardianID) {
+      const GuardianSchema = require('../entities/Guardian');
+      const guardianRepo = AppDataSource.getRepository(GuardianSchema);
+      let guardian = null;
+      
+      guardian = await guardianRepo.findOne({ where: { ID: guardianID } });
+      if(guardian) {
+        guardian_email = guardian.email;
+      }
     }
     
     const student = studentRepository().create({
@@ -117,7 +129,7 @@ async function create(req, res) {
     if (cdnUrl) {
       const studentName = `${result.nombres} ${result.apellidos}`;
       const studentEmail = result.email || null;
-      const guardianEmail = (datosApoderado && datosApoderado.email) || null;
+      const guardianEmail = guardian_email || (datosApoderado && datosApoderado.email) || null;
 
       const recipients = new Set();
       if (studentEmail) recipients.add(studentEmail);

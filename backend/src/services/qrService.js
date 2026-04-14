@@ -7,7 +7,7 @@ const FormData = require('form-data');
 
 // Path a la imagen base en la raiz del monorepo
 const MONOREPO_ROOT = path.resolve(__dirname, '..', '..', '..');
-const BASE_QR_PATH = path.join(MONOREPO_ROOT, 'base-qr.png');
+const BASE_QR_PATH = path.join(MONOREPO_ROOT, './media/base-qr.png');
 
 // CDN
 const CDN_UPLOAD_URL = 'https://cdn.donath.us/cdn/upload';
