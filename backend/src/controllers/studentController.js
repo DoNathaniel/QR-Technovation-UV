@@ -52,11 +52,20 @@ async function getById(req, res) {
 
 async function create(req, res) {
   try {
-    const { datosApoderado, seasonID } = req.body;
+    const { datosApoderado, seasonID, rut } = req.body;
     console.log(seasonID)
     
     if (!seasonID) {
       return res.status(400).json({ message: 'seasonID es requerido' });
+    }
+
+    if (rut) {
+      const existingStudent = await studentRepository().findOne({
+        where: { rut: rut.trim(), seasonID: parseInt(seasonID) }
+      });
+      if (existingStudent) {
+        return res.status(400).json({ message: 'Ya existe un estudiante con ese RUT en esta temporada' });
+      }
     }
     
 
@@ -155,10 +164,19 @@ async function create(req, res) {
 async function update(req, res) {
   try {
     const { id } = req.params;
-    const { datosApoderado, seasonID } = req.body;
+    const { datosApoderado, seasonID, rut } = req.body;
     
     if (!seasonID) {
       return res.status(400).json({ message: 'seasonID es requerido' });
+    }
+
+    if (rut) {
+      const existingStudent = await studentRepository().findOne({
+        where: { rut: rut.trim(), seasonID: parseInt(seasonID) }
+      });
+      if (existingStudent && existingStudent.ID !== parseInt(id)) {
+        return res.status(400).json({ message: 'Ya existe un estudiante con ese RUT en esta temporada' });
+      }
     }
     
     const SeasonSchema = require('../entities/Season');
