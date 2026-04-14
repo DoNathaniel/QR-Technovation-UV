@@ -3,8 +3,10 @@ const { AppDataSource } = require('../database/data-source');
 const StudentSchema = require('../entities/Student');
 const { generateQR } = require('../services/qrService');
 const { sendQREmail } = require('../services/emailService');
+const GuardianSchema = require('../entities/Guardian');
 
 const studentRepository = () => AppDataSource.getRepository(StudentSchema);
+const guardianRepository = () => AppDataSource.getRepository(GuardianSchema);
 
 function validateRUT(rut) {
   const rutRegex = /^\d{1,2}\.\d{3}\.\d{3}-[0-9K]$/i;
@@ -245,6 +247,8 @@ async function resendQR(req, res) {
       return res.status(404).json({ message: 'Estudiante no encontrado' });
     }
 
+    const guardian = await guardianRepository().findOne({ where: { ID: parseInt(student.guardianID) } });
+
     // Si no tiene QR en CDN, generarlo ahora
     let qrUrl = student.qrUrl;
     if (!qrUrl) {
@@ -255,7 +259,7 @@ async function resendQR(req, res) {
 
     // Enviar QR al estudiante y al apoderado (sin duplicados)
     const studentEmail = student.email || null;
-    const guardianEmail = (student.datosApoderado && student.datosApoderado.email) || null;
+    const guardianEmail = (guardian && guardian.email) || (student.datosApoderado && student.datosApoderado.email) || null;
 
     const recipients = new Set();
     if (studentEmail) recipients.add(studentEmail);
