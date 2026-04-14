@@ -263,7 +263,7 @@ async function resendQR(req, res) {
 
     const recipients = new Set();
     if (studentEmail) recipients.add(studentEmail);
-    if (guardianEmail) recipients.add(guardianEmail);
+    if (guardianEmail && (guardianEmail !== studentEmail)) recipients.add(guardianEmail);
 
     if (recipients.size === 0) {
       return res.status(400).json({
