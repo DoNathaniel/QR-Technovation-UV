@@ -31,7 +31,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!currentSeasonId || fetchedRef.current) return;
-    
+
     fetchedRef.current = true;
     setLoading(true);
     api.get(`/attendance/stats?seasonID=${currentSeasonId}`)
@@ -42,7 +42,7 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <div 
+      <div
         className="rounded-xl p-8 text-white text-center"
         style={{ background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)` }}
       >
@@ -84,8 +84,8 @@ export default function Dashboard() {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        <Link 
-          to="/asistencia" 
+        <Link
+          to="/asistencia"
           className="group bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-lg hover:border-blue-200 transition-all"
         >
           <div className="flex items-center gap-4">
@@ -101,8 +101,8 @@ export default function Dashboard() {
           </div>
         </Link>
 
-        <Link 
-          to="/informe-asistencia" 
+        <Link
+          to="/informe-asistencia"
           className="group bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-lg hover:border-indigo-200 transition-all"
         >
           <div className="flex items-center gap-4">
@@ -119,28 +119,47 @@ export default function Dashboard() {
         </Link>
 
         {canAccess(['superadmin', 'admin']) && (
-          <Link 
-            to="/estudiantes" 
-            className="group bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-lg hover:border-purple-200 transition-all"
-          >
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-xl" style={{ backgroundColor: colors.secondary + '20' }}>
-                <svg className="w-7 h-7" style={{ color: colors.secondary }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
+          <>
+            <Link
+              to="/estudiantes"
+              className="group bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-lg hover:border-purple-200 transition-all"
+            >
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl" style={{ backgroundColor: colors.secondary + '20' }}>
+                  <svg className="w-7 h-7" style={{ color: colors.secondary }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg text-gray-800 group-hover:text-purple-600 transition-colors">Lista de Estudiantes</h3>
+                  <p className="text-sm text-gray-500">Ver y gestionar estudiantes</p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-semibold text-lg text-gray-800 group-hover:text-purple-600 transition-colors">Lista de Estudiantes</h3>
-                <p className="text-sm text-gray-500">Ver y gestionar estudiantes</p>
+            </Link>
+
+            <Link
+              to="/usuarios"
+              className="group bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-lg hover:border-pink-200 transition-all"
+            >
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl" style={{ backgroundColor: colors.primary + '20' }}>
+                  <svg className="w-7 h-7" style={{ color: colors.primary }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg text-gray-800 group-hover:text-pink-600 transition-colors">Usuarios</h3>
+                  <p className="text-sm text-gray-500">Gestionar usuarios del sistema</p>
+                </div>
               </div>
-            </div>
-          </Link>
+            </Link>
+          </>
         )}
 
         {canAccess(['superadmin']) && (
           <>
-            <Link 
-              to="/equipos" 
+            <Link
+              to="/equipos"
               className="group bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-lg hover:border-green-200 transition-all"
             >
               <div className="flex items-center gap-4">
@@ -156,8 +175,8 @@ export default function Dashboard() {
               </div>
             </Link>
 
-            <Link 
-              to="/temporadas" 
+            <Link
+              to="/temporadas"
               className="group bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-lg hover:border-yellow-200 transition-all"
             >
               <div className="flex items-center gap-4">
@@ -173,25 +192,8 @@ export default function Dashboard() {
               </div>
             </Link>
 
-            <Link 
-              to="/usuarios" 
-              className="group bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-lg hover:border-pink-200 transition-all"
-            >
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl" style={{ backgroundColor: colors.primary + '20' }}>
-                  <svg className="w-7 h-7" style={{ color: colors.primary }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-lg text-gray-800 group-hover:text-pink-600 transition-colors">Usuarios</h3>
-                  <p className="text-sm text-gray-500">Gestionar usuarios del sistema</p>
-                </div>
-              </div>
-            </Link>
-
-            <Link 
-              to="/fechas" 
+            <Link
+              to="/fechas"
               className="group bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-lg hover:border-indigo-200 transition-all"
             >
               <div className="flex items-center gap-4">
