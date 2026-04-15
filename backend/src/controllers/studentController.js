@@ -242,6 +242,8 @@ async function remove(req, res) {
 async function resendQR(req, res) {
   try {
     const { id } = req.params;
+    const { destino } = req.body; // 'estudiante', 'apoderado', 'ambos' (por defecto)
+    
     const student = await studentRepository().findOne({ where: { ID: parseInt(id) } });
     if (!student) {
       return res.status(404).json({ message: 'Estudiante no encontrado' });
@@ -257,17 +259,23 @@ async function resendQR(req, res) {
       await studentRepository().save(student);
     }
 
-    // Enviar QR al estudiante y al apoderado (sin duplicados)
+    // Determinar destinatarios según parámetro destino
     const studentEmail = student.email || null;
     const guardianEmail = (guardian && guardian.email) || (student.datosApoderado && student.datosApoderado.email) || null;
 
     const recipients = new Set();
-    if (studentEmail) recipients.add(studentEmail);
-    if (guardianEmail && (guardianEmail !== studentEmail)) recipients.add(guardianEmail);
+    
+    const dest = destino || 'ambos';
+    if (dest === 'estudiante' || dest === 'ambos') {
+      if (studentEmail) recipients.add(studentEmail);
+    }
+    if (dest === 'apoderado' || dest === 'ambos') {
+      if (guardianEmail && guardianEmail !== studentEmail) recipients.add(guardianEmail);
+    }
 
     if (recipients.size === 0) {
       return res.status(400).json({
-        message: 'No hay email disponible para este estudiante ni su apoderado',
+        message: 'No hay email disponible para el destino seleccionado',
       });
     }
 
@@ -278,7 +286,7 @@ async function resendQR(req, res) {
       sent.push(email);
     }
 
-    console.log(`[QR] Reenviado para estudiante ID: ${id} - ${studentName} a ${sent.join(', ')}`);
+    console.log(`[QR] Reenviado para estudiante ID: ${id} - ${studentName} a ${sent.join(', ')} (destino: ${dest})`);
     res.json({ message: `QR reenviado exitosamente a ${sent.join(', ')}` });
   } catch (error) {
     console.error('[QR] Error al reenviar QR:', error.message);

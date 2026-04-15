@@ -22,6 +22,7 @@ interface Student {
     rut?: string;
   } | null;
   guardianID: number | null;
+  qrUrl?: string;
 }
 
 interface Guardian {
@@ -46,6 +47,9 @@ export default function StudentsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [filterCategoria, setFilterCategoria] = useState<string>('');
+  const [qrModal, setQrModal] = useState<{ show: boolean; student: Student | null; qrUrl: string | null }>({ show: false, student: null, qrUrl: null });
+  const [resendQRModal, setResendQRModal] = useState<{ show: boolean; student: Student | null }>({ show: false, student: null });
+  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     nombres: '',
     apellidos: '',
@@ -73,6 +77,17 @@ export default function StudentsPage() {
     loadGuardians();
     loadStudents();
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.student-menu') && openMenuId !== null) {
+        setOpenMenuId(null);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [openMenuId]);
 
   const loadStudents = async () => {
     try {
@@ -189,10 +204,10 @@ export default function StudentsPage() {
     });
   };
 
-  const handleResendQR = async (studentId: number) => {
+  const handleResendQR = async (studentId: number, destino: string = 'ambos') => {
     setResendingQRId(studentId);
     try {
-      await api.post(`/students/${studentId}/resend-qr`);
+      await api.post(`/students/${studentId}/resend-qr`, { destino });
       toast.success('QR reenviado correctamente');
     } catch (error) {
       console.error('Error resending QR:', error);
@@ -200,6 +215,11 @@ export default function StudentsPage() {
     } finally {
       setResendingQRId(null);
     }
+  };
+
+  const handleViewQR = (student: Student) => {
+    const qrUrl = student.qrUrl || `${import.meta.env.VITE_API_URL || ''}/students/${student.ID}/qr`;
+    setQrModal({ show: true, student, qrUrl });
   };
 
   if (loading) return <div className="p-4">Cargando...</div>;
@@ -452,21 +472,26 @@ export default function StudentsPage() {
                 <td className="px-4 py-3 text-sm text-text-muted">
                   {student.retiradoApoderado ? 'Con Apoderado' : 'Solo'}
                 </td>
-                <td className="px-4 py-3 text-right">
+<td className="px-4 py-3 text-right space-x-1">
                   <button 
-                    onClick={() => handleResendQR(student.ID)} 
-                    disabled={resendingQRId === student.ID}
-                    className="text-blue-600 hover:text-blue-800 text-sm mr-3 disabled:opacity-50"
+                    onClick={() => handleViewQR(student)}
+                    className="px-2 py-1 text-xs font-medium bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors"
                   >
-                    {resendingQRId === student.ID ? 'Enviando...' : 'Reenviar QR'}
+                    Ver QR
                   </button>
-                  <button onClick={() => handleEdit(student)} className="text-blue-600 hover:text-blue-800 text-sm mr-3">
+                  <button 
+                    onClick={() => setResendQRModal({ show: true, student })}
+                    className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                  >
+                    Reenviar QR
+                  </button>
+                  <button onClick={() => handleEdit(student)} className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 transition-colors">
                     Editar
                   </button>
                   <button 
                     onClick={() => handleDelete(student.ID)} 
                     disabled={deletingId === student.ID}
-                    className="text-red-600 hover:text-red-800 text-sm disabled:opacity-50"
+                    className="px-2 py-1 text-xs font-medium bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors disabled:opacity-50"
                   >
                     {deletingId === student.ID ? 'Eliminando...' : 'Eliminar'}
                   </button>
@@ -483,6 +508,84 @@ export default function StudentsPage() {
           </tbody>
         </table>
       </div>
+
+      {qrModal.show && qrModal.student && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setQrModal({ show: false, student: null, qrUrl: null })}>
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-800">
+                QR de {qrModal.student.nombres} {qrModal.student.apellidos}
+              </h3>
+              <button 
+                onClick={() => setQrModal({ show: false, student: null, qrUrl: null })}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            <div className="flex justify-center mb-4">
+              <img src={qrModal.qrUrl || ''} alt="QR Code" className="w-48 h-48 rounded-sm" />
+            </div>
+            <div className="text-center text-sm text-gray-600 mb-4">
+              <p>Categoría: {qrModal.student.categoria}</p>
+            </div>
+            <div className="flex gap-2 justify-center">
+              <a 
+                href={qrModal.qrUrl || ''} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+              >
+                Abrir en nueva pestaña
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {resendQRModal.show && resendQRModal.student && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setResendQRModal({ show: false, student: null })}>
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-800">
+                Reenviar QR
+              </h3>
+              <button 
+                onClick={() => setResendQRModal({ show: false, student: null })}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">
+              ¿A quién deseas enviar el código QR de <strong>{resendQRModal.student.nombres} {resendQRModal.student.apellidos}</strong>?
+            </p>
+            <div className="flex flex-col gap-2">
+              <button 
+                onClick={() => { handleResendQR(resendQRModal.student!.ID, 'estudiante'); setResendQRModal({ show: false, student: null }); }}
+                disabled={resendingQRId === resendQRModal.student.ID}
+                className="px-4 py-3 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors text-left disabled:opacity-50"
+              >
+                📧 A la alumna ({resendQRModal.student.email || 'Sin email'})
+              </button>
+              <button 
+                onClick={() => { handleResendQR(resendQRModal.student!.ID, 'apoderado'); setResendQRModal({ show: false, student: null }); }}
+                disabled={resendingQRId === resendQRModal.student.ID}
+                className="px-4 py-3 bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors text-left disabled:opacity-50"
+              >
+                📧 Al apoderado
+              </button>
+              <button 
+                onClick={() => { handleResendQR(resendQRModal.student!.ID, 'ambos'); setResendQRModal({ show: false, student: null }); }}
+                disabled={resendingQRId === resendQRModal.student.ID}
+                className="px-4 py-3 bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors text-left disabled:opacity-50"
+              >
+                📧 A ambos
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

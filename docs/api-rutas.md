@@ -71,7 +71,7 @@ Base URL: `/api`
 | 24 | POST | `/api/students` | `authenticateToken`, `checkRole('superadmin', 'admin')` | `studentController.create` | Crear estudiante |
 | 25 | PUT | `/api/students/:id` | `authenticateToken`, `checkRole('superadmin', 'admin')` | `studentController.update` | Actualizar estudiante |
 | 26 | DELETE | `/api/students/:id` | `authenticateToken`, `checkRole('superadmin', 'admin')` | `studentController.remove` | Eliminar estudiante |
-| 27 | POST | `/api/students/:id/resend-qr` | `authenticateToken`, `checkRole('superadmin', 'admin')` | `studentController.resendQR` | Reenviar QR por email |
+| 27 | POST | `/api/students/:id/resend-qr` | `authenticateToken`, `checkRole('superadmin', 'admin')` | `studentController.resendQR` | Reenviar QR por email (body: `{ destino: 'estudiante' | 'apoderado' | 'ambos' }`) |
 
 ## Equipos
 

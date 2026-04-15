@@ -25,7 +25,7 @@ Gestiona los estudiantes del programa. Al crear un estudiante, el sistema genera
 | POST | `/api/students` | `authenticateToken`, `checkRole('superadmin', 'admin')` | Crear estudiante (+ QR + email) |
 | PUT | `/api/students/:id` | `authenticateToken`, `checkRole('superadmin', 'admin')` | Actualizar estudiante |
 | DELETE | `/api/students/:id` | `authenticateToken`, `checkRole('superadmin', 'admin')` | Eliminar estudiante |
-| POST | `/api/students/:id/resend-qr` | `authenticateToken`, `checkRole('superadmin', 'admin')` | Reenviar QR por email |
+| POST | `/api/students/:id/resend-qr` | `authenticateToken`, `checkRole('superadmin', 'admin')` | Reenviar QR por email (parametro `destino`: 'estudiante', 'apoderado', 'ambos') |
 
 ### Parametros de filtrado (GET `/api/students`)
 

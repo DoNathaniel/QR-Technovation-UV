@@ -154,7 +154,7 @@
 - [x] T7-3 En formulario: buscar/seleccionar apoderado existente o crear nuevo
 - [x] T7-4 Editar estudiante
 - [x] T7-5 Eliminar estudiante
-- [x] T7-6 Botón re-enviar QR por email
+- [x] T7-6 Botón re-enviar QR por email (con opción alumna/apoderado/ambos)
 - [x] T7-7 Validar RUT único por temporada
 - [x] T7-8 Mostrar mensaje si estudiante tiene hermanos en la misma temporada
 
