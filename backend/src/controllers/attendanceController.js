@@ -182,7 +182,8 @@ async function getBySeason(req, res) {
     const result = filtered.map(att => ({
       studentID: att.studentID,
       fecha: seasonDates.find(sd => sd.ID === att.seasonDateID)?.fecha,
-      tipo: att.tipo
+      tipo: att.tipo,
+      justificacion: att.justificacion
     }));
 
     res.json(result);
@@ -191,4 +192,55 @@ async function getBySeason(req, res) {
   }
 }
 
-module.exports = { register, getByDate, getByStudent, getStats, getBySeason };
+async function justificar(req, res) {
+  try {
+    const { studentID, fecha, justificacion } = req.body;
+    const userID = req.user?.id || 1;
+    const { seasonID } = req.query;
+    
+    console.log('[justificar] Body:', req.body, 'Query:', req.query, 'User:', req.user, 'userID:', userID);
+    
+    if (!studentID || !fecha || !justificacion) {
+      return res.status(400).json({ message: 'Faltan datos requeridos: studentID, fecha, justificacion' });
+    }
+
+    if (!seasonID) {
+      return res.status(400).json({ message: 'Falta seasonID en query' });
+    }
+
+    const seasonDate = await seasonDateRepository().findOne({
+      where: { fecha, seasonID: parseInt(seasonID) }
+    });
+
+    if (!seasonDate) {
+      return res.status(404).json({ message: 'Fecha no encontrada en la temporada' });
+    }
+
+    let attendance = await attendanceRepository().findOne({
+      where: { studentID: parseInt(studentID), seasonDateID: seasonDate.ID }
+    });
+
+    if (!attendance) {
+      attendance = attendanceRepository().create({
+        tipo: 'justificado',
+        studentID: parseInt(studentID),
+        seasonDateID: seasonDate.ID,
+        userID: userID,
+        hora: '09:00:00',
+        justificacion
+      });
+    } else {
+      attendance.justificacion = justificacion;
+      attendance.tipo = 'justificado';
+    }
+
+    await attendanceRepository().save(attendance);
+
+    res.json({ message: 'Justificación guardada', justificacion });
+  } catch (error) {
+    console.error('[justificar] Error:', error);
+    res.status(500).json({ message: 'Error al justificar', error: error.message });
+  }
+}
+
+module.exports = { register, getByDate, getByStudent, getStats, getBySeason, justificar };

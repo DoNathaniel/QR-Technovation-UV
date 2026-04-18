@@ -20,7 +20,7 @@ type FeedbackState =
   | { type: 'confirmApoderado'; nombre: string; studentID: number; requiereConfirmar: boolean };
 
 const READER_ID = 'qr-reader';
-const COOLDOWN_MS = 2500; // prevent duplicate scans
+const COOLDOWN_MS = 60000; // prevent duplicate scans
 
 export default function QrScanner({ userID, connected, onReconnect, onRegistered, date }: QrScannerProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -105,6 +105,9 @@ export default function QrScanner({ userID, connected, onReconnect, onRegistered
   }, [isOpen]);
 
   const audio = new Audio('/scanner.mp3');
+  audio.volume = 0.7;
+  const audio_success = new Audio('/success.mp3');
+  audio_success.volume = 0.7;
 
   const handleDecode = useCallback(
     async (text: string) => {
@@ -119,7 +122,6 @@ export default function QrScanner({ userID, connected, onReconnect, onRegistered
       lastScannedTimeRef.current = now;
       processingRef.current = true;
 
-      audio.volume = 0.5;
       audio.play().catch(() => {});
 
       setFeedback({ type: 'scanning' });
@@ -199,6 +201,7 @@ export default function QrScanner({ userID, connected, onReconnect, onRegistered
           : [];
 
         setFeedback({ type: 'success', nombre, tipo: attendance.tipo, requiereApoderado: false, sisters: sistersInfo });
+        audio_success.play().catch(() => {});
         onRegistered?.(attendance);
       } catch (err: unknown) {
         const msg =
@@ -234,6 +237,7 @@ export default function QrScanner({ userID, connected, onReconnect, onRegistered
         ? sisters.map(s => ({ nombre: `${s.nombres} ${s.apellidos}` })) 
         : [];
       setFeedback({ type: 'success', nombre, tipo: attendance.tipo, requiereApoderado: true, sisters: sistersInfo });
+      audio_success.play().catch(() => {});
       onRegistered?.(attendance);
     } catch (err) {
       setFeedback({ type: 'error', message: 'Error al registrar salida' });

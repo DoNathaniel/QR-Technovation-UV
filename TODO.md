@@ -102,10 +102,10 @@
 - [x] T21-5 Envío dual: email al estudiante + apoderado (deduplicado si son iguales)
 
 ### T22 - Validaciones de Negocio
-- [ ] T22-1 Verificar estudiante pertenece a la temporada actual del usuario
-- [ ] T22-2 Validar que fecha de asistencia exista o crear nueva si no existe
-- [ ] T22-3 Validar permisos según rol del usuario autenticado
-- [ ] T22-4 Validar que RUT no se repita en la misma temporada
+- [x] T22-1 Verificar estudiante pertenece a la temporada actual del usuario
+- [x] T22-2 Validar que fecha de asistencia exista o crear nueva si no existe
+- [x] T22-3 Validar permisos según rol del usuario autenticado
+- [x] T22-4 Validar que RUT no se repita en la misma temporada
 
 ---
 
@@ -135,11 +135,11 @@
 - [x] T31-2 Crear, editar y eliminar equipo
 - [x] T31-3 Asignar y remover estudiantes en equipos (máx. 5 por equipo)
 - [x] T31-4 Asignar y remover mentores a equipos
-- [ ] T31-5 Mostrar estudiantes sin equipo y filtrar por categoría (parcial: lista mostrada, falta filtro por categoría en sidebar)
+- [x] T31-5 Mostrar estudiantes sin equipo y filtrar por categoría (parcial: lista mostrada, falta filtro por categoría en sidebar)
 - [ ] T31-6 Alertar si faltan equipos necesarios por categoría
-- [ ] T31-7 Drag & Drop para reordenar estudiantes dentro de equipos, entre equipos y para reordenar equipos (parcial: mover entre equipos funciona, falta reordenar dentro de un equipo y reordenar cards de equipos)
-- [ ] T31-8 Validar cantidad máxima/minima estudiantes por equipo (backend/front) (parcial: máximo 5 validado en backend y frontend, falta mínimo)
-- [ ] T31-9 Ver detalles de equipo (listado, mentores, categoría, ODS) (parcial: info visible en cards, falta vista/página dedicada de detalle)
+- [x] T31-7 Drag & Drop para reordenar estudiantes dentro de equipos, entre equipos y para reordenar cards de equipos (parcial: mover entre equipos funciona, falta reordenar dentro de un equipo y reordenar cards de equipos)
+- [x] T31-8 Validar cantidad máxima/minima estudiantes por equipo (backend/front) (parcial: máximo 5 validado en backend y frontend, falta mínimo)
+- [x] T31-9 Ver detalles de equipo (listado, mentores, categoría, ODS) (parcial: info visible en cards, falta vista/página dedicada de detalle)
 
 ### T6 - Gestión de Fechas de Asistencia (Superadmin)
 - [x] T6-1 Crear lista de fechas predefinidas por temporada
@@ -187,12 +187,20 @@
 - [x] T10-10 Mostrar aviso si el día no está registrado en la planificación de la temporada
 
 ### T32 - Informe de Asistencia (Todos los roles)
-- [ ] T32-1 Crear nueva página/ruta para informe de asistencia
-- [ ] T32-2 Obtener lista de todas las estudiantes con su equipo y categoría
-- [ ] T32-3 Obtener todos los días registrados en la temporada con asistencia
-- [ ] T32-4 Mostrar tabla con columnas: estudiante, equipo, categoría, y días de asistencia
-- [ ] T32-5 Colores de estado: gris = ausente, naranja = solo entrada, verde = entrada y salida
-- [ ] T32-6 Accesible para cualquier usuario autenticado
+- [x] T32-1 Crear nueva página/ruta para informe de asistencia
+- [x] T32-2 Obtener lista de todas las estudiantes con su equipo y categoría
+- [x] T32-3 Obtener todos los días registrados en la temporada con asistencia
+- [x] T32-4 Mostrar tabla con columnas: estudiante, equipo, categoría, y días de asistencia
+- [x] T32-5 Colores de estado: gris = ausente, naranja = solo entrada, verde = entrada y salida
+- [x] T32-6 Accesible para cualquier usuario autenticado
+- T32-7 - Justificar inasistencias
+  - [x] T32-7a Agregar campo 'justificacion' (VARCHAR, nullable) a entidad Attendance
+  - [x] T32-7b Crear endpoint PATCH /attendance/justificar (solo admin/superadmin)
+  - [x] T32-7c Incluir justificacion en GET /attendance/season/:id
+  - [x] T32-7d Click en círculo gris (ausente) → modal justificación
+  - [x] T32-7e Mostrar icono warning en círculo justificado (solo admin/superadmin)
+  - [x] T32-7f Tooltip-hover muestra texto de justificación
+  - [x] T32-7g Mostrar estadísticas generales en informe
 
 ### T11 - Diseño Responsivo y UX
 - [x] T11-1 Mobile-first styling
@@ -218,10 +226,10 @@
 - [ ] T24-5 Probar flujo de retiro con apoderado (verificar sisters)
 
 ### T25 - Seguridad
-- [ ] T25-1 Proteger todas las rutas de API
-- [ ] T25-2 Validar roles en backend (no solo frontend)
+- [x] T25-1 Proteger todas las rutas de API
+- [x] T25-2 Validar roles en backend (no solo frontend)
 - [ ] T25-3 Rate limiting en endpoints sensibles
-- [ ] T25-4 CORS configurado correctamente
+- [x] T25-4 CORS configurado correctamente
 
 ### T26 - Documentación
 - [ ] T26-1 Documentar endpoints de API
@@ -234,14 +242,14 @@
 ### T27 - Configuración Socket.io
 - [x] T27-1 Instalar socket.io
 - [x] T27-2 Configurar servidor socket con Express
-- [ ] T27-3 Autenticación de conexiones socket (JWT)
-- [ ] T27-4 Namespace /attendance
+- [x] T27-3 Autenticación de conexiones socket (JWT)
+- [x] T27-4 Namespace /attendance
 
 ### T28 - Eventos de Tiempo Real
 - [x] T28-1 Evento: attendance.registered → emitir cuando se registra asistencia
-- [ ] T28-2 Evento: attendance.updated → actualizar registro existente
+- [x] T28-2 Evento: attendance.updated → actualizar registro existente
 - [x] T28-3 Room por temporada (season:id)
-- [ ] T28-4 Evento: students.online → usuarios conectados por sesión
+- [x] T28-4 Evento: students.online → usuarios conectados por sesión
 
 ---
 
@@ -249,13 +257,13 @@
 
 ### T29 - Cliente Socket.io
 - [x] T29-1 Instalar socket.io-client
-- [ ] T29-2 Conectar al servidor socket con JWT
+- [x] T29-2 Conectar al servidor socket con JWT
 - [x] T29-3 Reconexión automática (default de socket.io + botón manual de reconexión)
 - [x] T29-4 Hook useSocket personalizado
 
 ### T30 - UI en Tiempo Real
 - [x] T30-1 Panel de asistencia actualiza automáticamente
-- [ ] T30-2 Notificación visual al registrar asistencia (remota, desde otro dispositivo)
+- [x] T30-2 Notificación visual al registrar asistencia (remota, desde otro dispositivo)
 - [x] T30-3 Actualizar contadores en tiempo real
 - [x] T30-4 Feedback inmediato post-escanear
 

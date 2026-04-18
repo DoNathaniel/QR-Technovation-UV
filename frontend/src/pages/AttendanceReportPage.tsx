@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import type { Categoria } from '../types';
 
 interface StudentInfo {
@@ -16,6 +17,7 @@ interface DayAttendance {
   fecha: string;
   hasEntrada: boolean;
   hasSalida: boolean;
+  justificacion?: string;
 }
 
 interface StudentAttendance {
@@ -40,11 +42,17 @@ function formatDateDisplay(dateStr: string): string {
 
 export default function AttendanceReportPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isAdmin = user?.rol === 'superadmin' || user?.rol === 'admin';
   const [loading, setLoading] = useState(true);
   const [students, setStudents] = useState<StudentInfo[]>([]);
   const [seasonDates, setSeasonDates] = useState<string[]>([]);
-  const [attendances, setAttendances] = useState<{ studentID: number; fecha: string; tipo: 'entrada' | 'salida' }[]>([]);
+  const [attendances, setAttendances] = useState<{ studentID: number; fecha: string; tipo: 'entrada' | 'salida'; justificacion?: string }[]>([]);
   const [filterCategoria, setFilterCategoria] = useState<Categoria | 'todas'>('todas');
+  const [showJustifyModal, setShowJustifyModal] = useState(false);
+  const [justifyData, setJustifyData] = useState<{ studentID: number; nombre: string; fecha: string } | null>(null);
+  const [justifyText, setJustifyText] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const seasonIdStr = localStorage.getItem('currentSeasonId');
   const seasonID = seasonIdStr ? parseInt(seasonIdStr, 10) : null;
@@ -101,6 +109,9 @@ export default function AttendanceReportPage() {
       } else {
         student.days[a.fecha].hasSalida = true;
       }
+      if (a.justificacion) {
+        student.days[a.fecha].justificacion = a.justificacion;
+      }
     }
 
     for (const student of byStudent.values()) {
@@ -127,6 +138,18 @@ export default function AttendanceReportPage() {
     if (filterCategoria === 'todas') return studentAttendance;
     return studentAttendance.filter((s) => s.categoria === filterCategoria);
   }, [studentAttendance, filterCategoria]);
+
+  const stats = useMemo(() => {
+    const totalStudents = studentAttendance.length;
+    const totalDays = validDates.length;
+    let totalAttendance = 0;
+    for (const s of studentAttendance) {
+      totalAttendance += s.attendanceDays;
+    }
+    const totalPossible = totalStudents * totalDays;
+    const avgPercent = totalPossible > 0 ? Math.round((totalAttendance / totalPossible) * 100) : 0;
+    return { totalStudents, totalDays, avgPercent };
+  }, [studentAttendance, validDates]);
 
   if (!seasonID) {
     return <div className="p-4">Debes seleccionar una temporada.</div>;
@@ -157,8 +180,26 @@ export default function AttendanceReportPage() {
           <option value="Senior">Senior</option>
         </select>
         <span className="text-xs text-text-muted ml-auto">
-          {filteredStudents.length} estudiante{filteredStudents.length !== 1 ? 's' : ''} · {validDates.length} días con asistencia
+          {filteredStudents.length} estudiante{filteredStudents.length !== 1 ? 's' : ''} · {validDates.length} días
         </span>
+      </div>
+
+      {/* Stats Bar */}
+      <div className="flex gap-4 bg-slate-50 rounded-lg p-3 border border-slate-200">
+        <div className="flex-1 text-center">
+          <div className="text-lg font-bold text-slate-700">{stats.totalStudents}</div>
+          <div className="text-xs text-text-muted">Estudiantes</div>
+        </div>
+        <div className="flex-1 text-center border-l border-slate-200">
+          <div className="text-lg font-bold text-slate-700">{stats.totalDays}</div>
+          <div className="text-xs text-text-muted">Días registrados</div>
+        </div>
+        <div className="flex-1 text-center border-l border-slate-200">
+          <div className={`text-lg font-bold ${stats.avgPercent >= 80 ? 'text-green-600' : stats.avgPercent >= 50 ? 'text-orange-500' : 'text-red-500'}`}>
+            {stats.avgPercent}%
+          </div>
+          <div className="text-xs text-text-muted">Asistencia promedio</div>
+        </div>
       </div>
 
       <div className="overflow-x-auto rounded-lg shadow border border-gray-200 bg-white">
@@ -216,15 +257,28 @@ export default function AttendanceReportPage() {
                         title = 'Solo entrada';
                       } else {
                         bgClass = 'bg-gray-200';
-                        title = 'No asistió';
+                        title = day?.justificacion ? `No asistió: ${day.justificacion}` : 'No asistió';
                       }
                     }
+                    const isClickable = isAdmin && isValidDate && !day?.hasEntrada;
                     return (
                       <td key={fecha} className="px-1 py-2 text-center">
                         <div
-                          className={`w-5 h-5 rounded mx-auto ${bgClass}`}
+                          className={`w-5 h-5 rounded mx-auto ${bgClass} ${isClickable ? 'cursor-pointer hover:ring-2 hover:ring-amber-400' : ''} relative`}
                           title={title}
-                        />
+                          onClick={() => {
+                            if (isClickable) {
+                              setJustifyData({ studentID: s.studentID, nombre: `${s.apellidos}, ${s.nombres}`, fecha });
+                              setShowJustifyModal(true);
+                            }
+                          }}
+                        >
+                          {day?.justificacion && (
+                            <svg className="absolute -top-1 -right-1 w-3 h-3 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                            </svg>
+                          )}
+                        </div>
                       </td>
                     );
                   })}
@@ -263,6 +317,57 @@ export default function AttendanceReportPage() {
           <span>Día sin asistencia registrada</span>
         </div>
       </div>
+
+      {/* Justify Modal */}
+      {showJustifyModal && justifyData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => setShowJustifyModal(false)}>
+          <div className="bg-white rounded-lg shadow-xl max-w-sm w-full p-4" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-bold text-text mb-2">Justificar inasistencia</h3>
+            <p className="text-sm text-text-muted mb-3">
+              {justifyData.nombre} - {formatDateDisplay(justifyData.fecha)}
+            </p>
+            <textarea
+              value={justifyText}
+              onChange={(e) => setJustifyText(e.target.value)}
+              placeholder="Motivo de la inasistencia."
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm mb-3 resize-none"
+              rows={3}
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={async () => {
+                  if (!justifyText.trim()) return;
+                  setSubmitting(true);
+                  try {
+                    await api.patch(`/attendance/justificar?seasonID=${seasonID}`, {
+                      studentID: justifyData.studentID,
+                      fecha: justifyData.fecha,
+                      justificacion: justifyText.trim(),
+                    });
+                    setShowJustifyModal(false);
+                    setJustifyText('');
+                    window.location.reload();
+                  } catch (err) {
+                    console.error('Error justifying:', err);
+                  } finally {
+                    setSubmitting(false);
+                  }
+                }}
+                disabled={!justifyText.trim() || submitting}
+                className="flex-1 bg-green-600 text-white font-semibold py-2 px-4 rounded hover:bg-green-700 disabled:opacity-50"
+              >
+                {submitting ? 'Guardando...' : 'Guardar'}
+              </button>
+              <button
+                onClick={() => { setShowJustifyModal(false); setJustifyText(''); }}
+                className="flex-1 bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded hover:bg-gray-300"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

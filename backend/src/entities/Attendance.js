@@ -12,7 +12,7 @@ const AttendanceSchema = new EntitySchema({
     },
     tipo: {
       type: 'enum',
-      enum: ['entrada', 'salida'],
+      enum: ['entrada', 'salida', 'justificado'],
     },
     hora: {
       type: 'time',
@@ -29,6 +29,11 @@ const AttendanceSchema = new EntitySchema({
     createdAt: {
       type: 'timestamp',
       createDate: true,
+    },
+    justificacion: {
+      type: 'varchar',
+      length: 500,
+      nullable: true,
     },
   },
   relations: {
