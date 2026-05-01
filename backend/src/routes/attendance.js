@@ -11,5 +11,7 @@ router.get('/student/:studentID', attendanceController.getByStudent);
 router.get('/stats', attendanceController.getStats);
 router.get('/season/:seasonID', attendanceController.getBySeason);
 router.patch('/justificar', authenticateToken, checkRole('superadmin', 'admin'), attendanceController.justificar);
+router.post('/manual/entrada', authenticateToken, checkRole('superadmin', 'admin'), attendanceController.manualEntrada);
+router.post('/manual/salida', authenticateToken, checkRole('superadmin', 'admin'), attendanceController.manualSalida);
 
 module.exports = router;

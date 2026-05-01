@@ -67,6 +67,7 @@ async function register(req, res) {
 
     // Emit real-time event to all clients in the season room
     if (req.io) {
+      result.fecha = seasonDate.fecha;
       req.io.to(`season:${student.seasonID}`).emit('attendance-registered', result);
     }
 
@@ -236,6 +237,22 @@ async function justificar(req, res) {
 
     await attendanceRepository().save(attendance);
 
+    if (req.io) {
+      const student = await studentRepository().findOne({ where: { ID: parseInt(studentID) } });
+      if (student) {
+        req.io.to(`season:${student.seasonID}`).emit('attendance-registered', {
+          ID: attendance.ID,
+          tipo: 'justificado',
+          hora: attendance.hora,
+          studentID: attendance.studentID,
+          seasonDateID: attendance.seasonDateID,
+          justificacion: attendance.justificacion,
+          fecha,
+          student
+        });
+      }
+    }
+
     res.json({ message: 'Justificación guardada', justificacion });
   } catch (error) {
     console.error('[justificar] Error:', error);
@@ -243,4 +260,112 @@ async function justificar(req, res) {
   }
 }
 
-module.exports = { register, getByDate, getByStudent, getStats, getBySeason, justificar };
+async function manualEntrada(req, res) {
+  try {
+    const { studentID, fecha } = req.body;
+    const userID = req.user?.id || 1;
+
+    if (!studentID || !fecha) {
+      return res.status(400).json({ message: 'Faltan datos requeridos: studentID, fecha' });
+    }
+
+    const student = await studentRepository().findOne({ where: { ID: studentID } });
+    if (!student) {
+      return res.status(404).json({ message: 'Estudiante no encontrada' });
+    }
+
+    let seasonDate = await seasonDateRepository().findOne({ where: { fecha, seasonID: student.seasonID } });
+    if (!seasonDate) {
+      return res.status(404).json({ message: 'Fecha no encontrada en la temporada' });
+    }
+
+    const existing = await attendanceRepository().findOne({
+      where: { studentID, seasonDateID: seasonDate.ID, tipo: 'entrada' }
+    });
+
+    if (existing) {
+      return res.status(400).json({ message: 'Ya existe una entrada para esta fecha' });
+    }
+
+    const attendance = attendanceRepository().create({
+      tipo: 'entrada',
+      hora: new Date().toTimeString().split(' ')[0],
+      studentID,
+      seasonDateID: seasonDate.ID,
+      userID
+    });
+
+    const result = await attendanceRepository().save(attendance);
+    result.student = student;
+    result.retiradoApoderado = student.retiradoApoderado;
+
+    if (req.io) {
+      result.fecha = seasonDate.fecha;
+      req.io.to(`season:${student.seasonID}`).emit('attendance-registered', result);
+    }
+
+    res.status(201).json(result);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al registrar entrada manual', error: error.message });
+  }
+}
+
+async function manualSalida(req, res) {
+  try {
+    const { studentID, fecha } = req.body;
+    const userID = req.user?.id || 1;
+
+    if (!studentID || !fecha) {
+      return res.status(400).json({ message: 'Faltan datos requeridos: studentID, fecha' });
+    }
+
+    const student = await studentRepository().findOne({ where: { ID: studentID } });
+    if (!student) {
+      return res.status(404).json({ message: 'Estudiante no encontrada' });
+    }
+
+    const seasonDate = await seasonDateRepository().findOne({ where: { fecha, seasonID: student.seasonID } });
+    if (!seasonDate) {
+      return res.status(404).json({ message: 'Fecha no encontrada en la temporada' });
+    }
+
+    const entradaExists = await attendanceRepository().findOne({
+      where: { studentID, seasonDateID: seasonDate.ID, tipo: 'entrada' }
+    });
+
+    if (!entradaExists) {
+      return res.status(400).json({ message: 'No existe entrada para esta fecha' });
+    }
+
+    const existingSalida = await attendanceRepository().findOne({
+      where: { studentID, seasonDateID: seasonDate.ID, tipo: 'salida' }
+    });
+
+    if (existingSalida) {
+      return res.status(400).json({ message: 'Ya existe una salida para esta fecha' });
+    }
+
+    const attendance = attendanceRepository().create({
+      tipo: 'salida',
+      hora: new Date().toTimeString().split(' ')[0],
+      studentID,
+      seasonDateID: seasonDate.ID,
+      userID
+    });
+
+    const result = await attendanceRepository().save(attendance);
+    result.student = student;
+    result.retiradoApoderado = student.retiradoApoderado;
+
+    if (req.io) {
+      result.fecha = seasonDate.fecha;
+      req.io.to(`season:${student.seasonID}`).emit('attendance-registered', result);
+    }
+
+    res.status(201).json(result);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al registrar salida manual', error: error.message });
+  }
+}
+
+module.exports = { register, getByDate, getByStudent, getStats, getBySeason, justificar, manualEntrada, manualSalida };

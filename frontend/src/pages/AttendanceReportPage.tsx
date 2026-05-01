@@ -1,8 +1,10 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../hooks/useSocket';
 import type { Categoria } from '../types';
+import type { Attendance } from '../types';
 
 interface StudentInfo {
   ID: number;
@@ -40,6 +42,11 @@ function formatDateDisplay(dateStr: string): string {
   });
 }
 
+function todayStr(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 export default function AttendanceReportPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -47,15 +54,102 @@ export default function AttendanceReportPage() {
   const [loading, setLoading] = useState(true);
   const [students, setStudents] = useState<StudentInfo[]>([]);
   const [seasonDates, setSeasonDates] = useState<string[]>([]);
-  const [attendances, setAttendances] = useState<{ studentID: number; fecha: string; tipo: 'entrada' | 'salida'; justificacion?: string }[]>([]);
+  const [attendances, setAttendances] = useState<{ studentID: number; fecha: string; tipo: 'entrada' | 'salida' | 'justificado'; justificacion?: string }[]>([]);
   const [filterCategoria, setFilterCategoria] = useState<Categoria | 'todas'>('todas');
   const [showJustifyModal, setShowJustifyModal] = useState(false);
   const [justifyData, setJustifyData] = useState<{ studentID: number; nombre: string; fecha: string } | null>(null);
   const [justifyText, setJustifyText] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  // T33-4: Menú contextual para acciones manuales
+  const [actionMenu, setActionMenu] = useState<{ x: number; y: number; studentID: number; nombre: string; fecha: string; hasEntrada: boolean; hasSalida: boolean } | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  // T33-1: Modo asistencia manual
+  const [manualMode, setManualMode] = useState(false);
+  // T33-3: Selector de fecha
+  const [selectedDate, setSelectedDate] = useState<string>(todayStr());
+
   const seasonIdStr = localStorage.getItem('currentSeasonId');
   const seasonID = seasonIdStr ? parseInt(seasonIdStr, 10) : null;
+
+  // T33-2: Conectar sockets para tiempo real
+  const { on } = useSocket(seasonID);
+
+  // Solo fechas <= hoy
+  const availableDates = useMemo(() => {
+    const today = todayStr();
+    return seasonDates.filter(d => d <= today).sort().reverse();
+  }, [seasonDates]);
+
+  // Handler para cuando llega un evento de asistencia en tiempo real
+  const handleAttendanceRegistered = useCallback((data: Attendance) => {
+    if (!data.studentID || !data.tipo || !data.fecha) return;
+    const fecha = data.fecha as string;
+    setAttendances(prev => {
+      const exists = prev.some(a => a.studentID === data.studentID && a.fecha === fecha && a.tipo === data.tipo);
+      if (exists) return prev;
+      return [...prev, { studentID: data.studentID, fecha, tipo: data.tipo, justificacion: data.justificacion }];
+    });
+  }, []);
+
+  useEffect(() => {
+    const unsub = on<Attendance>('attendance-registered', handleAttendanceRegistered);
+    return unsub;
+  }, [on, handleAttendanceRegistered]);
+
+  // Cerrar menú contextual al hacer click fuera
+  useEffect(() => {
+    const handleClickOutside = () => setActionMenu(null);
+    if (actionMenu) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [actionMenu]);
+
+  // Funciones para acciones manuales
+  const handleManualEntrada = async () => {
+    if (!actionMenu || !seasonID) return;
+    setActionLoading(true);
+    try {
+      await api.post('/attendance/manual/entrada', {
+        studentID: actionMenu.studentID,
+        fecha: actionMenu.fecha,
+      });
+      const attendanceRes = await api.get<{ studentID: number; fecha: string; tipo: 'entrada' | 'salida' }[]>(`/attendance/season/${seasonID}`);
+      setAttendances(attendanceRes.data);
+      setActionMenu(null);
+    } catch (err) {
+      console.error('Error marking manual entrada:', err);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleManualSalida = async () => {
+    if (!actionMenu || !seasonID) return;
+    setActionLoading(true);
+    try {
+      await api.post('/attendance/manual/salida', {
+        studentID: actionMenu.studentID,
+        fecha: actionMenu.fecha,
+      });
+      const attendanceRes = await api.get<{ studentID: number; fecha: string; tipo: 'entrada' | 'salida' }[]>(`/attendance/season/${seasonID}`);
+      setAttendances(attendanceRes.data);
+      setActionMenu(null);
+    } catch (err) {
+      console.error('Error marking manual salida:', err);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleOpenJustify = () => {
+    if (!actionMenu) return;
+    setJustifyData({ studentID: actionMenu.studentID, nombre: actionMenu.nombre, fecha: actionMenu.fecha });
+    setShowJustifyModal(true);
+    setActionMenu(null);
+  };
 
   useEffect(() => {
     if (!seasonID) return;
@@ -166,7 +260,36 @@ export default function AttendanceReportPage() {
           &larr; Volver
         </button>
         <h1 className="text-xl sm:text-2xl font-bold text-text">Informe de Asistencia</h1>
+        {isAdmin && (
+          <label className="ml-auto flex items-center gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={manualMode}
+              onChange={(e) => setManualMode(e.target.checked)}
+              className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+            />
+            <span className="text-sm font-medium text-blue-700">Modo Asistencia Manual</span>
+          </label>
+        )}
       </div>
+
+      {manualMode && isAdmin && (
+        <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg p-3">
+          <span className="text-sm font-medium text-blue-800">Fecha:</span>
+          <select
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            className="px-3 py-1.5 border border-blue-300 rounded-lg text-sm bg-white"
+          >
+            {availableDates.map((d) => (
+              <option key={d} value={d}>{formatDateDisplay(d)}</option>
+            ))}
+          </select>
+          <span className="text-xs text-blue-600 ml-auto">
+            Solo puede modificar fechas pasadas o de hoy
+          </span>
+        </div>
+      )}
 
       <div className="flex items-center gap-2 flex-wrap">
         <select
@@ -260,14 +383,26 @@ export default function AttendanceReportPage() {
                         title = day?.justificacion ? `No asistió: ${day.justificacion}` : 'No asistió';
                       }
                     }
-                    const isClickable = isAdmin && isValidDate && !day?.hasEntrada;
+                    const isEditable = isAdmin && manualMode && fecha <= todayStr();
+                    const isLegacyClickable = isAdmin && isValidDate && !day?.hasEntrada;
                     return (
                       <td key={fecha} className="px-1 py-2 text-center">
                         <div
-                          className={`w-5 h-5 rounded mx-auto ${bgClass} ${isClickable ? 'cursor-pointer hover:ring-2 hover:ring-amber-400' : ''} relative`}
+                          className={`w-5 h-5 rounded mx-auto ${bgClass} ${isEditable || isLegacyClickable ? 'cursor-pointer hover:ring-2 hover:ring-amber-400' : ''} relative`}
                           title={title}
-                          onClick={() => {
-                            if (isClickable) {
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (isEditable) {
+                              setActionMenu({
+                                x: e.clientX,
+                                y: e.clientY,
+                                studentID: s.studentID,
+                                nombre: `${s.apellidos}, ${s.nombres}`,
+                                fecha,
+                                hasEntrada: !!day?.hasEntrada,
+                                hasSalida: !!day?.hasSalida,
+                              });
+                            } else if (isLegacyClickable) {
                               setJustifyData({ studentID: s.studentID, nombre: `${s.apellidos}, ${s.nombres}`, fecha });
                               setShowJustifyModal(true);
                             }
@@ -318,6 +453,54 @@ export default function AttendanceReportPage() {
         </div>
       </div>
 
+      {/* Action Menu */}
+      {actionMenu && (
+        <div
+          className="fixed z-50 bg-white rounded-lg shadow-xl border border-gray-200 py-1 min-w-[180px]"
+          style={{ left: actionMenu.x, top: actionMenu.y }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {actionLoading ? (
+            <div className="px-3 py-3 text-center text-sm text-gray-500 flex items-center justify-center gap-2">
+              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+              Procesando...
+            </div>
+          ) : (
+            <>
+              <button
+                onClick={handleManualEntrada}
+                disabled={actionMenu.hasEntrada}
+                className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 ${actionMenu.hasEntrada ? 'text-gray-400' : 'text-gray-700'}`}
+              >
+                <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                Marcar entrada
+              </button>
+              <button
+                onClick={handleManualSalida}
+                disabled={!actionMenu.hasEntrada || actionMenu.hasSalida}
+                className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 ${!actionMenu.hasEntrada || actionMenu.hasSalida ? 'text-gray-400' : 'text-gray-700'}`}
+              >
+                <span className="w-2 h-2 rounded-full bg-orange-400"></span>
+                Marcar salida
+              </button>
+              <hr className="my-1 border-gray-100" />
+              <button
+                onClick={handleOpenJustify}
+                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 text-amber-700"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                Justificar inasistencia
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
       {/* Justify Modal */}
       {showJustifyModal && justifyData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => setShowJustifyModal(false)}>
@@ -336,7 +519,7 @@ export default function AttendanceReportPage() {
             <div className="flex gap-2">
               <button
                 onClick={async () => {
-                  if (!justifyText.trim()) return;
+                  if (!justifyText.trim() || !seasonID) return;
                   setSubmitting(true);
                   try {
                     await api.patch(`/attendance/justificar?seasonID=${seasonID}`, {
@@ -344,9 +527,10 @@ export default function AttendanceReportPage() {
                       fecha: justifyData.fecha,
                       justificacion: justifyText.trim(),
                     });
+                    const attendanceRes = await api.get<{ studentID: number; fecha: string; tipo: 'entrada' | 'salida' | 'justificado'; justificacion?: string }[]>(`/attendance/season/${seasonID}`);
+                    setAttendances(attendanceRes.data);
                     setShowJustifyModal(false);
                     setJustifyText('');
-                    window.location.reload();
                   } catch (err) {
                     console.error('Error justifying:', err);
                   } finally {

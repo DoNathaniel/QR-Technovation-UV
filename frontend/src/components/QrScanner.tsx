@@ -14,7 +14,7 @@ interface QrScannerProps {
 
 type FeedbackState =
   | { type: 'idle' }
-  | { type: 'success'; nombre: string; tipo: 'entrada' | 'salida'; requiereApoderado: boolean; sisters: { nombre: string }[] }
+  | { type: 'success'; nombre: string; tipo: 'entrada' | 'salida' | 'justificado'; requiereApoderado: boolean; sisters: { nombre: string }[] }
   | { type: 'error'; message: string }
   | { type: 'scanning' }
   | { type: 'confirmApoderado'; nombre: string; studentID: number; requiereConfirmar: boolean };
