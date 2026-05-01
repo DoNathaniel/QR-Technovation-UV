@@ -85,15 +85,18 @@ export interface Student {
 
 export interface Attendance {
   ID: number;
-  tipo: 'entrada' | 'salida';
+  tipo: 'entrada' | 'salida' | 'justificado';
   hora: string;
   studentID: number;
   seasonDateID: number;
   userID: number;
   createdAt: string;
   student?: Student;
-  requeridoApoderado?: boolean;  // T20-6: flag para verificar si requiere confirmacion visual
-  sisters?: { ID: number; nombres: string; apellidos: string }[];  // T20-7: sisters del mismo apoderado
+  requeridoApoderado?: boolean;
+  sisters?: { ID: number; nombres: string; apellidos: string }[];
+  justificacion?: string;
+  retiradoApoderado?: boolean;
+  fecha?: string;
 }
 
 export interface AttendanceStats {
