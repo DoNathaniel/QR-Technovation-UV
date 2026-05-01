@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guia para Mentores/as - Sistema de Asistencia QR</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 18mm 16mm 18mm 16mm;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 11pt;
+      line-height: 1.55;
+      color: #1a202c;
+      background: #ffffff;
+      max-width: 210mm;
+      margin: 0 auto;
+      padding: 20px 30px;
+    }
+
+    /* ── Cover / Header ── */
+    .cover {
+      text-align: center;
+      padding: 30px 0 20px;
+      border-bottom: 3px solid #1B3A59;
+      margin-bottom: 28px;
+    }
+
+    .cover .logos {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 30px;
+      flex-wrap: wrap;
+      margin-bottom: 22px;
+    }
+
+    .cover .logos img {
+      height: 60px;
+      object-fit: contain;
+    }
+
+    .cover h1 {
+      font-size: 22pt;
+      color: #1B3A59;
+      margin-bottom: 4px;
+      font-weight: 700;
+    }
+
+    .cover .subtitle {
+      font-size: 12pt;
+      color: #3D7EB5;
+      font-weight: 500;
+    }
+
+    /* ── Table of contents ── */
+    .toc {
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 18px 24px;
+      margin-bottom: 28px;
+      page-break-after: avoid;
+    }
+
+    .toc h2 {
+      font-size: 13pt;
+      color: #1B3A59;
+      margin-bottom: 10px;
+    }
+
+    .toc ol {
+      padding-left: 20px;
+    }
+
+    .toc li {
+      margin-bottom: 3px;
+      font-size: 10.5pt;
+    }
+
+    .toc a {
+      color: #3D7EB5;
+      text-decoration: none;
+    }
+
+    .toc a:hover {
+      text-decoration: underline;
+    }
+
+    /* ── Sections ── */
+    h2 {
+      font-size: 15pt;
+      color: #1B3A59;
+      border-bottom: 2px solid #D4007A;
+      padding-bottom: 5px;
+      margin-top: 32px;
+      margin-bottom: 14px;
+      page-break-after: avoid;
+    }
+
+    h3 {
+      font-size: 12pt;
+      color: #3D7EB5;
+      margin-top: 20px;
+      margin-bottom: 8px;
+      page-break-after: avoid;
+    }
+
+    p {
+      margin-bottom: 10px;
+      text-align: justify;
+    }
+
+    ul, ol {
+      margin-bottom: 12px;
+      padding-left: 24px;
+    }
+
+    li {
+      margin-bottom: 5px;
+    }
+
+    strong {
+      color: #1B3A59;
+    }
+
+    /* ── Tables ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0 16px;
+      font-size: 10.5pt;
+    }
+
+    th {
+      background: #1B3A59;
+      color: #ffffff;
+      padding: 8px 12px;
+      text-align: left;
+      font-weight: 600;
+    }
+
+    td {
+      padding: 7px 12px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    tr:nth-child(even) td {
+      background: #f7fafc;
+    }
+
+    /* ── Info boxes ── */
+    .info-box {
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin: 14px 0;
+      font-size: 10.5pt;
+      page-break-inside: avoid;
+    }
+
+    .info-box.blue {
+      background: #ebf8ff;
+      border-left: 4px solid #3D7EB5;
+      color: #2c5282;
+    }
+
+    .info-box.pink {
+      background: #fff5f7;
+      border-left: 4px solid #D4007A;
+      color: #97266d;
+    }
+
+    .info-box.amber {
+      background: #fffff0;
+      border-left: 4px solid #d69e2e;
+      color: #975a16;
+    }
+
+    .info-box.green {
+      background: #f0fff4;
+      border-left: 4px solid #38a169;
+      color: #276749;
+    }
+
+    .info-box strong {
+      color: inherit;
+    }
+
+    /* ── Step cards ── */
+    .step {
+      display: flex;
+      gap: 14px;
+      margin: 12px 0;
+      page-break-inside: avoid;
+    }
+
+    .step-number {
+      flex-shrink: 0;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #D4007A;
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 14pt;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 2px;
+    }
+
+    .step-content {
+      flex: 1;
+    }
+
+    /* ── Color dots for status ── */
+    .dot {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    .dot.green { background: #38a169; }
+    .dot.orange { background: #d69e2e; }
+    .dot.gray { background: #a0aec0; }
+    .dot.red { background: #e53e3e; }
+    .dot.blue { background: #3D7EB5; }
+    .dot.pink { background: #D4007A; }
+
+    /* ── Status badge simulation ── */
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 9pt;
+      font-weight: 600;
+      vertical-align: middle;
+    }
+
+    .badge.green { background: #c6f6d5; color: #276749; }
+    .badge.orange { background: #fefcbf; color: #975a16; }
+    .badge.gray { background: #e2e8f0; color: #4a5568; }
+    .badge.red { background: #fed7d7; color: #9b2c2c; }
+
+    /* ── QR example ── */
+    .qr-example {
+      text-align: center;
+      margin: 16px 0;
+      page-break-inside: avoid;
+    }
+
+    .qr-example img {
+      width: 170px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+    }
+
+    .qr-example .caption {
+      font-size: 9.5pt;
+      color: #718096;
+      margin-top: 6px;
+      font-style: italic;
+    }
+
+    /* ── FAQ section ── */
+    .faq-item {
+      margin-bottom: 16px;
+      page-break-inside: avoid;
+    }
+
+    .faq-item h4 {
+      font-size: 11pt;
+      color: #D4007A;
+      margin-bottom: 4px;
+    }
+
+    .faq-item p, .faq-item ul {
+      font-size: 10.5pt;
+      margin-bottom: 4px;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      text-align: center;
+      margin-top: 36px;
+      padding-top: 20px;
+      border-top: 2px solid #1B3A59;
+    }
+
+    .footer img {
+      height: 50px;
+      margin-bottom: 8px;
+    }
+
+    .footer p {
+      font-size: 10pt;
+      color: #718096;
+      text-align: center;
+    }
+
+    /* ── URL highlight ── */
+    .url-highlight {
+      display: inline-block;
+      background: #ebf8ff;
+      border: 1px solid #3D7EB5;
+      border-radius: 6px;
+      padding: 4px 14px;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 11pt;
+      color: #2c5282;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    /* ── Flow diagram style ── */
+    .flow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 14px 0;
+      font-size: 10pt;
+      page-break-inside: avoid;
+    }
+
+    .flow .flow-step {
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 8px 14px;
+      text-align: center;
+      font-weight: 600;
+      color: #1B3A59;
+    }
+
+    .flow .flow-arrow {
+      color: #D4007A;
+      font-size: 16pt;
+      font-weight: 700;
+    }
+
+    /* ── Print specifics ── */
+    @media print {
+      body {
+        padding: 0;
+        font-size: 10.5pt;
+      }
+
+      .cover {
+        page-break-after: avoid;
+      }
+
+      h2 {
+        page-break-after: avoid;
+      }
+
+      .info-box, .step, .faq-item, table {
+        page-break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- COVER                                        -->
+<!-- ════════════════════════════════════════════ -->
+<div class="cover">
+  <div class="logos">
+    <img src="../media/technovationgirls-chile.png" alt="Technovation Girls Chile" style="height:55px; background:#1B3A59; padding:8px 14px; border-radius:6px;">
+    <img src="../media/uv.png" alt="Universidad de Valparaiso" style="height:65px;">
+    <img src="../media/escuela-informatica.png" alt="Escuela de Ingenieria Informatica" style="height:55px;">
+  </div>
+  <h1>Guia para Mentores/as</h1>
+  <div class="subtitle">Sistema de Asistencia QR &mdash; Technovation Girls Chile &mdash; Universidad de Valparaiso</div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- TABLE OF CONTENTS                            -->
+<!-- ════════════════════════════════════════════ -->
+<div class="toc">
+  <h2>Tabla de Contenidos</h2>
+  <ol>
+    <li><a href="#sec1">Introduccion</a></li>
+    <li><a href="#sec2">Acceso al Sistema (Inicio de Sesion)</a></li>
+    <li><a href="#sec3">Seleccion de Temporada</a></li>
+    <li><a href="#sec4">El Panel Principal (Dashboard)</a></li>
+    <li><a href="#sec5">Panel de Asistencia y Escaneo de QR</a></li>
+    <li><a href="#sec6">Informe de Asistencia</a></li>
+    <li><a href="#sec7">Preguntas Frecuentes y Solucion de Problemas</a></li>
+  </ol>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- 1. INTRODUCCION                              -->
+<!-- ════════════════════════════════════════════ -->
+<h2 id="sec1">1. Introduccion</h2>
+
+<p>Este manual esta dirigido a los <strong>mentores y mentoras</strong> del programa Technovation Girls Chile en la Universidad de Valparaiso. Como mentor/a, tu rol principal en el sistema es:</p>
+
+<ul>
+  <li><strong>Escanear codigos QR</strong> de las estudiantes para registrar su entrada y salida.</li>
+  <li><strong>Consultar el listado de asistencia</strong> del dia y el informe general de la temporada.</li>
+</ul>
+
+<p>No necesitas preocuparte por gestionar estudiantes, usuarios, temporadas ni equipos; eso lo hace el equipo de coordinacion.</p>
+
+<div class="qr-example">
+  <img src="../media/base-qr.png" alt="Ejemplo de QR con marco institucional">
+  <div class="caption">Ejemplo de un codigo QR de estudiante con el marco institucional</div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- 2. ACCESO AL SISTEMA                         -->
+<!-- ════════════════════════════════════════════ -->
+<h2 id="sec2">2. Acceso al Sistema (Inicio de Sesion)</h2>
+
+<p>Para ingresar al sistema, abre el navegador de tu celular o computador y visita:</p>
+
+<p style="text-align:center; margin: 16px 0;">
+  <span class="url-highlight">https://qr-technovation-uv.donath.us/</span>
+</p>
+
+<div class="step">
+  <div class="step-number">1</div>
+  <div class="step-content">
+    Ingresa a la URL indicada. Veras la pantalla de inicio de sesion con el logo de la Universidad de Valparaiso y el titulo <strong>"Sistema de Asistencia"</strong>.
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-number">2</div>
+  <div class="step-content">
+    Ingresa tus credenciales:
+    <ul style="margin-top:4px;">
+      <li><strong>Correo electronico:</strong> el correo que registraste con el equipo de coordinacion.</li>
+      <li><strong>Contrasena:</strong> la contrasena que te fue asignada.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-number">3</div>
+  <div class="step-content">
+    Presiona el boton <strong>"Iniciar Sesion"</strong> (boton rosado). Si las credenciales son correctas, seras redirigido/a al panel principal.
+  </div>
+</div>
+
+<div class="info-box pink">
+  <strong>Si hay un error:</strong> Aparecera un mensaje en rojo: <em>"Credenciales invalidas. Por favor intenta de nuevo."</em> Verifica que tu correo y contrasena esten bien escritos. Si olvidaste tu contrasena, contacta al equipo de coordinacion para que te la restablezcan.
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- 3. SELECCION DE TEMPORADA                    -->
+<!-- ════════════════════════════════════════════ -->
+<h2 id="sec3">3. Seleccion de Temporada</h2>
+
+<p>Si el equipo de coordinacion te asigno a <strong>mas de una temporada</strong>, al iniciar sesion veras un cuadro de dialogo pidiendote que selecciones en cual temporada deseas trabajar.</p>
+
+<ul>
+  <li>Selecciona la temporada correspondiente al semestre actual.</li>
+  <li>Si solo tienes acceso a una temporada, esta se seleccionara automaticamente y no veras este paso.</li>
+</ul>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- 4. DASHBOARD                                 -->
+<!-- ════════════════════════════════════════════ -->
+<h2 id="sec4">4. El Panel Principal (Dashboard)</h2>
+
+<p>Al ingresar, veras tu panel principal con:</p>
+
+<h3>Bienvenida</h3>
+<p>Un banner que dice <strong>"Hola, [tu nombre]!"</strong> junto con tu rol (<strong>Mentora</strong>) y el nombre de la temporada activa.</p>
+
+<h3>Estadisticas del Dia</h3>
+<p>Cuatro tarjetas con los numeros del dia:</p>
+
+<table>
+  <tr><th>Tarjeta</th><th>Que muestra</th></tr>
+  <tr><td><strong>Total Estudiantes</strong></td><td>Cantidad total de estudiantes inscritas en la temporada</td></tr>
+  <tr><td><strong>Presentes Hoy</strong></td><td>Estudiantes que estan actualmente en el taller</td></tr>
+  <tr><td><strong>Entradas Hoy</strong></td><td>Total de registros de entrada del dia</td></tr>
+  <tr><td><strong>Salidas Hoy</strong></td><td>Total de registros de salida del dia</td></tr>
+</table>
+
+<h3>Accesos Rapidos</h3>
+<p>Como mentor/a, veras <strong>dos tarjetas</strong> de navegacion:</p>
+
+<table>
+  <tr><th>Tarjeta</th><th>Descripcion</th></tr>
+  <tr><td><strong>Panel de Asistencia</strong></td><td>Escaneas codigos QR y ves el listado de asistencia del dia</td></tr>
+  <tr><td><strong>Informe de Asistencia</strong></td><td>Ves el resumen de asistencia de toda la temporada</td></tr>
+</table>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- 5. PANEL DE ASISTENCIA                       -->
+<!-- ════════════════════════════════════════════ -->
+<h2 id="sec5">5. Panel de Asistencia y Escaneo de QR</h2>
+
+<p>Esta es la <strong>pantalla principal</strong> que usaras como mentor/a. Para acceder, presiona la tarjeta <strong>"Panel de Asistencia"</strong> desde el Dashboard.</p>
+
+<!-- 5.1 Como funciona -->
+<h3>5.1 Como funciona el escaneo</h3>
+
+<p>El flujo de escaneo es simple:</p>
+
+<div class="flow">
+  <div class="flow-step">Presiona<br>"Escanear QR"</div>
+  <div class="flow-arrow">&rarr;</div>
+  <div class="flow-step">Apunta la camara<br>al codigo QR</div>
+  <div class="flow-arrow">&rarr;</div>
+  <div class="flow-step">El sistema registra<br>entrada o salida</div>
+  <div class="flow-arrow">&rarr;</div>
+  <div class="flow-step">Ves la<br>confirmacion</div>
+</div>
+
+<div class="step">
+  <div class="step-number">1</div>
+  <div class="step-content">
+    <strong>Verifica la conexion:</strong> A la derecha del boton "Escanear QR" hay un indicador. Debe estar en <span class="badge green">Conectado</span>. Si dice <span class="badge red">Desconectado</span>, presiona sobre el para reconectar.
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-number">2</div>
+  <div class="step-content">
+    <strong>Abre el escaner:</strong> Presiona <strong>"Escanear QR"</strong>. Si es la primera vez, tu navegador te pedira permiso para usar la camara. Acepta.
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-number">3</div>
+  <div class="step-content">
+    <strong>Escanea:</strong> Apunta la camara trasera de tu celular al codigo QR de la estudiante. Cuando lo detecte, escucharas un sonido de confirmacion.
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-number">4</div>
+  <div class="step-content">
+    <strong>Resultado:</strong> Aparecera un mensaje indicandote si se registro una <strong>entrada</strong> o una <strong>salida</strong>. Presiona "Aceptar" y continua con la siguiente estudiante.
+  </div>
+</div>
+
+<div class="info-box blue">
+  <strong>Entrada y salida automatica:</strong> No necesitas elegir manualmente si es entrada o salida. El sistema alterna automaticamente: el primer escaneo del dia es <strong>entrada</strong>, el segundo es <strong>salida</strong>, el tercero es <strong>entrada</strong> nuevamente, y asi sucesivamente.
+</div>
+
+<!-- 5.2 Retiro con apoderado -->
+<h3>5.2 Retiro con Apoderado</h3>
+
+<p>Algunas estudiantes requieren que un <strong>apoderado las retire</strong>. Al registrar la <strong>salida</strong> de estas estudiantes, el sistema te mostrara una confirmacion adicional:</p>
+
+<div class="info-box amber">
+  <strong>Confirmar retiro con apoderado</strong><br>
+  "[Nombre de la estudiante]" tiene registrado retiro con apoderado. &iquest;Confirmas que viste al apoderado?<br><br>
+  <span class="badge green">Lo vi</span> &nbsp; <span class="badge red">Cancelar</span>
+</div>
+
+<ul>
+  <li>Si <strong>viste al apoderado</strong>, presiona <strong>"Lo vi"</strong> y la salida se registrara.</li>
+  <li>Si <strong>no lo has visto</strong>, presiona <strong>"Cancelar"</strong>. La salida no se registrara.</li>
+</ul>
+
+<p>Ademas, si la estudiante tiene <strong>hermanas</strong> (u otras estudiantes con el mismo apoderado) en la temporada, veras un aviso recordandote que tambien estan inscritas.</p>
+
+<!-- 5.3 Estados de las estudiantes -->
+<h3>5.3 Estados de las Estudiantes</h3>
+
+<p>Debajo del escaner QR veras el <strong>listado de todas las estudiantes</strong> con su estado de asistencia del dia. Cada estudiante puede tener uno de estos tres estados:</p>
+
+<table>
+  <tr><th style="width:50px;">Color</th><th>Estado</th><th>Significado</th></tr>
+  <tr>
+    <td style="text-align:center;"><span class="dot green"></span></td>
+    <td><strong>Presente</strong></td>
+    <td>La estudiante ingreso al taller y aun no se ha retirado</td>
+  </tr>
+  <tr>
+    <td style="text-align:center;"><span class="dot orange"></span></td>
+    <td><strong>Salio</strong></td>
+    <td>La estudiante ingreso y ya se retiro del taller</td>
+  </tr>
+  <tr>
+    <td style="text-align:center;"><span class="dot gray"></span></td>
+    <td><strong>Ausente</strong></td>
+    <td>La estudiante esta inscrita pero no ha asistido hoy</td>
+  </tr>
+</table>
+
+<p>Cada tarjeta de estudiante muestra:</p>
+<ul>
+  <li>El <strong>punto de color</strong> segun su estado.</li>
+  <li><strong>Nombre y apellido.</strong></li>
+  <li><strong>Categoria:</strong> <span class="badge green">Beginner</span> <span class="badge" style="background:#bee3f8;color:#2c5282;">Junior</span> <span class="badge" style="background:#e9d8fd;color:#553c9a;">Senior</span></li>
+  <li>Etiqueta <span class="badge red">Retiro apoderado</span> si corresponde.</li>
+  <li>La <strong>hora del ultimo registro</strong> (ej: "Entrada 09:30").</li>
+</ul>
+
+<p>Si presionas sobre una tarjeta, se expande mostrando el <strong>historial completo del dia</strong> (todas las entradas y salidas registradas con su hora).</p>
+
+<!-- 5.4 Barra de estadisticas -->
+<h3>5.4 Barra de Estadisticas</h3>
+
+<p>En la parte superior del listado veras cinco tarjetas con los conteos del dia:</p>
+
+<table>
+  <tr><th style="width:50px;">Color</th><th>Tarjeta</th><th>Significado</th></tr>
+  <tr><td style="text-align:center;"><span class="dot green"></span></td><td><strong>Presentes</strong></td><td>Estudiantes actualmente en el taller</td></tr>
+  <tr><td style="text-align:center;"><span class="dot orange"></span></td><td><strong>Salieron</strong></td><td>Estudiantes que ya se retiraron</td></tr>
+  <tr><td style="text-align:center;"><span class="dot red"></span></td><td><strong>Ausentes</strong></td><td>Estudiantes que no han asistido hoy</td></tr>
+  <tr><td style="text-align:center;"><span class="dot blue"></span></td><td><strong>Entradas</strong></td><td>Total de registros de entrada</td></tr>
+  <tr><td style="text-align:center;"><span class="dot pink"></span></td><td><strong>Salidas</strong></td><td>Total de registros de salida</td></tr>
+</table>
+
+<p>Puedes <strong>presionar</strong> sobre Presentes, Salieron o Ausentes para <strong>filtrar</strong> el listado y ver solo las estudiantes con ese estado. Presiona nuevamente para quitar el filtro.</p>
+
+<!-- 5.5 Busqueda y filtros -->
+<h3>5.5 Busqueda y Filtros</h3>
+
+<p>Sobre el listado encontraras herramientas para encontrar estudiantes rapidamente:</p>
+
+<ul>
+  <li><strong>Campo de busqueda:</strong> Escribe el nombre o apellido de una estudiante.</li>
+  <li><strong>Selector de categoria:</strong> Filtra por Beginner, Junior, Senior o todas.</li>
+  <li><strong>Boton "Limpiar filtro status":</strong> Quita el filtro de estado activo.</li>
+</ul>
+
+<div class="info-box green">
+  <strong>Tiempo real:</strong> El listado se actualiza automaticamente cuando otro mentor/a escanea un QR. No necesitas recargar la pagina.
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- 6. INFORME DE ASISTENCIA                     -->
+<!-- ════════════════════════════════════════════ -->
+<h2 id="sec6">6. Informe de Asistencia</h2>
+
+<p>Para acceder, presiona la tarjeta <strong>"Informe de Asistencia"</strong> desde el Dashboard. Esta pantalla muestra una <strong>tabla resumen</strong> de toda la temporada.</p>
+
+<h3>Estructura de la tabla</h3>
+<table>
+  <tr><th>Columna</th><th>Contenido</th></tr>
+  <tr><td><strong>Estudiante</strong></td><td>Nombre y apellido</td></tr>
+  <tr><td><strong>Equipo</strong></td><td>Nombre del equipo asignado</td></tr>
+  <tr><td><strong>Categoria</strong></td><td>Beginner, Junior o Senior</td></tr>
+  <tr><td><strong>Fechas de sesion</strong></td><td>Una columna por cada fecha de sesion planificada</td></tr>
+  <tr><td><strong>Porcentaje</strong></td><td>Porcentaje de asistencia general de la estudiante</td></tr>
+</table>
+
+<h3>Codigo de colores por celda de fecha</h3>
+<table>
+  <tr><th style="width:50px;">Color</th><th>Significado</th></tr>
+  <tr><td style="text-align:center;"><span class="dot gray"></span></td><td>No asistio ese dia</td></tr>
+  <tr><td style="text-align:center;"><span class="dot orange"></span></td><td>Solo tiene registro de entrada (no se registro salida)</td></tr>
+  <tr><td style="text-align:center;"><span class="dot green"></span></td><td>Tiene registro de entrada y salida completo</td></tr>
+</table>
+
+<h3>Codigo de colores del porcentaje</h3>
+<table>
+  <tr><th style="width:50px;">Color</th><th>Rango</th></tr>
+  <tr><td style="text-align:center;"><span class="dot green"></span></td><td>80% o mas de asistencia</td></tr>
+  <tr><td style="text-align:center;"><span class="dot orange"></span></td><td>Entre 50% y 79% de asistencia</td></tr>
+  <tr><td style="text-align:center;"><span class="dot red"></span></td><td>Menos del 50% de asistencia</td></tr>
+</table>
+
+<p>Puedes filtrar la tabla por <strong>categoria</strong> usando el selector disponible.</p>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- 7. FAQ                                       -->
+<!-- ════════════════════════════════════════════ -->
+<h2 id="sec7">7. Preguntas Frecuentes y Solucion de Problemas</h2>
+
+<div class="faq-item">
+  <h4>"No puedo iniciar sesion"</h4>
+  <ul>
+    <li>Verifica que el correo y la contrasena esten correctamente escritos.</li>
+    <li>Asegurate de estar conectado/a a internet.</li>
+    <li>Si olvidaste tu contrasena, contacta al equipo de coordinacion.</li>
+  </ul>
+</div>
+
+<div class="faq-item">
+  <h4>"El boton Escanear QR esta gris/deshabilitado"</h4>
+  <ul>
+    <li>Revisa el indicador de conexion. Si dice "Desconectado", presiona sobre el para reconectar.</li>
+    <li>Verifica tu conexion a internet (WiFi o datos moviles).</li>
+    <li>Si persiste, recarga la pagina del navegador.</li>
+  </ul>
+</div>
+
+<div class="faq-item">
+  <h4>"La camara no se abre"</h4>
+  <ul>
+    <li>Tu navegador necesita <strong>permiso para acceder a la camara</strong>. Presiona "Permitir" cuando aparezca el mensaje.</li>
+    <li>Si ya denegaste el permiso, ve a Configuracion del navegador &gt; Permisos del sitio &gt; Camara &gt; Permitir.</li>
+    <li>Asegurate de que ninguna otra aplicacion este usando la camara.</li>
+  </ul>
+</div>
+
+<div class="faq-item">
+  <h4>"El QR no se lee / no escanea"</h4>
+  <ul>
+    <li>Asegurate de que el codigo QR este <strong>bien iluminado</strong> y no este arrugado.</li>
+    <li>Coloca el QR <strong>centrado dentro del recuadro</strong> que muestra la camara.</li>
+    <li>Manten el celular <strong>estable</strong> a unos 15-20 cm del QR.</li>
+    <li>Si el QR esta en pantalla, sube el brillo al maximo.</li>
+  </ul>
+</div>
+
+<div class="faq-item">
+  <h4>"Dice QR no valido"</h4>
+  <ul>
+    <li>Verifica que el QR sea el correcto del sistema (con el marco institucional de logos).</li>
+    <li>Un QR de otra temporada no sera valido. Contacta al equipo de coordinacion.</li>
+  </ul>
+</div>
+
+<div class="faq-item">
+  <h4>"Aparece 'Error de red' al escanear"</h4>
+  <ul>
+    <li>Tu celular perdio conexion momentaneamente. Espera unos segundos e intenta de nuevo.</li>
+    <li>Si el indicador cambia a rojo, presiona para reconectar.</li>
+  </ul>
+</div>
+
+<div class="faq-item">
+  <h4>"Escane dos veces seguidas el mismo QR por error"</h4>
+  <p>No te preocupes. El sistema tiene un periodo de espera de 2.5 segundos entre escaneos del mismo codigo, evitando duplicados.</p>
+</div>
+
+<div class="faq-item">
+  <h4>"Escanee una salida cuando era entrada (o viceversa)"</h4>
+  <p>Contacta al equipo de coordinacion. Solo ellos pueden corregir registros de asistencia.</p>
+</div>
+
+<div class="faq-item">
+  <h4>"La fecha de hoy dice que no esta en la planificacion"</h4>
+  <p>Esto es solo un aviso informativo. <strong>Puedes registrar asistencia normalmente.</strong> Informa al equipo de coordinacion para que actualicen las fechas si es necesario.</p>
+</div>
+
+<div class="faq-item">
+  <h4>"La lista de asistencia no se actualiza"</h4>
+  <ul>
+    <li>Verifica tu conexion. El listado se actualiza en tiempo real mientras estes conectado/a.</li>
+    <li>Presiona el indicador de conexion para reconectar si esta en rojo.</li>
+  </ul>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- FOOTER                                       -->
+<!-- ════════════════════════════════════════════ -->
+<div class="footer">
+  <img src="../media/escuela-informatica.png" alt="Escuela de Ingenieria Informatica">
+  <p>
+    <strong>Escuela de Ingenieria Informatica</strong><br>
+    Universidad de Valparaiso &mdash; Technovation Girls Chile
+  </p>
+  <p style="margin-top:10px; font-style:italic;">
+    En caso de problemas y/o consultas, contacta a:<br>
+    <a href="mailto:vicente.hernandezd@estudiantes.uv.cl" style="color:#3D7EB5; text-decoration:none;">vicente.hernandezd@estudiantes.uv.cl</a>
+    &nbsp;|&nbsp;
+    <a href="https://wa.me/56963577906" target="_blank" style="color:#3D7EB5; text-decoration:none;">+56 9 6357 7906</a>
+  </p>
+  <p style="margin-top:16px; font-size:9pt; color:#a0aec0;">
+    WebApp desarrollada con 💙 por <a href="https://www.linkedin.com/in/vicente-nathaniel/" target="_blank" style="color:#3D7EB5; text-decoration:none;">Vicente Hernández Donoso</a>
+  </p>
+</div>
+
+</body>
+</html>
