@@ -269,6 +269,29 @@
 
 ---
 
+## FASE 7: Asistencia Manual y Sockets Bidireccionales
+
+### T33 - Asistencia Manual desde Panel de Informe
+
+- [x] T33-1 Añadir toggle "Modo Asistencia Manual" en AttendanceReportPage (solo admins)
+- [x] T33-2 Conectar sockets en AttendanceReportPage para recibir eventos en tiempo real
+- [x] T33-3 Añadir selector de fecha (solo fechas ≤ hoy)
+- [x] T33-4 Crear menú contextual en celdas de asistencia con opciones:
+  - [x] T33-4a Marcar entrada manual
+  - [x] T33-4b Marcar salida manual
+  - [x] T33-4c Justificar inasistencia (funcionalidad existente)
+- [x] T33-5 Backend: crear endpoint POST /attendance/manual/entrada
+- [x] T33-6 Backend: crear endpoint POST /attendance/manual/salida
+- [x] T33-7 Backend: modificar endpoint PATCH /attendance/justificar para emitir socket
+
+### T34 - Sockets Bidireccionales
+
+- [x] T34-1 Verificar que AttendancePage reciba eventos de cambios manuales (ya funciona)
+- [x] T34-2 Verificar que AttendanceReportPage reciba eventos de escaneos en tiempo real
+- [x] T34-3 Sincronización automática entre ambos paneles sin reload
+
+---
+
 ## Notas de Dependencias
 
 - T1 → T2 (Completados)
