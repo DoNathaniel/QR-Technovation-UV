@@ -185,33 +185,6 @@ export default function AttendanceReportPage() {
     }
   }, [isAdmin, retireData]);
 
-  const handleRetireStudent = useCallback(
-    async (studentID: number, studentName: string) => {
-      if (!isAdmin) return;
-      const confirmed = window.confirm(`¿Retirar del programa a ${studentName}?`);
-      if (!confirmed) return;
-
-      try {
-        const res = await api.patch<{ student: { ID: number; retiradoPrograma: boolean } }>(
-          `/students/${studentID}/retiro-programa`,
-          { retiradoPrograma: true },
-        );
-
-        const updated = res.data.student;
-        setStudents((prev) =>
-          prev.map((student) =>
-            student.ID === updated.ID
-              ? { ...student, retiradoPrograma: updated.retiradoPrograma }
-              : student,
-          ),
-        );
-      } catch (err) {
-        console.error('Error retirando estudiante del programa:', err);
-      }
-    },
-    [isAdmin],
-  );
-
   useEffect(() => {
     if (!seasonID) return;
     Promise.all([
@@ -688,3 +661,4 @@ export default function AttendanceReportPage() {
     </div>
   );
 }
+
