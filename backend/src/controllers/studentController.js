@@ -54,7 +54,7 @@ async function getById(req, res) {
 
 async function create(req, res) {
   try {
-    const { datosApoderado, seasonID, rut } = req.body;
+    const { datosApoderado, seasonID, rut, retiradoPrograma, retiradoPorUserID, retiradoEn, ...studentData } = req.body;
     console.log(seasonID)
     
     if (!seasonID) {
@@ -118,7 +118,7 @@ async function create(req, res) {
     }
     
     const student = studentRepository().create({
-      ...req.body,
+      ...studentData,
       guardianID,
       datosApoderado: datosApoderado && datosApoderado.nombres ? datosApoderado : null,
     });
@@ -166,7 +166,7 @@ async function create(req, res) {
 async function update(req, res) {
   try {
     const { id } = req.params;
-    const { datosApoderado, seasonID, rut } = req.body;
+    const { datosApoderado, seasonID, rut, retiradoPrograma, retiradoPorUserID, retiradoEn, ...studentData } = req.body;
     
     if (!seasonID) {
       return res.status(400).json({ message: 'seasonID es requerido' });
@@ -220,7 +220,7 @@ async function update(req, res) {
       guardianID = guardian.ID;
     }
     
-    Object.assign(student, req.body, { guardianID });
+    Object.assign(student, studentData, { guardianID });
     const result = await studentRepository().save(student);
     res.json(result);
   } catch (error) {
@@ -236,6 +236,36 @@ async function remove(req, res) {
     res.json({ message: 'Estudiante eliminado', result });
   } catch (error) {
     res.status(500).json({ message: 'Error al eliminar estudiante', error: error.message });
+  }
+}
+
+async function setRetiroPrograma(req, res) {
+  try {
+    const { id } = req.params;
+    const { retiradoPrograma = true } = req.body || {};
+    const actingUserID = req.user?.id || null;
+
+    if (typeof retiradoPrograma !== 'boolean') {
+      return res.status(400).json({ message: 'retiradoPrograma debe ser booleano' });
+    }
+
+    const student = await studentRepository().findOne({ where: { ID: parseInt(id) } });
+    if (!student) {
+      return res.status(404).json({ message: 'Estudiante no encontrado' });
+    }
+
+    student.retiradoPrograma = retiradoPrograma;
+    student.retiradoPorUserID = retiradoPrograma ? actingUserID : null;
+    student.retiradoEn = retiradoPrograma ? new Date() : null;
+
+    const result = await studentRepository().save(student);
+
+    res.json({
+      message: retiradoPrograma ? 'Estudiante retirado del programa' : 'Retiro del programa revertido',
+      student: result,
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al actualizar retiro del programa', error: error.message });
   }
 }
 
@@ -318,4 +348,4 @@ async function getQR(req, res) {
   }
 }
 
-module.exports = { getAll, getById, create, update, remove, resendQR, getQR };
+module.exports = { getAll, getById, create, update, remove, resendQR, getQR, setRetiroPrograma };

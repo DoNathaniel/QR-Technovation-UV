@@ -10,6 +10,7 @@ router.get('/:id/qr', authenticateToken, checkRole('superadmin', 'admin', 'volun
 router.get('/:id', authenticateToken, checkRole('superadmin', 'admin', 'voluntario'), studentController.getById);
 router.post('/', authenticateToken, checkRole('superadmin', 'admin'), studentController.create);
 router.put('/:id', authenticateToken, checkRole('superadmin', 'admin'), studentController.update);
+router.patch('/:id/retiro-programa', authenticateToken, checkRole('superadmin'), studentController.setRetiroPrograma);
 router.delete('/:id', authenticateToken, checkRole('superadmin', 'admin'), studentController.remove);
 router.post('/:id/resend-qr', authenticateToken, checkRole('superadmin', 'admin'), studentController.resendQR);
 

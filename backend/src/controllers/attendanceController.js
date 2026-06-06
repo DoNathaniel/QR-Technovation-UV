@@ -115,7 +115,7 @@ async function getStats(req, res) {
     const today = new Date().toISOString().split('T')[0];
     
     const totalEstudiantes = await studentRepository().count({
-      where: { seasonID: parseInt(seasonID) }
+      where: { seasonID: parseInt(seasonID), retiradoPrograma: false }
     });
 
     const seasonDate = await seasonDateRepository().findOne({ 
@@ -132,7 +132,8 @@ async function getStats(req, res) {
     }
 
     const allAttendances = await attendanceRepository().find({
-      where: { seasonDateID: seasonDate.ID }
+      where: { seasonDateID: seasonDate.ID },
+      relations: ['student']
     });
 
     const estudiantesPresentes = new Set();
@@ -140,6 +141,9 @@ async function getStats(req, res) {
     let salidasHoy = 0;
 
     allAttendances.forEach(att => {
+      if (att.student?.retiradoPrograma) {
+        return;
+      }
       if (att.tipo === 'entrada') {
         entradasHoy++;
         estudiantesPresentes.add(att.studentID);
