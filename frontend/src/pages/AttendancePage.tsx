@@ -16,6 +16,7 @@ interface StudentSummary {
   nombres: string;
   apellidos: string;
   categoria: Categoria;
+  retiradoPrograma: boolean;
   retiradoApoderado: boolean;
   records: Attendance[];
   lastRecord: Attendance | null;
@@ -73,7 +74,16 @@ export default function AttendancePage() {
   const [filterStatus, setFilterStatus] = useState<'todos' | 'presente' | 'salio' | 'ausente'>('todos');
   const [searchQuery, setSearchQuery] = useState('');
   const [allStudents, setAllStudents] = useState<
-    { ID: number; nombres: string; apellidos: string; categoria: Categoria; retiradoApoderado: boolean }[]
+    {
+      ID: number;
+      nombres: string;
+      apellidos: string;
+      categoria: Categoria;
+      retiradoApoderado: boolean;
+      retiradoPrograma: boolean;
+      retiradoPorUserID: number | null;
+      retiradoEn: string | null;
+    }[]
   >([]);
   const [seasonDates, setSeasonDates] = useState<string[]>([]);
   const [dateInPlanification, setDateInPlanification] = useState(false);
@@ -174,6 +184,7 @@ export default function AttendancePage() {
       const nombres = fromRecord?.nombres ?? fromList?.nombres ?? 'Desconocido';
       const apellidos = fromRecord?.apellidos ?? fromList?.apellidos ?? '';
       const categoria = fromRecord?.categoria ?? fromList?.categoria ?? 'Beginner';
+      const retiradoPrograma = fromRecord?.retiradoPrograma ?? fromList?.retiradoPrograma ?? false;
       const retiradoApoderado = fromRecord?.retiradoApoderado ?? fromList?.retiradoApoderado ?? false;
 
       summaries.push({
@@ -181,6 +192,7 @@ export default function AttendancePage() {
         nombres,
         apellidos,
         categoria,
+        retiradoPrograma,
         retiradoApoderado,
         records,
         lastRecord,
@@ -196,6 +208,7 @@ export default function AttendancePage() {
           nombres: s.nombres,
           apellidos: s.apellidos,
           categoria: s.categoria,
+          retiradoPrograma: s.retiradoPrograma,
           retiradoApoderado: s.retiradoApoderado,
           records: [],
           lastRecord: null,
@@ -239,11 +252,13 @@ export default function AttendancePage() {
 
   // ── Stats ──
   const stats = useMemo(() => {
-    const presentes = studentSummaries.filter((s) => s.status === 'presente').length;
-    const salieron = studentSummaries.filter((s) => s.status === 'salio').length;
-    const ausentes = studentSummaries.filter((s) => s.status === 'ausente').length;
-    const totalEntradas = attendances.filter((a) => a.tipo === 'entrada').length;
-    const totalSalidas = attendances.filter((a) => a.tipo === 'salida').length;
+    const activeStudents = studentSummaries.filter((s) => !s.retiradoPrograma);
+    const activeStudentIDs = new Set(activeStudents.map((s) => s.studentID));
+    const presentes = activeStudents.filter((s) => s.status === 'presente').length;
+    const salieron = activeStudents.filter((s) => s.status === 'salio').length;
+    const ausentes = activeStudents.filter((s) => s.status === 'ausente').length;
+    const totalEntradas = attendances.filter((a) => a.tipo === 'entrada' && activeStudentIDs.has(a.studentID)).length;
+    const totalSalidas = attendances.filter((a) => a.tipo === 'salida' && activeStudentIDs.has(a.studentID)).length;
     return { presentes, salieron, ausentes, totalEntradas, totalSalidas };
   }, [studentSummaries, attendances]);
 
@@ -387,7 +402,10 @@ export default function AttendancePage() {
           )}
 
           {filteredSummaries.map((s) => (
-            <StudentCard key={s.studentID} summary={s} />
+            <StudentCard
+              key={s.studentID}
+              summary={s}
+            />
           ))}
         </div>
       )}
@@ -399,10 +417,13 @@ export default function AttendancePage() {
 // Student attendance card
 // ──────────────────────────────────────────────
 
-function StudentCard({ summary }: { summary: StudentSummary }) {
+function StudentCard({
+  summary,
+}: {
+  summary: StudentSummary;
+}) {
   const [expanded, setExpanded] = useState(false);
   const { status, lastRecord, records } = summary;
-
   const statusConfig = {
     presente: {
       bg: 'bg-green-50 border-green-200',
@@ -429,9 +450,17 @@ function StudentCard({ summary }: { summary: StudentSummary }) {
   return (
     <div className={`rounded-lg border shadow-sm overflow-hidden ${cfg.bg}`}>
       {/* Main row */}
-      <button
+      <div
+        role="button"
+        tabIndex={0}
         onClick={() => records.length > 0 && setExpanded(!expanded)}
-        className="w-full flex items-center gap-3 px-3 py-2.5 text-left"
+        onKeyDown={(e) => {
+          if ((e.key === 'Enter' || e.key === ' ') && records.length > 0) {
+            e.preventDefault();
+            setExpanded(!expanded);
+          }
+        }}
+        className={`w-full flex items-center gap-3 px-3 py-2.5 text-left ${records.length > 0 ? 'cursor-pointer' : 'cursor-default'}`}
       >
         {/* Status dot */}
         <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${cfg.dot}`} />
@@ -469,7 +498,7 @@ function StudentCard({ summary }: { summary: StudentSummary }) {
             {expanded ? '\u25B2' : '\u25BC'}
           </span>
         )}
-      </button>
+      </div>
 
       {/* Expanded: timeline of records */}
       {expanded && records.length > 0 && (

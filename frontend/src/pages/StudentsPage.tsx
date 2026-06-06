@@ -346,13 +346,6 @@ export default function StudentsPage() {
                   <button onClick={() => handleEdit(student)} className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 transition-colors">
                     Editar
                   </button>
-                  <button 
-                    onClick={() => handleDelete(student.ID)} 
-                    disabled={deletingId === student.ID}
-                    className="px-2 py-1 text-xs font-medium bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors disabled:opacity-50"
-                  >
-                    {deletingId === student.ID ? 'Eliminando...' : 'Eliminar'}
-                  </button>
                 </td>
               </tr>
             ))}

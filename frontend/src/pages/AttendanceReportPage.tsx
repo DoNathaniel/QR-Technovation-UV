@@ -13,6 +13,7 @@ interface StudentInfo {
   categoria: Categoria;
   teamID: number | null;
   teamNombre: string | null;
+  retiradoPrograma?: boolean;
 }
 
 interface DayAttendance {
@@ -28,8 +29,10 @@ interface StudentAttendance {
   apellidos: string;
   categoria: Categoria;
   equipo: string | null;
+  retiradoPrograma: boolean;
   days: Record<string, DayAttendance>;
   attendanceDays: number;
+  justifiedDays: number;
   totalDays: number;
 }
 
@@ -60,6 +63,8 @@ export default function AttendanceReportPage() {
   const [justifyData, setJustifyData] = useState<{ studentID: number; nombre: string; fecha: string } | null>(null);
   const [justifyText, setJustifyText] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [retireData, setRetireData] = useState<{ studentID: number; nombre: string } | null>(null);
+  const [retireSubmitting, setRetireSubmitting] = useState(false);
 
   // T33-4: Menú contextual para acciones manuales
   const [actionMenu, setActionMenu] = useState<{ x: number; y: number; studentID: number; nombre: string; fecha: string; hasEntrada: boolean; hasSalida: boolean } | null>(null);
@@ -151,6 +156,62 @@ export default function AttendanceReportPage() {
     setActionMenu(null);
   };
 
+  const handleOpenRetire = useCallback((studentID: number, studentName: string) => {
+    setRetireData({ studentID, nombre: studentName });
+  }, []);
+
+  const handleConfirmRetire = useCallback(async () => {
+    if (!retireData || !isAdmin) return;
+    setRetireSubmitting(true);
+    try {
+      const res = await api.patch<{ student: { ID: number; retiradoPrograma: boolean } }>(
+        `/students/${retireData.studentID}/retiro-programa`,
+        { retiradoPrograma: true },
+      );
+
+      const updated = res.data.student;
+      setStudents((prev) =>
+        prev.map((student) =>
+          student.ID === updated.ID
+            ? { ...student, retiradoPrograma: updated.retiradoPrograma }
+            : student,
+        ),
+      );
+      setRetireData(null);
+    } catch (err) {
+      console.error('Error retirando estudiante del programa:', err);
+    } finally {
+      setRetireSubmitting(false);
+    }
+  }, [isAdmin, retireData]);
+
+  const handleRetireStudent = useCallback(
+    async (studentID: number, studentName: string) => {
+      if (!isAdmin) return;
+      const confirmed = window.confirm(`¿Retirar del programa a ${studentName}?`);
+      if (!confirmed) return;
+
+      try {
+        const res = await api.patch<{ student: { ID: number; retiradoPrograma: boolean } }>(
+          `/students/${studentID}/retiro-programa`,
+          { retiradoPrograma: true },
+        );
+
+        const updated = res.data.student;
+        setStudents((prev) =>
+          prev.map((student) =>
+            student.ID === updated.ID
+              ? { ...student, retiradoPrograma: updated.retiradoPrograma }
+              : student,
+          ),
+        );
+      } catch (err) {
+        console.error('Error retirando estudiante del programa:', err);
+      }
+    },
+    [isAdmin],
+  );
+
   useEffect(() => {
     if (!seasonID) return;
     Promise.all([
@@ -186,8 +247,10 @@ export default function AttendanceReportPage() {
         apellidos: s.apellidos,
         categoria: s.categoria,
         equipo: s.teamNombre,
+        retiradoPrograma: s.retiradoPrograma ?? false,
         days: {},
         attendanceDays: 0,
+        justifiedDays: 0,
         totalDays: 0,
       });
     }
@@ -210,13 +273,19 @@ export default function AttendanceReportPage() {
 
     for (const student of byStudent.values()) {
       let attendanceDays = 0;
+      let justifiedDays = 0;
       for (const fecha of validDates) {
         const day = student.days[fecha];
-        if (day?.hasEntrada) {
+        // Un día justificado cuenta como presente en el porcentaje.
+        if (day?.hasEntrada || day?.justificacion) {
           attendanceDays++;
+        }
+        if (day?.justificacion) {
+          justifiedDays++;
         }
       }
       student.attendanceDays = attendanceDays;
+      student.justifiedDays = justifiedDays;
       student.totalDays = validDates.length;
     }
 
@@ -234,10 +303,11 @@ export default function AttendanceReportPage() {
   }, [studentAttendance, filterCategoria]);
 
   const stats = useMemo(() => {
-    const totalStudents = studentAttendance.length;
+    const activeStudents = studentAttendance.filter((s) => !s.retiradoPrograma);
+    const totalStudents = activeStudents.length;
     const totalDays = validDates.length;
     let totalAttendance = 0;
-    for (const s of studentAttendance) {
+    for (const s of activeStudents) {
       totalAttendance += s.attendanceDays;
     }
     const totalPossible = totalStudents * totalDays;
@@ -340,19 +410,22 @@ export default function AttendanceReportPage() {
                 </th>
               ))}
               <th className="px-2 py-3 text-center font-semibold text-slate-700 border-b w-16 bg-slate-50">%</th>
+              {manualMode && isAdmin && (
+                <th className="px-2 py-3 text-center font-semibold text-slate-700 border-b w-16 bg-slate-50">Retiro</th>
+              )}
             </tr>
           </thead>
           <tbody>
             {filteredStudents.map((s) => {
-              const percentage = s.totalDays > 0 ? Math.round((s.attendanceDays / s.totalDays) * 100) : 0;
+              const percentage = !s.retiradoPrograma && s.totalDays > 0 ? Math.round((s.attendanceDays / s.totalDays) * 100) : null;
               return (
-                <tr key={s.studentID} className="border-b hover:bg-slate-50">
+                <tr key={s.studentID} className={`border-b hover:bg-slate-50 ${s.retiradoPrograma ? 'bg-red-50/40' : ''}`}>
                   <td className="px-3 py-2.5">
-                    <div className="font-medium text-slate-800 truncate">
+                    <div className={`font-medium text-slate-800 truncate ${s.retiradoPrograma ? 'line-through decoration-2 decoration-red-500' : ''}`}>
                       {s.apellidos}, {s.nombres}
                     </div>
                   </td>
-                  <td className="px-3 py-2.5 text-slate-500">{s.equipo || '-'}</td>
+                  <td className={`px-3 py-2.5 text-slate-500 ${s.retiradoPrograma ? 'line-through decoration-2 decoration-red-500' : ''}`}>{s.equipo || '-'}</td>
                   <td className="px-3 py-2.5">
                     <span
                       className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
@@ -361,7 +434,7 @@ export default function AttendanceReportPage() {
                           : s.categoria === 'Junior'
                           ? 'bg-blue-100 text-blue-700'
                           : 'bg-purple-100 text-purple-700'
-                      }`}
+                      } ${s.retiradoPrograma ? 'line-through decoration-2 decoration-red-500' : ''}`}
                     >
                       {s.categoria}
                     </span>
@@ -418,15 +491,46 @@ export default function AttendanceReportPage() {
                     );
                   })}
                   <td className="px-2 py-2.5 text-center bg-slate-50">
-                    <span className={`font-bold ${
-                      percentage >= 80 ? 'text-green-600' :
-                      percentage >= 50 ? 'text-orange-500' :
-                      percentage > 0 ? 'text-red-500' :
-                      'text-gray-400'
-                    }`}>
-                      {percentage}%
+                    <span
+                      className={`inline-flex items-center justify-center gap-1 font-bold ${
+                        percentage == null ? 'text-gray-400 line-through decoration-2 decoration-red-500' :
+                        percentage >= 80 ? 'text-green-600' :
+                        percentage >= 50 ? 'text-orange-500' :
+                        percentage > 0 ? 'text-red-500' :
+                        'text-gray-400'
+                      }`}
+                      title={s.retiradoPrograma ? 'Retirado del programa' : s.justifiedDays > 0 ? `Tiene ${s.justifiedDays} justificativo${s.justifiedDays === 1 ? '' : 's'}` : undefined}
+                    >
+                      {percentage == null ? '--' : `${percentage}%`}
+                      {!s.retiradoPrograma && s.justifiedDays > 0 && (
+                        <span
+                          className="inline-flex items-center justify-center text-amber-500"
+                          aria-label={`Tiene ${s.justifiedDays} justificativo${s.justifiedDays === 1 ? '' : 's'}`}
+                        >
+                          ⚠️
+                        </span>
+                      )}
                     </span>
                   </td>
+                  {manualMode && isAdmin && (
+                    <td className="px-2 py-2.5 text-center bg-slate-50">
+                      {!s.retiradoPrograma ? (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenRetire(s.studentID, `${s.apellidos}, ${s.nombres}`)}
+                          className="inline-flex items-center justify-center text-red-600 hover:text-red-700"
+                          title="Retirar del programa"
+                          aria-label={`Retirar del programa a ${s.apellidos}, ${s.nombres}`}
+                        >
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                            <path d="M10 3h7a2 2 0 0 1 2 2v4h-2V5h-7v14h7v-4h2v4a2 2 0 0 1-2 2h-7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm3.59 11.59L17.17 11H8v-2h9.17l-3.58-3.59L15 4l6 6-6 6-1.41-1.41z" />
+                          </svg>
+                        </button>
+                      ) : (
+                        <span className="text-xs font-semibold text-red-600">Retirada</span>
+                      )}
+                    </td>
+                  )}
                 </tr>
               );
             })}
@@ -452,6 +556,35 @@ export default function AttendanceReportPage() {
           <span>Día sin asistencia registrada</span>
         </div>
       </div>
+
+      {retireData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => !retireSubmitting && setRetireData(null)}>
+          <div className="w-full max-w-md rounded-lg bg-white shadow-xl p-5" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-bold text-text mb-2">Confirmar retiro del programa</h3>
+            <p className="text-sm text-text-muted mb-4">
+              ¿Seguro que deseas retirar a <span className="font-semibold text-text">{retireData.nombre}</span> del programa?
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button
+                type="button"
+                onClick={() => setRetireData(null)}
+                disabled={retireSubmitting}
+                className="px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmRetire}
+                disabled={retireSubmitting}
+                className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700 disabled:opacity-50"
+              >
+                {retireSubmitting ? 'Retirando...' : 'Confirmar retiro'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Action Menu */}
       {actionMenu && (

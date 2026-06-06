@@ -74,6 +74,9 @@ export interface Student {
   rut: string;
   categoria: Categoria;
   seasonID: number;
+  retiradoPrograma: boolean;
+  retiradoPorUserID: number | null;
+  retiradoEn: string | null;
   retiradoApoderado: boolean;
   datosApoderado: Record<string, unknown> | null;
   guardianID: number | null;
