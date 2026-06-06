@@ -38,6 +38,18 @@ const StudentSchema = new EntitySchema({
     seasonID: {
       type: 'int',
     },
+    retiradoPrograma: {
+      type: 'boolean',
+      default: false,
+    },
+    retiradoPorUserID: {
+      type: 'int',
+      nullable: true,
+    },
+    retiradoEn: {
+      type: 'timestamp',
+      nullable: true,
+    },
     retiradoApoderado: {
       type: 'boolean',
       default: false,
@@ -85,6 +97,12 @@ const StudentSchema = new EntitySchema({
       type: 'many-to-one',
       target: 'Team',
       joinColumn: { name: 'teamID' },
+      nullable: true,
+    },
+    retiradoPor: {
+      type: 'many-to-one',
+      target: 'User',
+      joinColumn: { name: 'retiradoPorUserID' },
       nullable: true,
     },
     attendances: {
