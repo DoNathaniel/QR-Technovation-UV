@@ -4,6 +4,10 @@ const jwt = require('jsonwebtoken');
 const { AppDataSource } = require('../database/data-source');
 const UserSchema = require('../entities/User');
 const SeasonSchema = require('../entities/Season');
+const {
+  normalizeSeasonIds,
+  normalizeUserSeasons,
+} = require('../utils/seasonAccess');
 
 const userRepository = () => AppDataSource.getRepository(UserSchema);
 const seasonRepository = () => AppDataSource.getRepository(SeasonSchema);
@@ -28,9 +32,7 @@ async function login(req, res) {
       return res.status(401).json({ message: 'Credenciales inválidas' });
     }
 
-    const userTemporadas = user.temporadas 
-      ? user.temporadas.map(Number).filter(Boolean)
-      : [];
+    const userTemporadas = normalizeSeasonIds(user.temporadas);
 
     const token = jwt.sign(
       { 
@@ -44,21 +46,23 @@ async function login(req, res) {
     );
 
     let temporadas = [];
-    if (userTemporadas.length > 0) {
+    if (user.rol === 'superadmin') {
+      temporadas = await seasonRepository().find();
+    } else if (userTemporadas.length > 0) {
       temporadas = await seasonRepository().findByIds(userTemporadas);
     } else {
       temporadas = await seasonRepository().find({ where: { activa: true } });
     }
 
     res.json({
-      user: {
+      user: normalizeUserSeasons({
         ID: user.ID,
         nombre: user.nombre,
         apellido: user.apellido,
         email: user.email,
         rol: user.rol,
         temporadas: userTemporadas,
-      },
+      }),
       token,
       temporadas,
     });

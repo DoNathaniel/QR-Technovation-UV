@@ -6,7 +6,9 @@ const seasonRepository = () => AppDataSource.getRepository(SeasonSchema);
 
 async function getAll(req, res) {
   try {
-    const seasons = await seasonRepository().find({ where: { activa: true } });
+    const seasons = req.user?.rol === 'superadmin'
+      ? await seasonRepository().find()
+      : await seasonRepository().find({ where: { activa: true } });
     res.json(seasons);
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener temporadas', error: error.message });

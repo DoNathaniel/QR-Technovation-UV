@@ -3,15 +3,49 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { AppDataSource } = require('../database/data-source');
 const UserSchema = require('../entities/User');
+const SeasonSchema = require('../entities/Season');
+const {
+  normalizeSeasonIds,
+  normalizeUserSeasons,
+} = require('../utils/seasonAccess');
 
 const userRepository = () => AppDataSource.getRepository(UserSchema);
+const seasonRepository = () => AppDataSource.getRepository(SeasonSchema);
 
 async function getAll(req, res) {
   try {
-    const users = await userRepository().find({
+    const { rol, seasonID } = req.query;
+    const findOptions = {
       select: ['ID', 'nombre', 'apellido', 'email', 'rol', 'temporadas'],
-    });
-    res.json(users);
+    };
+
+    if (rol) {
+      findOptions.where = { rol };
+    }
+
+    const users = await userRepository().find(findOptions);
+    const normalizedSeasonID = Number(seasonID);
+
+    const seasonLookup = Number.isFinite(normalizedSeasonID)
+      ? await seasonRepository().findOne({ where: { ID: normalizedSeasonID } })
+      : null;
+
+    const filteredUsers = Number.isFinite(normalizedSeasonID)
+      ? users.filter((user) => {
+          if (user.rol === 'superadmin') {
+            return true;
+          }
+
+          const userSeasons = normalizeSeasonIds(user.temporadas);
+          if (userSeasons.includes(normalizedSeasonID)) {
+            return true;
+          }
+
+          return userSeasons.length === 0 && seasonLookup?.activa;
+        })
+      : users;
+
+    res.json(filteredUsers.map(normalizeUserSeasons));
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener usuarios', error: error.message });
   }
@@ -23,7 +57,7 @@ async function create(req, res) {
     const token = authHeader?.replace('Bearer ', '');
     const decoded = token ? jwt.verify(token, process.env.JWT_SECRET || 'secret_key') : null;
     
-    const { password, rol, ...rest } = req.body;
+    const { password, rol, temporadas, ...rest } = req.body;
     
     if (decoded?.rol !== 'superadmin' && rol === 'superadmin') {
       return res.status(403).json({ message: 'No tienes permiso para crear superadmin' });
@@ -38,10 +72,11 @@ async function create(req, res) {
       ...rest,
       password: hashedPassword,
       rol: rol || 'voluntario',
+      temporadas: normalizeSeasonIds(temporadas),
     });
     const result = await userRepository().save(user);
     delete result.password;
-    res.status(201).json(result);
+    res.status(201).json(normalizeUserSeasons(result));
   } catch (error) {
     res.status(500).json({ message: 'Error al crear usuario', error: error.message });
   }
@@ -59,7 +94,7 @@ async function update(req, res) {
     const token = authHeader?.replace('Bearer ', '');
     const decoded = token ? jwt.verify(token, process.env.JWT_SECRET || 'secret_key') : null;
     
-    const { password, rol, ...rest } = req.body;
+    const { password, rol, temporadas, ...rest } = req.body;
     
     if (rol && rol !== user.rol) {
       if (decoded?.rol !== 'superadmin') {
@@ -74,10 +109,13 @@ async function update(req, res) {
     if (password) {
       user.password = await bcrypt.hash(password, 10);
     }
+    if (temporadas !== undefined) {
+      user.temporadas = normalizeSeasonIds(temporadas);
+    }
     Object.assign(user, rest);
     const result = await userRepository().save(user);
     delete result.password;
-    res.json(result);
+    res.json(normalizeUserSeasons(result));
   } catch (error) {
     res.status(500).json({ message: 'Error al actualizar usuario', error: error.message });
   }

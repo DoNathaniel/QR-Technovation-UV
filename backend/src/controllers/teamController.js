@@ -5,12 +5,17 @@ const TeamStudentSchema = require('../entities/TeamStudent');
 const TeamMentorSchema = require('../entities/TeamMentor');
 const StudentSchema = require('../entities/Student');
 const UserSchema = require('../entities/User');
+const SeasonSchema = require('../entities/Season');
+const {
+  userHasSeasonAccess,
+} = require('../utils/seasonAccess');
 
 const teamRepository = () => AppDataSource.getRepository(TeamSchema);
 const teamStudentRepository = () => AppDataSource.getRepository(TeamStudentSchema);
 const teamMentorRepository = () => AppDataSource.getRepository(TeamMentorSchema);
 const studentRepository = () => AppDataSource.getRepository(StudentSchema);
 const userRepository = () => AppDataSource.getRepository(UserSchema);
+const seasonRepository = () => AppDataSource.getRepository(SeasonSchema);
 
 const list = async (req, res) => {
 	const { seasonID } = req.query;
@@ -124,6 +129,22 @@ const assignMentor = async (req, res) => {
   // body: { mentorID, teamID, seasonID }
   try {
     const { mentorID, teamID, seasonID } = req.body;
+    const mentor = await userRepository().findOne({ where: { ID: mentorID } });
+    if (!mentor) {
+      return res.status(404).json({ message: 'Mentor no encontrado' });
+    }
+
+    if (mentor.rol !== 'voluntario') {
+      return res.status(400).json({ message: 'Solo los voluntarios pueden ser asignados como mentores' });
+    }
+
+    const season = await seasonRepository().findOne({ where: { ID: seasonID } });
+    const activeSeasonIds = season?.activa ? [season.ID] : [];
+
+    if (!userHasSeasonAccess(mentor, seasonID, activeSeasonIds)) {
+      return res.status(400).json({ message: 'El mentor no está configurado para esta temporada' });
+    }
+
     const rel = teamMentorRepository().create({ mentorID, teamID, seasonID });
     await teamMentorRepository().save(rel);
     res.json({ success: true });
