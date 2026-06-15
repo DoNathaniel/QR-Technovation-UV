@@ -161,11 +161,30 @@ export default function UsersPage() {
       </div>
 
       {showForm && (
-        <div className="bg-surface rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold mb-4">
-            {editingUser ? 'Editar Usuario' : 'Nuevo Usuario'}
-          </h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => !submitting && setShowForm(false)}
+        >
+          <div
+            className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+            role="dialog"
+            aria-modal="true"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold text-gray-800">
+                {editingUser ? 'Editar Usuario' : 'Nuevo Usuario'}
+              </h2>
+              <button
+                type="button"
+                onClick={() => setShowForm(false)}
+                disabled={submitting}
+                className="text-gray-500 hover:text-gray-700 text-2xl disabled:opacity-50"
+              >
+                ×
+              </button>
+            </div>
+            <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-text mb-1">Nombre</label>
@@ -265,7 +284,7 @@ export default function UsersPage() {
                 )}
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 pt-2">
               <button
                 type="submit"
                 disabled={submitting}
@@ -283,7 +302,8 @@ export default function UsersPage() {
                 Cancelar
               </button>
             </div>
-          </form>
+            </form>
+          </div>
         </div>
       )}
 
