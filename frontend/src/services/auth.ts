@@ -11,6 +11,7 @@ export const authService = {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('currentSeasonId');
+    localStorage.removeItem('availableSeasons');
   },
 
   getToken(): string | null {

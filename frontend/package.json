@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build && cp .htaccess dist/",
+    "build": "tsc && vite build && node -e \"require('fs').copyFileSync('.htaccess', 'dist/.htaccess')\"",
     "preview": "vite preview"
   },
   "devDependencies": {

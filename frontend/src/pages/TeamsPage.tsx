@@ -48,7 +48,7 @@ function DraggableStudent({
       </span>
       <button
         onClick={() => onRemove(student.ID)}
-        className="text-red-500 hover:text-red-700 flex-shrink-0"
+        className="text-red-500 hover:text-red-700 shrink-0"
         title="Quitar del equipo"
       >
         ✕
@@ -79,7 +79,7 @@ function TeamStudentDropZone({
   return (
     <div
       ref={ref}
-      className={`space-y-1 rounded-lg p-2 min-h-[40px] transition-colors border border-dashed
+      className={`space-y-1 rounded-lg p-2 min-h-10 transition-colors border border-dashed
         ${isDropTarget && !full && !invalidCategory ? 'bg-green-50 border-green-400' : ''}
         ${isDropTarget && (full || invalidCategory) ? 'bg-red-50 border-red-400' : ''}
         ${!isDropTarget ? 'border-gray-200 bg-gray-50/50' : ''}
@@ -113,7 +113,7 @@ function UnassignedStudentsDropZone({ children }: { children: React.ReactNode })
   return (
     <div
       ref={ref}
-      className={`space-y-2 max-h-[calc(100vh-280px)] overflow-y-auto rounded-lg p-2 min-h-[60px] transition-colors
+      className={`space-y-2 max-h-[calc(100vh-280px)] overflow-y-auto rounded-lg p-2 min-h-15 transition-colors
         ${isDropTarget ? 'bg-yellow-50 border-2 border-yellow-300' : 'border border-transparent'}`}
     >
       {children}
@@ -151,7 +151,7 @@ function DraggableUnassignedStudent({
           onAssign(student.ID, parseInt(e.target.value));
           e.target.value = '';
         }}
-        className="px-1.5 py-0.5 border border-gray-300 rounded text-[10px] flex-shrink-0"
+        className="px-1.5 py-0.5 border border-gray-300 rounded text-[10px] shrink-0"
       >
         <option value="">Equipo...</option>
         {teams
@@ -209,7 +209,7 @@ function DraggableTeamMentor({
       </span>
       <button
         onClick={() => onRemove(mentor.ID, teamID)}
-        className="text-red-500 hover:text-red-700 flex-shrink-0"
+        className="text-red-500 hover:text-red-700 shrink-0"
         title="Quitar mentor"
       >
         ✕
@@ -243,7 +243,7 @@ function TeamMentorDropZone({
   return (
     <div
       ref={ref}
-      className={`space-y-1 rounded-lg p-2 min-h-[40px] transition-colors border border-dashed
+      className={`space-y-1 rounded-lg p-2 min-h-10 transition-colors border border-dashed
         ${isDropTarget && !alreadyInTeam ? 'bg-green-50 border-green-400' : ''}
         ${isDropTarget && alreadyInTeam ? 'bg-yellow-50 border-yellow-400' : ''}
         ${!isDropTarget ? 'border-gray-200 bg-gray-50/50' : ''}`}
@@ -334,7 +334,7 @@ export default function TeamsPage() {
         await Promise.all([
           api.get<Team[]>(`/teams?seasonID=${seasonID}`),
           api.get<Student[]>(`/students?seasonID=${seasonID}`),
-          api.get<Mentor[]>(`/users?rol=voluntario`),
+          api.get<Mentor[]>(`/users?rol=voluntario&seasonID=${seasonID}`),
           api.get<TeamMentor[]>(`/teams/mentors?seasonID=${seasonID}`),
           api.get<TeamStudent[]>(`/teams/students?seasonID=${seasonID}`),
         ]);
@@ -960,7 +960,7 @@ function MentorSidebar({
     >
       <h2 className="text-sm font-bold text-text mb-1">Mentores disponibles</h2>
       <p className="text-[10px] text-text-muted mb-2">
-        Arrastra a un equipo. Un mentor puede estar en varios equipos.
+        Arrastra a un equipo. Solo aparecen los mentores configurados para esta temporada.
         Arrastra un mentor de un equipo aqui para quitarlo.
       </p>
       <div className="space-y-2 max-h-[calc(100vh-280px)] overflow-y-auto">
@@ -983,7 +983,7 @@ function MentorSidebar({
         })}
         {mentors.length === 0 && (
           <div className="text-xs text-text-muted italic py-4 text-center">
-            No hay mentores registrados.
+            No hay mentores configurados para esta temporada.
           </div>
         )}
       </div>

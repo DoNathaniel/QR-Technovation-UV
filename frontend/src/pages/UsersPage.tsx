@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { colors } from '../config';
+import type { Season } from '../types';
 
 interface User {
   ID: number;
@@ -9,12 +10,13 @@ interface User {
   apellido: string;
   email: string;
   rol: 'superadmin' | 'admin' | 'voluntario';
-  temporadas: string | null;
+  temporadas: number[];
 }
 
 export default function UsersPage() {
   const navigate = useNavigate();
   const [users, setUsers] = useState<User[]>([]);
+  const [seasons, setSeasons] = useState<Season[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -26,16 +28,21 @@ export default function UsersPage() {
     email: '',
     password: '',
     rol: 'voluntario' as 'superadmin' | 'admin' | 'voluntario',
+    temporadas: [] as number[],
   });
 
   useEffect(() => {
-    loadUsers();
+    loadData();
   }, []);
 
-  const loadUsers = async () => {
+  const loadData = async () => {
     try {
-      const res = await api.get('/users');
-      setUsers(res.data);
+      const [usersRes, seasonsRes] = await Promise.all([
+        api.get('/users'),
+        api.get('/seasons'),
+      ]);
+      setUsers(usersRes.data);
+      setSeasons(seasonsRes.data);
     } catch (error) {
       console.error('Error loading users:', error);
     } finally {
@@ -43,12 +50,39 @@ export default function UsersPage() {
     }
   };
 
+  const loadUsers = async () => {
+    try {
+      const res = await api.get('/users');
+      setUsers(res.data);
+    } catch (error) {
+      console.error('Error loading users:', error);
+    }
+  };
+
+  const seasonNameById = (seasonID: number) =>
+    seasons.find((season) => season.ID === seasonID)?.nombre ?? `Temporada #${seasonID}`;
+
+  const toggleSeason = (seasonID: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      temporadas: prev.temporadas.includes(seasonID)
+        ? prev.temporadas.filter((id) => id !== seasonID)
+        : [...prev.temporadas, seasonID],
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     try {
       if (editingUser) {
-        const updateData: any = { nombre: formData.nombre, apellido: formData.apellido, email: formData.email, rol: formData.rol };
+        const updateData: any = {
+          nombre: formData.nombre,
+          apellido: formData.apellido,
+          email: formData.email,
+          rol: formData.rol,
+          temporadas: formData.temporadas,
+        };
         if (formData.password) {
           updateData.password = formData.password;
         }
@@ -56,10 +90,10 @@ export default function UsersPage() {
       } else {
         await api.post('/users', formData);
       }
-      loadUsers();
+      loadData();
       setShowForm(false);
       setEditingUser(null);
-      setFormData({ nombre: '', apellido: '', email: '', password: '', rol: 'voluntario' });
+      setFormData({ nombre: '', apellido: '', email: '', password: '', rol: 'voluntario', temporadas: [] });
     } catch (error) {
       console.error('Error saving user:', error);
     } finally {
@@ -75,6 +109,7 @@ export default function UsersPage() {
       email: user.email,
       password: '',
       rol: user.rol,
+      temporadas: user.temporadas || [],
     });
     setShowForm(true);
   };
@@ -116,7 +151,7 @@ export default function UsersPage() {
           onClick={() => {
             setShowForm(true);
             setEditingUser(null);
-            setFormData({ nombre: '', apellido: '', email: '', password: '', rol: 'voluntario' });
+            setFormData({ nombre: '', apellido: '', email: '', password: '', rol: 'voluntario', temporadas: [] });
           }}
           className="px-4 py-2 rounded text-white text-sm"
           style={{ backgroundColor: colors.primary }}
@@ -187,6 +222,49 @@ export default function UsersPage() {
                 <option value="superadmin">Super Admin</option>
               </select>
             </div>
+            <div>
+              <div className="flex items-center justify-between gap-3 mb-1">
+                <label className="block text-sm font-medium text-text">Temporadas</label>
+                <span className="text-xs text-text-muted">
+                  {formData.rol === 'superadmin'
+                    ? 'El superadmin tiene acceso a todas las temporadas'
+                    : 'Selecciona una o más temporadas para este usuario'}
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 rounded-lg border border-gray-200 p-3 max-h-56 overflow-y-auto">
+                {seasons.map((season) => {
+                  const checked = formData.temporadas.includes(season.ID);
+                  return (
+                    <label
+                      key={season.ID}
+                      className={`flex items-start gap-3 rounded-md border px-3 py-2 cursor-pointer transition-colors ${
+                        checked ? 'border-blue-400 bg-blue-50' : 'border-gray-200 bg-white'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleSeason(season.ID)}
+                        className="mt-1"
+                      />
+                      <span className="min-w-0">
+                        <span className="block text-sm font-medium text-text">
+                          {season.nombre}
+                        </span>
+                        <span className="block text-xs text-text-muted">
+                          {new Date(season.fechaInicio).toLocaleDateString('es-CL')} - {new Date(season.fechaFin).toLocaleDateString('es-CL')}
+                        </span>
+                      </span>
+                    </label>
+                  );
+                })}
+                {seasons.length === 0 && (
+                  <div className="col-span-full text-sm text-text-muted">
+                    No hay temporadas disponibles para configurar.
+                  </div>
+                )}
+              </div>
+            </div>
             <div className="flex gap-2">
               <button
                 type="submit"
@@ -216,6 +294,7 @@ export default function UsersPage() {
               <th className="px-4 py-3 text-left text-sm font-medium text-text-muted">Nombre</th>
               <th className="px-4 py-3 text-left text-sm font-medium text-text-muted">Email</th>
               <th className="px-4 py-3 text-left text-sm font-medium text-text-muted">Rol</th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-text-muted">Temporadas</th>
               <th className="px-4 py-3 text-right text-sm font-medium text-text-muted">Acciones</th>
             </tr>
           </thead>
@@ -234,6 +313,24 @@ export default function UsersPage() {
                   }`}>
                     {roleLabels[user.rol]}
                   </span>
+                </td>
+                <td className="px-4 py-3 text-sm text-text-muted">
+                  {user.rol === 'superadmin'
+                    ? 'Todas'
+                    : user.temporadas.length > 0
+                      ? (
+                        <div className="flex flex-wrap gap-1">
+                          {user.temporadas.map((seasonID) => (
+                            <span
+                              key={seasonID}
+                              className="px-2 py-0.5 text-[11px] rounded-full bg-gray-100 text-gray-700"
+                            >
+                              {seasonNameById(seasonID)}
+                            </span>
+                          ))}
+                        </div>
+                      )
+                      : 'Sin temporadas'}
                 </td>
                 <td className="px-4 py-3 text-right">
                   <button
@@ -254,7 +351,7 @@ export default function UsersPage() {
             ))}
             {users.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-text-muted">
+                <td colSpan={5} className="px-4 py-8 text-center text-text-muted">
                   No hay usuarios registrados
                 </td>
               </tr>

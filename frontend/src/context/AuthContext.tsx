@@ -18,7 +18,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAuthenticated: false,
     currentSeasonId: null,
   });
-  const [temporadas, setTemporadas] = useState<Season[]>([]);
+  const [temporadas, setTemporadas] = useState<Season[]>(() => {
+    const stored = localStorage.getItem('availableSeasons');
+    if (!stored) return [];
+    try {
+      return JSON.parse(stored) as Season[];
+    } catch {
+      return [];
+    }
+  });
+
+  const persistSeasons = (seasons: Season[]) => {
+    setTemporadas(seasons);
+    localStorage.setItem('availableSeasons', JSON.stringify(seasons));
+  };
+
+  const getValidSeasonId = (seasons: Season[], seasonId: number | null) => {
+    if (seasonId && seasons.some((season) => season.ID === seasonId)) {
+      return seasonId;
+    }
+    return seasons[0]?.ID ?? null;
+  };
 
   useEffect(() => {
     const token = authService.getToken();
@@ -26,12 +46,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const currentSeasonId = authService.getCurrentSeasonId();
 
     if (token && user) {
+      const validSeasonId = getValidSeasonId(temporadas, currentSeasonId);
       setState({
         user,
         token,
         isAuthenticated: true,
-        currentSeasonId,
+        currentSeasonId: validSeasonId,
       });
+      if (validSeasonId !== currentSeasonId) {
+        if (validSeasonId !== null) {
+          localStorage.setItem('currentSeasonId', validSeasonId.toString());
+        } else {
+          localStorage.removeItem('currentSeasonId');
+        }
+      }
     }
   }, []);
 
@@ -40,18 +68,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     localStorage.setItem('token', response.token);
     localStorage.setItem('user', JSON.stringify(response.user));
+    persistSeasons(response.temporadas);
+
+    const currentSeasonId = getValidSeasonId(response.temporadas, response.temporadas[0]?.ID ?? null);
     
     setState({
       user: response.user,
       token: response.token,
       isAuthenticated: true,
-      currentSeasonId: response.temporadas[0]?.ID || null,
+      currentSeasonId,
     });
     
-    setTemporadas(response.temporadas);
-    
-    if (response.temporadas.length > 0) {
-      localStorage.setItem('currentSeasonId', response.temporadas[0].ID.toString());
+    if (currentSeasonId !== null) {
+      localStorage.setItem('currentSeasonId', currentSeasonId.toString());
+    } else {
+      localStorage.removeItem('currentSeasonId');
     }
   };
 
@@ -67,6 +98,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const setCurrentSeason = (seasonId: number) => {
+    if (temporadas.length > 0 && !temporadas.some((season) => season.ID === seasonId)) {
+      return;
+    }
     authService.setCurrentSeasonId(seasonId);
     setState(prev => ({ ...prev, currentSeasonId: seasonId }));
   };
