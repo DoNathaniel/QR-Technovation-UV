@@ -70,15 +70,18 @@ io.on('connection', (socket) => {
   });
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.PORT || 3000);
+const HOST = '0.0.0.0';
 
 AppDataSource.initialize()
   .then(() => {
     console.log('Database connected');
-    httpServer.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
+
+    httpServer.listen(PORT, HOST, () => {
+      console.log(`Server running on ${HOST}:${PORT}`);
     });
   })
   .catch((error) => {
     console.error('Database connection failed:', error);
+    process.exit(1);
   });
