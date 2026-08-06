@@ -383,6 +383,7 @@ async function generateStudentQR(req, res) {
       generated: true,
     });
   } catch (error) {
+    console.log(error)
     console.error('[QR] Error al generar QR:', error.message);
     res.status(500).json({ message: 'Error al generar QR', error: error.message });
   }
