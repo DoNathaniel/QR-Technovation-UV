@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { colors } from '../config';
-import type { Season } from '../types';
+import type { Season, Team, TeamMentor } from '../types';
 
 interface User {
   ID: number;
@@ -17,11 +17,16 @@ export default function UsersPage() {
   const navigate = useNavigate();
   const [users, setUsers] = useState<User[]>([]);
   const [seasons, setSeasons] = useState<Season[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [teamMentorAssignments, setTeamMentorAssignments] = useState<TeamMentor[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedSeason, setSelectedSeason] = useState('');
+  const [selectedRole, setSelectedRole] = useState('');
   const [formData, setFormData] = useState({
     nombre: '',
     apellido: '',
@@ -37,12 +42,16 @@ export default function UsersPage() {
 
   const loadData = async () => {
     try {
-      const [usersRes, seasonsRes] = await Promise.all([
+      const [usersRes, seasonsRes, teamsRes, teamMentorsRes] = await Promise.all([
         api.get('/users'),
         api.get('/seasons'),
+        api.get('/teams'),
+        api.get('/teams/mentors'),
       ]);
       setUsers(usersRes.data);
       setSeasons(seasonsRes.data);
+      setTeams(teamsRes.data);
+      setTeamMentorAssignments(teamMentorsRes.data);
     } catch (error) {
       console.error('Error loading users:', error);
     } finally {
@@ -61,6 +70,17 @@ export default function UsersPage() {
 
   const seasonNameById = (seasonID: number) =>
     seasons.find((season) => season.ID === seasonID)?.nombre ?? `Temporada #${seasonID}`;
+
+  const teamsForUser = (user: User) => {
+    const allowedSeasonIds = user.rol === 'superadmin'
+      ? new Set(teams.map((team) => team.seasonID))
+      : new Set(user.temporadas);
+
+    return teamMentorAssignments
+      .filter((assignment) => assignment.mentorID === user.ID && allowedSeasonIds.has(assignment.seasonID))
+      .map((assignment) => teams.find((team) => team.ID === assignment.teamID))
+      .filter((team): team is Team => Boolean(team) && allowedSeasonIds.has(team.seasonID));
+  };
 
   const toggleSeason = (seasonID: number) => {
     setFormData((prev) => ({
@@ -132,6 +152,18 @@ export default function UsersPage() {
     admin: 'Admin',
     voluntario: 'Voluntario',
   };
+
+  const normalizedSearchTerm = searchTerm.trim().toLocaleLowerCase('es-CL');
+  const filteredUsers = users.filter((user) => {
+    const fullName = `${user.nombre} ${user.apellido}`.toLocaleLowerCase('es-CL');
+    const matchesName = !normalizedSearchTerm || fullName.includes(normalizedSearchTerm);
+    const matchesSeason = !selectedSeason
+      || user.rol === 'superadmin'
+      || user.temporadas.includes(Number(selectedSeason));
+    const matchesRole = !selectedRole || user.rol === selectedRole;
+
+    return matchesName && matchesSeason && matchesRole;
+  });
 
   if (loading) return <div className="p-4">Cargando...</div>;
 
@@ -307,6 +339,56 @@ export default function UsersPage() {
         </div>
       )}
 
+      <div className="bg-surface rounded-lg shadow p-4">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_auto_auto] md:items-end">
+          <div>
+            <label htmlFor="user-search" className="block text-sm font-medium text-text mb-1">
+              Buscar por nombre
+            </label>
+            <input
+              id="user-search"
+              type="search"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Nombre o apellido"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+            />
+          </div>
+          <div>
+            <label htmlFor="season-filter" className="block text-sm font-medium text-text mb-1">
+              Temporada
+            </label>
+            <select
+              id="season-filter"
+              value={selectedSeason}
+              onChange={(e) => setSelectedSeason(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+            >
+              <option value="">Todas las temporadas</option>
+              {seasons.map((season) => (
+                <option key={season.ID} value={season.ID}>{season.nombre}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="role-filter" className="block text-sm font-medium text-text mb-1">
+              Rol
+            </label>
+            <select
+              id="role-filter"
+              value={selectedRole}
+              onChange={(e) => setSelectedRole(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+            >
+              <option value="">Todos los roles</option>
+              <option value="superadmin">Super Admin</option>
+              <option value="admin">Admin</option>
+              <option value="voluntario">Voluntario</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
       <div className="bg-surface rounded-lg shadow overflow-hidden">
         <table className="w-full">
           <thead className="bg-gray-50">
@@ -315,11 +397,12 @@ export default function UsersPage() {
               <th className="px-4 py-3 text-left text-sm font-medium text-text-muted">Email</th>
               <th className="px-4 py-3 text-left text-sm font-medium text-text-muted">Rol</th>
               <th className="px-4 py-3 text-left text-sm font-medium text-text-muted">Temporadas</th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-text-muted">Equipos</th>
               <th className="px-4 py-3 text-right text-sm font-medium text-text-muted">Acciones</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {users.map((user) => (
+            {filteredUsers.map((user) => (
               <tr key={user.ID} className="hover:bg-gray-50">
                 <td className="px-4 py-3 text-sm text-text">
                   {user.nombre} {user.apellido}
@@ -352,6 +435,22 @@ export default function UsersPage() {
                       )
                       : 'Sin temporadas'}
                 </td>
+                <td className="px-4 py-3 text-sm text-text-muted">
+                  {teamsForUser(user).length > 0
+                    ? (
+                      <div className="flex flex-wrap gap-1">
+                        {teamsForUser(user).map((team) => (
+                          <span
+                            key={team.ID}
+                            className="px-2 py-0.5 text-[11px] rounded-full bg-green-100 text-green-800"
+                          >
+                            {team.nombre} · {seasonNameById(team.seasonID)}
+                          </span>
+                        ))}
+                      </div>
+                    )
+                    : 'Sin equipo'}
+                </td>
                 <td className="px-4 py-3 text-right">
                   <button
                     onClick={() => handleEdit(user)}
@@ -369,10 +468,10 @@ export default function UsersPage() {
                 </td>
               </tr>
             ))}
-            {users.length === 0 && (
+            {filteredUsers.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-text-muted">
-                  No hay usuarios registrados
+                <td colSpan={6} className="px-4 py-8 text-center text-text-muted">
+                  {users.length === 0 ? 'No hay usuarios registrados' : 'No hay usuarios que coincidan con los filtros'}
                 </td>
               </tr>
             )}
