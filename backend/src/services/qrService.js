@@ -5,7 +5,7 @@ const sharp = require('sharp');
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
 
 // Path a la imagen base en la raiz del monorepo
-const BASE_QR_PATH = path.join("./", '../media/base-qr-season1.png');
+const BASE_QR_PATH = path.join(__dirname, "../media/base-qr-season1.png");
 console.log(BASE_QR_PATH)
 
 function r2Config() {
