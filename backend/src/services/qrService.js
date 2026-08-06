@@ -5,8 +5,7 @@ const sharp = require('sharp');
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
 
 // Path a la imagen base en la raiz del monorepo
-const MONOREPO_ROOT = path.resolve(__dirname, '..', '..', '..');
-const BASE_QR_PATH = path.join(MONOREPO_ROOT, './media/base-qr.png');
+const BASE_QR_PATH = path.join('../media/base-qr-season1.png');
 
 function r2Config() {
   const R2_ENDPOINT = process.env.R2_ENDPOINT || 'https://a09105738e1d4fe8bcbf689176c62491.r2.cloudflarestorage.com';
