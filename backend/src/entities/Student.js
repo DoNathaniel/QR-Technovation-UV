@@ -23,6 +23,8 @@ const StudentSchema = new EntitySchema({
       length: 255,
       nullable: true,
     },
+    emailEncrypted: { type: 'text', nullable: true },
+    emailHash: { type: 'varchar', length: 64, nullable: true },
     fechaNac: {
       type: 'date',
       nullable: true,
@@ -30,7 +32,10 @@ const StudentSchema = new EntitySchema({
     rut: {
       type: 'varchar',
       length: 20,
+      nullable: true,
     },
+    rutEncrypted: { type: 'text', nullable: true },
+    rutHash: { type: 'varchar', length: 64, nullable: true },
     categoria: {
       type: 'enum',
       enum: ['Beginner', 'Junior', 'Senior'],
@@ -111,6 +116,13 @@ const StudentSchema = new EntitySchema({
       inverseSide: 'student',
     },
   },
+  indices: [
+    {
+      name: 'UQ_students_rut_hash_season',
+      columns: ['rutHash', 'seasonID'],
+      unique: true,
+    },
+  ],
 });
 
 module.exports = StudentSchema;

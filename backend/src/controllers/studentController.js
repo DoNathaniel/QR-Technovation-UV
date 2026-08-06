@@ -4,6 +4,7 @@ const StudentSchema = require('../entities/Student');
 const { generateQR } = require('../services/qrService');
 const { sendQREmail } = require('../services/emailService');
 const GuardianSchema = require('../entities/Guardian');
+const { blindIndex, protect, reveal, serializeSensitive, protectGuardianData, revealGuardianData } = require('../services/sensitiveDataService');
 
 const studentRepository = () => AppDataSource.getRepository(StudentSchema);
 const guardianRepository = () => AppDataSource.getRepository(GuardianSchema);
@@ -11,6 +12,45 @@ const guardianRepository = () => AppDataSource.getRepository(GuardianSchema);
 function validateRUT(rut) {
   const rutRegex = /^\d{1,2}\.\d{3}\.\d{3}-[0-9K]$/i;
   return rutRegex.test(rut);
+}
+
+function serializeStudent(student) {
+  const result = serializeSensitive(student, ['email', 'rut']);
+  result.datosApoderado = revealGuardianData(result.datosApoderado);
+  return result;
+}
+
+function studentValues(data, rut) {
+  const email = protect(data.email, 'email');
+  const protectedRut = protect(rut, 'rut');
+  const values = { ...data };
+  delete values.email;
+  return {
+    ...values,
+    email: null,
+    emailEncrypted: email.encrypted,
+    emailHash: email.hash,
+    rut: null,
+    rutEncrypted: protectedRut.encrypted,
+    rutHash: protectedRut.hash,
+  };
+}
+
+function guardianValues(data, seasonID) {
+  const email = protect(data.email, 'email');
+  const rut = protect(data.rut, 'rut');
+  return {
+    nombres: data.nombres,
+    apellidos: data.apellidos || '',
+    telefono: data.telefono || '',
+    seasonID,
+    email: null,
+    emailEncrypted: email.encrypted,
+    emailHash: email.hash,
+    rut: null,
+    rutEncrypted: rut.encrypted,
+    rutHash: rut.hash,
+  };
 }
 
 async function getAll(req, res) {
@@ -28,7 +68,7 @@ async function getAll(req, res) {
     });
     
     const result = students.map(s => ({
-      ...s,
+      ...serializeStudent(s),
       teamID: s.team?.ID || null,
       teamNombre: s.team?.nombre || null,
     }));
@@ -46,7 +86,7 @@ async function getById(req, res) {
     if (!student) {
       return res.status(404).json({ message: 'Estudiante no encontrado' });
     }
-    res.json(student);
+    res.json(serializeStudent(student));
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener estudiante', error: error.message });
   }
@@ -55,15 +95,16 @@ async function getById(req, res) {
 async function create(req, res) {
   try {
     const { datosApoderado, seasonID, rut, retiradoPrograma, retiradoPorUserID, retiradoEn, ...studentData } = req.body;
-    console.log(seasonID)
-    
     if (!seasonID) {
       return res.status(400).json({ message: 'seasonID es requerido' });
     }
 
     if (rut) {
       const existingStudent = await studentRepository().findOne({
-        where: { rut: rut.trim(), seasonID: parseInt(seasonID) }
+        where: [
+          { rutHash: blindIndex(rut, 'rut'), seasonID: parseInt(seasonID) },
+          { rut: rut.trim(), seasonID: parseInt(seasonID) },
+        ]
       });
       if (existingStudent) {
         return res.status(400).json({ message: 'Ya existe un estudiante con ese RUT en esta temporada' });
@@ -92,17 +133,10 @@ async function create(req, res) {
       }
       
       if (!guardian) {
-        guardian = guardianRepo.create({
-          nombres: datosApoderado.nombres,
-          apellidos: datosApoderado.apellidos || '',
-          email: datosApoderado.email || '',
-          telefono: datosApoderado.telefono || '',
-          rut: datosApoderado.rut || '',
-          seasonID: req.body.seasonID,
-        });
+        guardian = guardianRepo.create(guardianValues(datosApoderado, req.body.seasonID));
         guardian = await guardianRepo.save(guardian);
       } else {
-        guardian_email = guardian.email;
+        guardian_email = reveal(guardian, 'email');
       }
       
       guardianID = guardian.ID;
@@ -113,14 +147,15 @@ async function create(req, res) {
       
       guardian = await guardianRepo.findOne({ where: { ID: guardianID } });
       if(guardian) {
-        guardian_email = guardian.email;
+        guardian_email = reveal(guardian, 'email');
       }
     }
     
     const student = studentRepository().create({
-      ...studentData,
+      ...studentValues(studentData, rut),
+      seasonID: parseInt(seasonID),
       guardianID,
-      datosApoderado: datosApoderado && datosApoderado.nombres ? datosApoderado : null,
+      datosApoderado: datosApoderado && datosApoderado.nombres ? protectGuardianData(datosApoderado) : null,
     });
     const result = await studentRepository().save(student);
 
@@ -139,7 +174,7 @@ async function create(req, res) {
     // Enviar QR por email al estudiante y al apoderado (sin duplicados)
     if (cdnUrl) {
       const studentName = `${result.nombres} ${result.apellidos}`;
-      const studentEmail = result.email || null;
+      const studentEmail = reveal(result, 'email');
       const guardianEmail = guardian_email || (datosApoderado && datosApoderado.email) || null;
 
       const recipients = new Set();
@@ -156,7 +191,7 @@ async function create(req, res) {
       }
     }
 
-    res.status(201).json(result);
+    res.status(201).json(serializeStudent(result));
   } catch (error) {
     console.error('Error creating student:', error);
     res.status(500).json({ message: 'Error al crear estudiante', error: error.message });
@@ -174,7 +209,10 @@ async function update(req, res) {
 
     if (rut) {
       const existingStudent = await studentRepository().findOne({
-        where: { rut: rut.trim(), seasonID: parseInt(seasonID) }
+        where: [
+          { rutHash: blindIndex(rut, 'rut'), seasonID: parseInt(seasonID) },
+          { rut: rut.trim(), seasonID: parseInt(seasonID) },
+        ]
       });
       if (existingStudent && existingStudent.ID !== parseInt(id)) {
         return res.status(400).json({ message: 'Ya existe un estudiante con ese RUT en esta temporada' });
@@ -206,23 +244,20 @@ async function update(req, res) {
       }
       
       if (!guardian) {
-        guardian = guardianRepo.create({
-          nombres: datosApoderado.nombres,
-          apellidos: datosApoderado.apellidos || '',
-          email: datosApoderado.email || '',
-          telefono: datosApoderado.telefono || '',
-          rut: datosApoderado.rut || '',
-          seasonID: req.body.seasonID,
-        });
+        guardian = guardianRepo.create(guardianValues(datosApoderado, req.body.seasonID));
         guardian = await guardianRepo.save(guardian);
       }
       
       guardianID = guardian.ID;
     }
     
-    Object.assign(student, studentData, { guardianID });
+    Object.assign(student, studentValues(studentData, rut), {
+      seasonID: parseInt(seasonID),
+      guardianID,
+      datosApoderado: datosApoderado && datosApoderado.nombres ? protectGuardianData(datosApoderado) : null,
+    });
     const result = await studentRepository().save(student);
-    res.json(result);
+    res.json(serializeStudent(result));
   } catch (error) {
     console.error('Error updating student:', error);
     res.status(500).json({ message: 'Error al actualizar estudiante', error: error.message });
@@ -262,7 +297,7 @@ async function setRetiroPrograma(req, res) {
 
     res.json({
       message: retiradoPrograma ? 'Estudiante retirado del programa' : 'Retiro del programa revertido',
-      student: result,
+      student: serializeStudent(result),
     });
   } catch (error) {
     res.status(500).json({ message: 'Error al actualizar retiro del programa', error: error.message });
@@ -281,17 +316,17 @@ async function resendQR(req, res) {
 
     const guardian = await guardianRepository().findOne({ where: { ID: parseInt(student.guardianID) } });
 
-    // Si no tiene QR en CDN, generarlo ahora
-    let qrUrl = student.qrUrl;
+    // Reenviar nunca genera ni regenera el QR. La URL debe existir primero.
+    const qrUrl = student.qrUrl;
     if (!qrUrl) {
-      qrUrl = await generateQR(student.seasonID, student.ID);
-      student.qrUrl = qrUrl;
-      await studentRepository().save(student);
+      return res.status(409).json({
+        message: 'La estudiante no tiene un QR generado. Usa la opción Generar QR antes de reenviar.',
+      });
     }
 
     // Determinar destinatarios según parámetro destino
-    const studentEmail = student.email || null;
-    const guardianEmail = (guardian && guardian.email) || (student.datosApoderado && student.datosApoderado.email) || null;
+    const studentEmail = reveal(student, 'email');
+    const guardianEmail = (guardian && reveal(guardian, 'email')) || (revealGuardianData(student.datosApoderado)?.email) || null;
 
     const recipients = new Set();
     
@@ -319,8 +354,37 @@ async function resendQR(req, res) {
     console.log(`[QR] Reenviado para estudiante ID: ${id} - ${studentName} a ${sent.join(', ')} (destino: ${dest})`);
     res.json({ message: `QR reenviado exitosamente a ${sent.join(', ')}` });
   } catch (error) {
+    console.log(error)
     console.error('[QR] Error al reenviar QR:', error.message);
     res.status(500).json({ message: 'Error al reenviar QR', error: error.message });
+  }
+}
+
+async function generateStudentQR(req, res) {
+  try {
+    const { id } = req.params;
+    const force = Boolean(req.body?.force);
+    const student = await studentRepository().findOne({ where: { ID: parseInt(id) } });
+    if (!student) return res.status(404).json({ message: 'Estudiante no encontrado' });
+
+    if (student.qrUrl && !force) {
+      return res.json({
+        message: 'La estudiante ya tiene un QR generado.',
+        qrUrl: student.qrUrl,
+        generated: false,
+      });
+    }
+
+    student.qrUrl = await generateQR(student.seasonID, student.ID);
+    await studentRepository().save(student);
+    res.json({
+      message: force ? 'QR regenerado y URL actualizada.' : 'QR generado y URL guardada.',
+      qrUrl: student.qrUrl,
+      generated: true,
+    });
+  } catch (error) {
+    console.error('[QR] Error al generar QR:', error.message);
+    res.status(500).json({ message: 'Error al generar QR', error: error.message });
   }
 }
 
@@ -332,20 +396,16 @@ async function getQR(req, res) {
       return res.status(404).json({ message: 'Estudiante no encontrado' });
     }
 
-    // Si no tiene QR en CDN, generarlo ahora
-    let qrUrl = student.qrUrl;
-    if (!qrUrl) {
-      qrUrl = await generateQR(student.seasonID, student.ID);
-      student.qrUrl = qrUrl;
-      await studentRepository().save(student);
+    if (!student.qrUrl) {
+      return res.status(404).json({ message: 'La estudiante no tiene un QR generado' });
     }
 
-    // Redirect a la URL del CDN
-    res.redirect(qrUrl);
+    res.redirect(student.qrUrl);
   } catch (error) {
+    console.log(error)
     console.error('[QR] Error al obtener QR:', error.message);
     res.status(500).json({ message: 'Error al obtener QR', error: error.message });
   }
 }
 
-module.exports = { getAll, getById, create, update, remove, resendQR, getQR, setRetiroPrograma };
+module.exports = { getAll, getById, create, update, remove, resendQR, generateStudentQR, getQR, setRetiroPrograma };

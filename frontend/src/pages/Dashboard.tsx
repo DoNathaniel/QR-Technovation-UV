@@ -208,6 +208,17 @@ export default function Dashboard() {
                 </div>
               </div>
             </Link>
+            <Link
+              to="/administracion/cifrado-datos"
+              className="group bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-lg hover:border-red-200 transition-all"
+            >
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl" style={{ backgroundColor: '#dc2626' + '20' }}>
+                  <svg className="w-7 h-7" style={{ color: '#dc2626' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 11c1.657 0 3-1.343 3-3V6a3 3 0 10-6 0v2c0 1.657 1.343 3 3 3zm-6 9v-2a6 6 0 0112 0v2M5 11V9a7 7 0 0114 0v2" /></svg>
+                </div>
+                <div><h3 className="font-semibold text-lg text-gray-800 group-hover:text-red-600 transition-colors">Cifrado de datos</h3><p className="text-sm text-gray-500">Proteger registros existentes</p></div>
+              </div>
+            </Link>
           </>
         )}
       </div>

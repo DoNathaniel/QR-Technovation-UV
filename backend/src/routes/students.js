@@ -12,6 +12,7 @@ router.post('/', authenticateToken, checkRole('superadmin', 'admin'), studentCon
 router.put('/:id', authenticateToken, checkRole('superadmin', 'admin'), studentController.update);
 router.patch('/:id/retiro-programa', authenticateToken, checkRole('superadmin'), studentController.setRetiroPrograma);
 router.delete('/:id', authenticateToken, checkRole('superadmin', 'admin'), studentController.remove);
+router.post('/:id/generate-qr', authenticateToken, checkRole('superadmin', 'admin'), studentController.generateStudentQR);
 router.post('/:id/resend-qr', authenticateToken, checkRole('superadmin', 'admin'), studentController.resendQR);
 
 module.exports = router;

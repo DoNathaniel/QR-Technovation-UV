@@ -8,6 +8,7 @@ const {
   normalizeSeasonIds,
   normalizeUserSeasons,
 } = require('../utils/seasonAccess');
+const { blindIndex, reveal } = require('../services/sensitiveDataService');
 
 const userRepository = () => AppDataSource.getRepository(UserSchema);
 const seasonRepository = () => AppDataSource.getRepository(SeasonSchema);
@@ -20,7 +21,9 @@ async function login(req, res) {
       return res.status(400).json({ message: 'Email y contraseña son requeridos' });
     }
 
-    const user = await userRepository().findOne({ where: { email } });
+    const user = await userRepository().findOne({
+      where: [{ emailHash: blindIndex(email, 'email') }, { email }],
+    });
 
     if (!user) {
       return res.status(401).json({ message: 'Credenciales inválidas' });
@@ -37,7 +40,6 @@ async function login(req, res) {
     const token = jwt.sign(
       { 
         id: user.ID, 
-        email: user.email, 
         rol: user.rol, 
         temporadas: userTemporadas 
       },
@@ -59,7 +61,7 @@ async function login(req, res) {
         ID: user.ID,
         nombre: user.nombre,
         apellido: user.apellido,
-        email: user.email,
+        email: reveal(user, 'email'),
         rol: user.rol,
         temporadas: userTemporadas,
       }),

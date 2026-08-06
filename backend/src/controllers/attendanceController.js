@@ -3,10 +3,21 @@ const { AppDataSource } = require('../database/data-source');
 const AttendanceSchema = require('../entities/Attendance');
 const SeasonDateSchema = require('../entities/SeasonDate');
 const StudentSchema = require('../entities/Student');
+const { serializeSensitive, revealGuardianData } = require('../services/sensitiveDataService');
 
 const attendanceRepository = () => AppDataSource.getRepository(AttendanceSchema);
 const seasonDateRepository = () => AppDataSource.getRepository(SeasonDateSchema);
 const studentRepository = () => AppDataSource.getRepository(StudentSchema);
+
+function serializeStudent(student) {
+  const result = serializeSensitive(student, ['email', 'rut']);
+  result.datosApoderado = revealGuardianData(result.datosApoderado);
+  return result;
+}
+
+function serializeAttendance(attendance) {
+  return { ...attendance, student: attendance.student ? serializeStudent(attendance.student) : attendance.student };
+}
 
 async function register(req, res) {
   try {
@@ -47,7 +58,7 @@ async function register(req, res) {
     const result = await attendanceRepository().save(attendance);
 
     // Attach student data + retiredApoderado flag for the socket event and response
-    result.student = student;
+    result.student = serializeStudent(student);
     result.retiradoApoderado = student.retiradoApoderado;
 
     // T20-7: Get sisters (other students with same guardian in same season)
@@ -71,7 +82,7 @@ async function register(req, res) {
       req.io.to(`season:${student.seasonID}`).emit('attendance-registered', result);
     }
 
-    res.status(201).json(result);
+    res.status(201).json(serializeAttendance(result));
   } catch (error) {
     res.status(500).json({ message: 'Error al registrar asistencia', error: error.message });
   }
@@ -90,7 +101,7 @@ async function getByDate(req, res) {
       where: { seasonDateID: seasonDate.ID },
       relations: ['student']
     });
-    res.json(attendances);
+    res.json(attendances.map(serializeAttendance));
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener asistencia', error: error.message });
   }
@@ -252,7 +263,7 @@ async function justificar(req, res) {
           seasonDateID: attendance.seasonDateID,
           justificacion: attendance.justificacion,
           fecha,
-          student
+          student: serializeStudent(student)
         });
       }
     }
@@ -300,7 +311,7 @@ async function manualEntrada(req, res) {
     });
 
     const result = await attendanceRepository().save(attendance);
-    result.student = student;
+    result.student = serializeStudent(student);
     result.retiradoApoderado = student.retiradoApoderado;
 
     if (req.io) {
@@ -308,7 +319,7 @@ async function manualEntrada(req, res) {
       req.io.to(`season:${student.seasonID}`).emit('attendance-registered', result);
     }
 
-    res.status(201).json(result);
+    res.status(201).json(serializeAttendance(result));
   } catch (error) {
     res.status(500).json({ message: 'Error al registrar entrada manual', error: error.message });
   }
@@ -358,7 +369,7 @@ async function manualSalida(req, res) {
     });
 
     const result = await attendanceRepository().save(attendance);
-    result.student = student;
+    result.student = serializeStudent(student);
     result.retiradoApoderado = student.retiradoApoderado;
 
     if (req.io) {
@@ -366,7 +377,7 @@ async function manualSalida(req, res) {
       req.io.to(`season:${student.seasonID}`).emit('attendance-registered', result);
     }
 
-    res.status(201).json(result);
+    res.status(201).json(serializeAttendance(result));
   } catch (error) {
     res.status(500).json({ message: 'Error al registrar salida manual', error: error.message });
   }

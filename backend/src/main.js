@@ -17,6 +17,7 @@ const guardianRoutes = require('./routes/guardians');
 const studentRoutes = require('./routes/students');
 const attendanceRoutes = require('./routes/attendance');
 const teamsRoutes = require('./routes/teams');
+const sensitiveDataAdminRoutes = require('./routes/sensitiveDataAdmin');
 
 // SERVER
 const app = express();
@@ -52,6 +53,7 @@ app.use('/api/guardians', guardianRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/teams', teamsRoutes);
+app.use('/api/admin/sensitive-data', sensitiveDataAdminRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

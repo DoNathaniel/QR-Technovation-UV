@@ -8,15 +8,25 @@ const {
   normalizeSeasonIds,
   normalizeUserSeasons,
 } = require('../utils/seasonAccess');
+const { protect, serializeSensitive } = require('../services/sensitiveDataService');
 
 const userRepository = () => AppDataSource.getRepository(UserSchema);
 const seasonRepository = () => AppDataSource.getRepository(SeasonSchema);
+
+function serializeUser(user) {
+  return serializeSensitive(user, ['email']);
+}
+
+function userEmailValues(email) {
+  const protectedEmail = protect(email, 'email');
+  return { email: null, emailEncrypted: protectedEmail.encrypted, emailHash: protectedEmail.hash };
+}
 
 async function getAll(req, res) {
   try {
     const { rol, seasonID } = req.query;
     const findOptions = {
-      select: ['ID', 'nombre', 'apellido', 'email', 'rol', 'temporadas'],
+      select: ['ID', 'nombre', 'apellido', 'email', 'emailEncrypted', 'emailHash', 'rol', 'temporadas'],
     };
 
     if (rol) {
@@ -45,7 +55,7 @@ async function getAll(req, res) {
         })
       : users;
 
-    res.json(filteredUsers.map(normalizeUserSeasons));
+    res.json(filteredUsers.map((user) => normalizeUserSeasons(serializeUser(user))));
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener usuarios', error: error.message });
   }
@@ -57,7 +67,7 @@ async function create(req, res) {
     const token = authHeader?.replace('Bearer ', '');
     const decoded = token ? jwt.verify(token, process.env.JWT_SECRET || 'secret_key') : null;
     
-    const { password, rol, temporadas, ...rest } = req.body;
+    const { password, rol, temporadas, email, ...rest } = req.body;
     
     if (decoded?.rol !== 'superadmin' && rol === 'superadmin') {
       return res.status(403).json({ message: 'No tienes permiso para crear superadmin' });
@@ -70,13 +80,14 @@ async function create(req, res) {
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = userRepository().create({
       ...rest,
+      ...userEmailValues(email),
       password: hashedPassword,
       rol: rol || 'voluntario',
       temporadas: normalizeSeasonIds(temporadas),
     });
     const result = await userRepository().save(user);
     delete result.password;
-    res.status(201).json(normalizeUserSeasons(result));
+    res.status(201).json(normalizeUserSeasons(serializeUser(result)));
   } catch (error) {
     res.status(500).json({ message: 'Error al crear usuario', error: error.message });
   }
@@ -94,7 +105,7 @@ async function update(req, res) {
     const token = authHeader?.replace('Bearer ', '');
     const decoded = token ? jwt.verify(token, process.env.JWT_SECRET || 'secret_key') : null;
     
-    const { password, rol, temporadas, ...rest } = req.body;
+    const { password, rol, temporadas, email, ...rest } = req.body;
     
     if (rol && rol !== user.rol) {
       if (decoded?.rol !== 'superadmin') {
@@ -113,9 +124,10 @@ async function update(req, res) {
       user.temporadas = normalizeSeasonIds(temporadas);
     }
     Object.assign(user, rest);
+    if (email !== undefined) Object.assign(user, userEmailValues(email));
     const result = await userRepository().save(user);
     delete result.password;
-    res.json(normalizeUserSeasons(result));
+    res.json(normalizeUserSeasons(serializeUser(result)));
   } catch (error) {
     res.status(500).json({ message: 'Error al actualizar usuario', error: error.message });
   }

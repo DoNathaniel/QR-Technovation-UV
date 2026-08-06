@@ -2,16 +2,32 @@
 const path = require('path');
 const QRCode = require('qrcode');
 const sharp = require('sharp');
-const axios = require('axios');
-const FormData = require('form-data');
+const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
 
 // Path a la imagen base en la raiz del monorepo
 const MONOREPO_ROOT = path.resolve(__dirname, '..', '..', '..');
 const BASE_QR_PATH = path.join(MONOREPO_ROOT, './media/base-qr.png');
 
-// CDN
-const CDN_UPLOAD_URL = 'https://cdn.donath.us/cdn/upload';
-const CDN_BASE_PATH = '_UV_QR-TECHNOVATION_';
+function r2Config() {
+  const R2_ENDPOINT = process.env.R2_ENDPOINT || 'https://a09105738e1d4fe8bcbf689176c62491.r2.cloudflarestorage.com';
+  const R2_BUCKET = process.env.R2_BUCKET || 'qr-technovation-dev';
+  const R2_PUBLIC_BASE_URL = process.env.R2_PUBLIC_BASE_URL || 'https://qr-technovation-cdn.donath.us';
+  const { R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY } = process.env;
+  const missing = ['R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY'].filter((key) => !process.env[key]);
+  if (missing.length) throw new Error(`Faltan variables de configuración R2: ${missing.join(', ')}`);
+  return { R2_ENDPOINT, R2_BUCKET, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_PUBLIC_BASE_URL };
+}
+
+function r2Client(config) {
+  return new S3Client({
+    region: 'auto',
+    endpoint: config.R2_ENDPOINT,
+    credentials: {
+      accessKeyId: config.R2_ACCESS_KEY_ID,
+      secretAccessKey: config.R2_SECRET_ACCESS_KEY,
+    },
+  });
+}
 
 // Dimensiones
 const BASE_SIZE = 500;   // base-qr.png es 500x500
@@ -27,47 +43,36 @@ function buildQRContent(seasonID, studentID) {
 }
 
 /**
- * Sube un buffer PNG al CDN y retorna la URL publica.
+ * Sube un buffer PNG a Cloudflare R2 y retorna su URL pública mediante
+ * el dominio personalizado del bucket.
  *
  * @param {Buffer} buffer - Buffer de la imagen PNG
  * @param {number} seasonID - ID de la temporada
  * @param {number} studentID - ID del estudiante
  * @returns {Promise<string>} URL publica del archivo en el CDN
  */
-async function uploadToCDN(buffer, seasonID, studentID) {
-  const cdnPath = `${CDN_BASE_PATH}/season_${seasonID}`;
-  const filename = `student_${studentID}.png`;
+async function uploadToR2(buffer, seasonID, studentID) {
+  const config = r2Config();
+  const key = buildQRContent(seasonID, studentID);
+  await r2Client(config).send(new PutObjectCommand({
+    Bucket: config.R2_BUCKET,
+    Key: key,
+    Body: buffer,
+    ContentType: 'image/png',
+    CacheControl: 'public, max-age=31536000, immutable',
+  }));
 
-  const form = new FormData();
-  form.append('file', buffer, {
-    filename,
-    contentType: 'image/png',
-  });
-
-  const response = await axios.post(
-    `${CDN_UPLOAD_URL}?path=${cdnPath}`,
-    form,
-    {
-      headers: form.getHeaders(),
-      timeout: 30000,
-    }
-  );
-
-  const url = response.data.url;
-  if (!url) {
-    throw new Error('El CDN no devolvio una URL en la respuesta');
-  }
-
-  console.log(`[CDN] Subido: ${cdnPath}/${filename} -> ${url}`);
+  const url = `${config.R2_PUBLIC_BASE_URL.replace(/\/$/, '')}/${key}`;
+  console.log(`[R2] Subido: ${key} -> ${url}`);
   return url;
 }
 
 /**
- * Genera la imagen QR compuesta (QR sobre base-qr.png) y la sube al CDN.
+ * Genera la imagen QR compuesta (QR sobre base-qr.png) y la sube a R2.
  *
  * @param {number} seasonID - ID de la temporada
  * @param {number} studentID - ID del estudiante
- * @returns {Promise<string>} URL publica del QR en el CDN
+ * @returns {Promise<string>} URL pública del QR en el dominio personalizado
  */
 async function generateQR(seasonID, studentID) {
   const content = buildQRContent(seasonID, studentID);
@@ -96,14 +101,15 @@ async function generateQR(seasonID, studentID) {
     .png()
     .toBuffer();
 
-  // 3. Subir al CDN
-  const cdnUrl = await uploadToCDN(composedBuffer, seasonID, studentID);
+  // 3. Subir a R2. El texto codificado no cambia: season_{id}/student_{id}.png
+  const cdnUrl = await uploadToR2(composedBuffer, seasonID, studentID);
 
-  console.log(`[QR] Generado y subido: ${content} -> ${cdnUrl}`);
+  console.log(`[QR] Generado y subido a R2: ${content} -> ${cdnUrl}`);
   return cdnUrl;
 }
 
 module.exports = {
   generateQR,
   buildQRContent,
+  uploadToR2,
 };

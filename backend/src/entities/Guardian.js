@@ -23,6 +23,8 @@ const GuardianSchema = new EntitySchema({
       length: 255,
       nullable: true,
     },
+    emailEncrypted: { type: 'text', nullable: true },
+    emailHash: { type: 'varchar', length: 64, nullable: true },
     telefono: {
       type: 'varchar',
       length: 20,
@@ -33,6 +35,8 @@ const GuardianSchema = new EntitySchema({
       length: 20,
       nullable: true,
     },
+    rutEncrypted: { type: 'text', nullable: true },
+    rutHash: { type: 'varchar', length: 64, nullable: true },
     seasonID: {
       type: 'int',
     },

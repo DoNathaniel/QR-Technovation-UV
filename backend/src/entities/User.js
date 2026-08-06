@@ -21,8 +21,10 @@ const UserSchema = new EntitySchema({
     email: {
       type: 'varchar',
       length: 255,
-      unique: true,
+      nullable: true,
     },
+    emailEncrypted: { type: 'text', nullable: true },
+    emailHash: { type: 'varchar', length: 64, nullable: true, unique: true },
     password: {
       type: 'varchar',
       length: 255,

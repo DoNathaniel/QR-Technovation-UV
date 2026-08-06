@@ -43,6 +43,7 @@ export default function StudentsPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [resendingQRId, setResendingQRId] = useState<number | null>(null);
+  const [generatingQRId, setGeneratingQRId] = useState<number | null>(null);
 
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [filterCategoria, setFilterCategoria] = useState<string>('');
@@ -153,7 +154,7 @@ export default function StudentsPage() {
         datosApoderado: formData.datosApoderado.nombres ? formData.datosApoderado : null,
       };
       
-      if (editingStudent) {
+      if (!editModal.isNew && editingStudent) {
         await api.put(`/students/${editingStudent.ID}`, payload);
       } else {
         await api.post('/students', payload);
@@ -224,8 +225,27 @@ export default function StudentsPage() {
   };
 
   const handleViewQR = (student: Student) => {
-    const qrUrl = student.qrUrl || `${import.meta.env.VITE_API_URL || ''}/students/${student.ID}/qr`;
-    setQrModal({ show: true, student, qrUrl });
+    if (!student.qrUrl) {
+      toast.warning('Esta estudiante aún no tiene un QR. Usa Generar QR primero.');
+      return;
+    }
+    setQrModal({ show: true, student, qrUrl: student.qrUrl });
+  };
+
+  const handleGenerateQR = async (student: Student) => {
+    const force = Boolean(student.qrUrl);
+    if (force && !window.confirm('Se regenerará la imagen y se actualizará la URL guardada. ¿Deseas continuar?')) return;
+    setGeneratingQRId(student.ID);
+    try {
+      const response = await api.post(`/students/${student.ID}/generate-qr`, { force });
+      toast.success(response.data.message);
+      await loadStudents();
+    } catch (error: any) {
+      console.error('Error generating QR:', error);
+      toast.error(error.response?.data?.message || 'Error al generar QR');
+    } finally {
+      setGeneratingQRId(null);
+    }
   };
 
   if (loading) return <div className="p-4">Cargando...</div>;
@@ -240,7 +260,11 @@ export default function StudentsPage() {
           <h1 className="text-2xl font-bold text-text">Lista de Estudiantes</h1>
         </div>
         <button
-          onClick={() => { setEditModal({ show: true, student: null, isNew: true }); resetForm(); }}
+          onClick={() => {
+            setEditingStudent(null);
+            resetForm();
+            setEditModal({ show: true, student: null, isNew: true });
+          }}
           className="px-4 py-2 rounded text-white text-sm"
           style={{ backgroundColor: colors.primary }}
         >
@@ -324,6 +348,13 @@ export default function StudentsPage() {
                     className="px-2 py-1 text-xs font-medium bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors"
                   >
                     Ver QR
+                  </button>
+                  <button
+                    onClick={() => handleGenerateQR(student)}
+                    disabled={generatingQRId === student.ID}
+                    className="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors disabled:opacity-50"
+                  >
+                    {generatingQRId === student.ID ? 'Generando...' : (student.qrUrl ? 'Regenerar QR' : 'Generar QR')}
                   </button>
                   <button 
                     onClick={() => setResendQRModal({ show: true, student })}
