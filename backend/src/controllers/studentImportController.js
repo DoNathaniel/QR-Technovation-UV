@@ -83,7 +83,9 @@ function parseRows(buffer) {
       genero: text(cell(row, ['Género alumna'])),
       guardian: {
         nombres: text(cell(row, ['Nombre apoderado'])),
-        apellidos: text(cell(row, ['Apellido 1.1'])),
+        // SheetJS renombra el segundo encabezado duplicado "Apellido 1" como "Apellido 1_1".
+        // Se conserva la variante con punto por compatibilidad con otras exportaciones.
+        apellidos: text(cell(row, ['Apellido 1_1', 'Apellido 1.1'])),
         email: text(cell(row, ['Correo apoderado'])).toLowerCase(),
         telefono: text(cell(row, ['Teléfono apoderado'])),
         rut: normalizeRut(cell(row, ['RUT apoderado'])),
