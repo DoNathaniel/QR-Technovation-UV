@@ -57,7 +57,8 @@ const StudentSchema = new EntitySchema({
     },
     retiradoApoderado: {
       type: 'boolean',
-      default: false,
+      nullable: true,
+      default: null,
     },
     datosApoderado: {
       type: 'json',

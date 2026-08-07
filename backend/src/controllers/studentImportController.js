@@ -90,7 +90,7 @@ function parseRows(buffer) {
         telefono: text(cell(row, ['Teléfono apoderado'])),
         rut: normalizeRut(cell(row, ['RUT apoderado'])),
       },
-      retiroConApoderado: retiro === 'con apoderado',
+      retiroConApoderado: retiro === 'con apoderado' ? true : retiro === 'sola' ? false : null,
       retiroOriginal: text(cell(row, ['RETIRO DE LA SEDE'])),
       errors: [],
       warnings: [],
@@ -111,8 +111,8 @@ function validateRows(rows) {
     if (!validRut(row.guardian.rut)) row.errors.push('El RUT del apoderado no es válido.');
     if (!row.guardian.email || !/^\S+@\S+\.\S+$/.test(row.guardian.email)) row.errors.push('El correo del apoderado no es válido.');
     if (!row.guardian.telefono) row.warnings.push('Falta el teléfono del apoderado.');
-    if (!row.retiroOriginal) row.warnings.push('Retiro sin definir; se importará como “sin apoderado”.');
-    else if (!['con apoderado', 'sola'].includes(normalized(row.retiroOriginal))) row.warnings.push('Modalidad de retiro no reconocida; se importará como “sin apoderado”.');
+    if (!row.retiroOriginal) row.warnings.push('Retiro sin definir; se importará como pendiente.');
+    else if (!['con apoderado', 'sola'].includes(normalized(row.retiroOriginal))) row.warnings.push('Modalidad de retiro no reconocida; se importará como pendiente.');
     if (!rutRows.has(row.rut)) rutRows.set(row.rut, []);
     rutRows.get(row.rut).push(row);
   }

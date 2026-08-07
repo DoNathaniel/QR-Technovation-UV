@@ -13,7 +13,7 @@ interface Student {
   rut: string;
   categoria: 'Beginner' | 'Junior' | 'Senior';
   seasonID: number;
-  retiradoApoderado: boolean;
+  retiradoApoderado: boolean | null;
   datosApoderado: {
     nombres?: string;
     apellidos?: string;
@@ -62,7 +62,7 @@ export default function StudentsPage() {
     rut: '',
     categoria: 'Beginner' as 'Beginner' | 'Junior' | 'Senior',
     seasonID: 0,
-    retiradoApoderado: false,
+    retiradoApoderado: null as boolean | null,
     datosApoderado: {
       nombres: '',
       apellidos: '',
@@ -104,8 +104,11 @@ export default function StudentsPage() {
         data = data.filter((s: Student) => s.categoria === filterCategoria);
       }
       if (filterRetiro) {
-        const onlyWithGuardian = filterRetiro === 'con';
-        data = data.filter((s: Student) => s.retiradoApoderado === onlyWithGuardian);
+        data = data.filter((s: Student) => {
+          if (filterRetiro === 'con') return s.retiradoApoderado === true;
+          if (filterRetiro === 'solo') return s.retiradoApoderado === false;
+          return s.retiradoApoderado === null;
+        });
       }
       if (sortOrder === 'AZ') {
         data.sort((a: Student, b: Student) => a.apellidos.localeCompare(b.apellidos));
@@ -291,6 +294,7 @@ export default function StudentsPage() {
           <option value="">Todos los retiros</option>
           <option value="con">Con Apoderado</option>
           <option value="solo">Solo</option>
+          <option value="pendiente">Sin definir</option>
         </select>
         <select
           value={sortOrder}
@@ -333,14 +337,14 @@ export default function StudentsPage() {
                   </span>
                 </td>
                 <td className="px-4 py-3 text-sm">
-                  {student.retiradoApoderado ? (
+                  {student.retiradoApoderado === true ? (
                     <button 
                       onClick={() => setViewGuardianModal({ show: true, student })}
                       className="text-blue-600 hover:text-blue-800 underline"
                     >
                       Con Apoderado
                     </button>
-                  ) : 'Solo'}
+                  ) : student.retiradoApoderado === false ? 'Solo' : 'Sin definir'}
                 </td>
 <td className="px-4 py-3 text-right space-x-1">
                   <button 
@@ -544,7 +548,7 @@ export default function StudentsPage() {
                 <label className="flex items-center gap-2 mb-4">
                   <input
                     type="checkbox"
-                    checked={formData.retiradoApoderado}
+                    checked={Boolean(formData.retiradoApoderado)}
                     onChange={(e) => setFormData({ ...formData, retiradoApoderado: e.target.checked })}
                     className="w-4 h-4"
                   />

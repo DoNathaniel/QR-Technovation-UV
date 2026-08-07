@@ -77,7 +77,7 @@ export interface Student {
   retiradoPrograma: boolean;
   retiradoPorUserID: number | null;
   retiradoEn: string | null;
-  retiradoApoderado: boolean;
+  retiradoApoderado: boolean | null;
   datosApoderado: Record<string, unknown> | null;
   guardianID: number | null;
   teamID?: number | null;
@@ -98,7 +98,7 @@ export interface Attendance {
   requeridoApoderado?: boolean;
   sisters?: { ID: number; nombres: string; apellidos: string }[];
   justificacion?: string;
-  retiradoApoderado?: boolean;
+  retiradoApoderado?: boolean | null;
   fecha?: string;
 }
 
