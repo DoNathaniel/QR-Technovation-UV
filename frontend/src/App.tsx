@@ -18,6 +18,7 @@ import TeamsPage from './pages/TeamsPage';
 import AttendancePage from './pages/AttendancePage';
 import AttendanceReportPage from './pages/AttendanceReportPage';
 import SensitiveDataPage from './pages/SensitiveDataPage';
+import StudentImportPage from './pages/StudentImportPage';
 import SeasonSelector from './components/SeasonSelector';
 import { useState } from 'react';
 
@@ -121,6 +122,7 @@ function AppLayout() {
           <Route path="/asistencia" element={<AttendancePage />} />
           <Route path="/informe-asistencia" element={<AttendanceReportPage />} />
           <Route path="/administracion/cifrado-datos" element={<SensitiveDataPage />} />
+          <Route path="/administracion/importar-estudiantes" element={<StudentImportPage />} />
           <Route path="*" element={<Navigate to="/panel" replace />} />
         </Routes>
       </main>

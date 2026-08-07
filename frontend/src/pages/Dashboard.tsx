@@ -219,6 +219,17 @@ export default function Dashboard() {
                 <div><h3 className="font-semibold text-lg text-gray-800 group-hover:text-red-600 transition-colors">Cifrado de datos</h3><p className="text-sm text-gray-500">Proteger registros existentes</p></div>
               </div>
             </Link>
+            <Link
+              to="/administracion/importar-estudiantes"
+              className="group bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-lg hover:border-blue-200 transition-all"
+            >
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl" style={{ backgroundColor: '#2563eb20' }}>
+                  <svg className="w-7 h-7" style={{ color: '#2563eb' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 16v-8m0 0l-3 3m3-3l3 3M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M4 4h16v4H4z" /></svg>
+                </div>
+                <div><h3 className="font-semibold text-lg text-gray-800 group-hover:text-blue-600 transition-colors">Importar estudiantes</h3><p className="text-sm text-gray-500">Revisar una plantilla antes de cargarla</p></div>
+              </div>
+            </Link>
           </>
         )}
       </div>
