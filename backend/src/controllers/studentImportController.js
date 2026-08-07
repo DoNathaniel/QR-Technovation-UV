@@ -45,13 +45,25 @@ function validRut(value) {
 function excelDate(value) {
   if (!value) return null;
   if (value instanceof Date && !Number.isNaN(value.valueOf())) return value.toISOString().slice(0, 10);
-  const parsed = XLSX.SSF.parse_date_code(Number(value));
-  if (parsed) return `${parsed.y}-${String(parsed.m).padStart(2, '0')}-${String(parsed.d).padStart(2, '0')}`;
   const source = text(value);
   const match = source.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
-  if (match) return `${match[3]}-${match[2].padStart(2, '0')}-${match[1].padStart(2, '0')}`;
+  if (match) {
+    const day = Number(match[1]);
+    const month = Number(match[2]);
+    const year = Number(match[3]);
+    if (day < 1 || month < 1 || month > 12 || year < 1901) return null;
+    const date = new Date(Date.UTC(year, month - 1, day));
+    if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return null;
+    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  }
+  const serial = Number(source);
+  if (Number.isFinite(serial) && serial > 0) {
+    const parsed = XLSX.SSF.parse_date_code(serial);
+    if (parsed && parsed.d >= 1 && parsed.m >= 1 && parsed.y >= 1901) return `${parsed.y}-${String(parsed.m).padStart(2, '0')}-${String(parsed.d).padStart(2, '0')}`;
+  }
   const date = new Date(source);
-  return Number.isNaN(date.valueOf()) ? null : date.toISOString().slice(0, 10);
+  const result = Number.isNaN(date.valueOf()) ? null : date.toISOString().slice(0, 10);
+  return result && result >= '1901-01-01' ? result : null;
 }
 
 function cell(row, names) {
