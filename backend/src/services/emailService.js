@@ -1,9 +1,7 @@
 'use strict';
-const axios = require('axios');
+const { SendMailClient } = require("zeptomail");
 
-const EMAIL_API_URL = process.env.EMAIL_API_URL || 'http://51.222.141.196:1011';
-const EMAIL_API_KEY = process.env.EMAIL_API_KEY || '';
-const EMAIL_CUENTA_ID = process.env.EMAIL_CUENTA_ID || 'api';
+const clientZeptoMail = new SendMailClient({ url: process.env.ZEPTOMAIL_API_URL, token: process.env.ZEPTOMAIL_API_TOKEN });
 
 /**
  * Envia un email con el QR del estudiante usando la URL del CDN.
@@ -14,7 +12,7 @@ const EMAIL_CUENTA_ID = process.env.EMAIL_CUENTA_ID || 'api';
  * @returns {Promise<object>} Respuesta del servicio de email
  */
 async function sendQREmail(to, studentName, qrUrl) {
-  if (!EMAIL_API_KEY) {
+  if (!process.env.ZEPTOMAIL_API_TOKEN) {
     throw new Error('EMAIL_API_KEY no configurada en .env');
   }
 
@@ -49,22 +47,21 @@ async function sendQREmail(to, studentName, qrUrl) {
     </div>
   `;
 
-  const response = await axios.post(
-    `${EMAIL_API_URL}/api/email/enviar-directo`,
-    {
-      cuentaId: EMAIL_CUENTA_ID,
-      to,
-      asunto: '🥳 Tu Codigo QR - Technovation Girls',
-      contenido,
+  const response = await clientZeptoMail.sendMail({
+    from: {
+      address: process.env.ZEPTOMAIL_FROM_EMAIL,
+      name: process.env.ZEPTOMAIL_FROM_NAME
     },
-    {
-      headers: {
-        'Content-Type': 'application/json',
-        'X-API-Key': EMAIL_API_KEY,
-      },
-      timeout: 15000,
-    }
-  );
+    to: [
+      {
+        email_address: {
+          address: to
+        }
+      }
+    ],
+    subject: '🥳 Tu Codigo QR - Technovation Girls',
+    htmlbody: contenido
+  })
 
   console.log(`[Email] QR enviado a ${to} para estudiante: ${studentName}`);
   return response.data;
