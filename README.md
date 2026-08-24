@@ -119,6 +119,11 @@ DB_USER=root
 DB_PASSWORD=tu_password
 DB_NAME=asistencia_db
 JWT_SECRET=tu_secret_key
+# Google OAuth (opcional)
+FRONTEND_URL=http://localhost:5173
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_CALLBACK_URL=http://localhost:3000/api/auth/google/callback
 ```
 
 Iniciar servidor:
