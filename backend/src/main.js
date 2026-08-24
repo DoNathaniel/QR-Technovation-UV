@@ -37,7 +37,10 @@ const skipOptions = (req) => req.method === 'OPTIONS';
 app.use(morgan(customFormat, { skip: skipOptions }));
 
 // APP
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  credentials: true,
+}));
 app.use(express.json());
 
 // Make socket.io accessible from route handlers via req.io
@@ -75,7 +78,7 @@ io.on('connection', (socket) => {
 });
 
 const PORT = Number(process.env.PORT || 3000);
-const HOST = '0.0.0.0';
+const HOST = process.env.APP_URL;
 
 AppDataSource.initialize()
   .then(() => {
