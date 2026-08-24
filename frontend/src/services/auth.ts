@@ -7,6 +7,12 @@ export const authService = {
     return response.data;
   },
 
+  async googleSession(): Promise<LoginResponse> {
+    const response = await api.post<LoginResponse>('/auth/google/session');
+    return response.data;
+  },
+
+
   logout(): void {
     localStorage.removeItem('token');
     localStorage.removeItem('user');

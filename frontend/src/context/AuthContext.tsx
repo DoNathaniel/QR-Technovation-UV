@@ -4,6 +4,7 @@ import type { AuthState, Season } from '../types';
 
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
   logout: () => void;
   setCurrentSeason: (seasonId: number) => void;
   temporadas: Season[];
@@ -63,9 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const login = async (email: string, password: string) => {
-    const response = await authService.login({ email, password });
-    
+  const persistLogin = (response: Awaited<ReturnType<typeof authService.login>>) => {
     localStorage.setItem('token', response.token);
     localStorage.setItem('user', JSON.stringify(response.user));
     persistSeasons(response.temporadas);
@@ -84,6 +83,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } else {
       localStorage.removeItem('currentSeasonId');
     }
+  };
+
+  const login = async (email: string, password: string) => {
+    persistLogin(await authService.login({ email, password }));
+  };
+
+  const loginWithGoogle = async () => {
+    persistLogin(await authService.googleSession());
   };
 
   const logout = () => {
@@ -106,7 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ ...state, login, logout, setCurrentSeason, temporadas }}>
+    <AuthContext.Provider value={{ ...state, login, loginWithGoogle, logout, setCurrentSeason, temporadas }}>
       {children}
     </AuthContext.Provider>
   );
