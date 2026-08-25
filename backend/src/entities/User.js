@@ -38,6 +38,11 @@ const UserSchema = new EntitySchema({
       type: 'simple-array',
       nullable: true,
     },
+    qrUrl: {
+      type: 'varchar',
+      length: 500,
+      nullable: true,
+    },
     createdAt: {
       type: 'timestamp',
       createDate: true,

@@ -6,6 +6,7 @@ const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
 
 // Path a la imagen base en la raiz del monorepo
 const BASE_QR_PATH = path.join(__dirname, "../media/base-qr-season2.png");
+const BASE_MENTOR_QR_PATH = path.join(__dirname, "../../../media/base-qr-equipo.png");
 
 function r2Config() {
   const R2_ENDPOINT = process.env.R2_ENDPOINT || 'https://a09105738e1d4fe8bcbf689176c62491.r2.cloudflarestorage.com';
@@ -39,6 +40,13 @@ const QR_OFFSET = Math.floor((BASE_SIZE - QR_SIZE) / 2); // 50px centrado
  */
 function buildQRContent(seasonID, studentID) {
   return `season_${seasonID}/student_${studentID}.png`;
+}
+
+/**
+ * Los QR de mentores pertenecen al usuario, no a una temporada.
+ */
+function buildMentorQRContent(userID) {
+  return `users/user_${userID}.png`;
 }
 
 /**
@@ -107,8 +115,49 @@ async function generateQR(seasonID, studentID) {
   return cdnUrl;
 }
 
+/**
+ * Genera el QR permanente de un mentor usando su diseño institucional.
+ * El mismo identificador y archivo se conservan entre temporadas.
+ *
+ * @param {number} userID - ID del usuario mentor
+ * @returns {Promise<string>} URL pública del QR en R2
+ */
+async function generateMentorQR(userID) {
+  const content = buildMentorQRContent(userID);
+  const baseSize = 1254;
+  const qrSize = 900;
+  const qrOffset = Math.floor((baseSize - qrSize) / 2);
+  const qrBuffer = await QRCode.toBuffer(content, {
+    type: 'png',
+    width: qrSize,
+    margin: 1,
+    color: { dark: '#000000', light: '#FFFFFF' },
+    errorCorrectionLevel: 'M',
+  });
+
+  const composedBuffer = await sharp(BASE_MENTOR_QR_PATH)
+    .composite([{ input: qrBuffer, top: qrOffset, left: qrOffset }])
+    .png()
+    .toBuffer();
+
+  const config = r2Config();
+  await r2Client(config).send(new PutObjectCommand({
+    Bucket: config.R2_BUCKET,
+    Key: content,
+    Body: composedBuffer,
+    ContentType: 'image/png',
+    CacheControl: 'no-cache',
+  }));
+
+  const url = `${config.R2_PUBLIC_BASE_URL.replace(/\/$/, '')}/${content}`;
+  console.log(`[QR] Mentor generado y subido a R2: ${content} -> ${url}`);
+  return url;
+}
+
 module.exports = {
   generateQR,
+  generateMentorQR,
   buildQRContent,
+  buildMentorQRContent,
   uploadToR2,
 };

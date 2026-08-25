@@ -8,7 +8,9 @@ const {
   normalizeSeasonIds,
   normalizeUserSeasons,
 } = require('../utils/seasonAccess');
-const { protect, serializeSensitive } = require('../services/sensitiveDataService');
+const { protect, reveal, serializeSensitive } = require('../services/sensitiveDataService');
+const { generateMentorQR } = require('../services/qrService');
+const { sendMentorQREmail } = require('../services/emailService');
 
 const userRepository = () => AppDataSource.getRepository(UserSchema);
 const seasonRepository = () => AppDataSource.getRepository(SeasonSchema);
@@ -26,7 +28,7 @@ async function getAll(req, res) {
   try {
     const { rol, seasonID } = req.query;
     const findOptions = {
-      select: ['ID', 'nombre', 'apellido', 'email', 'emailEncrypted', 'emailHash', 'rol', 'temporadas'],
+      select: ['ID', 'nombre', 'apellido', 'email', 'emailEncrypted', 'emailHash', 'rol', 'temporadas', 'qrUrl'],
     };
 
     if (rol) {
@@ -143,4 +145,88 @@ async function remove(req, res) {
   }
 }
 
-module.exports = { getAll, create, update, remove };
+async function getMentorOrRespond(id, res) {
+  const user = await userRepository().findOne({ where: { ID: parseInt(id) } });
+  if (!user) {
+    res.status(404).json({ message: 'Usuario no encontrado' });
+    return null;
+  }
+  if (!['voluntario', 'admin'].includes(user.rol)) {
+    res.status(400).json({ message: 'Solo los usuarios con rol Voluntario o Admin pueden tener un QR de mentoría' });
+    return null;
+  }
+  return user;
+}
+
+async function generateMentorQRForUser(req, res) {
+  try {
+    const user = await getMentorOrRespond(req.params.id, res);
+    if (!user) return;
+
+    const force = Boolean(req.body?.force);
+    const email = reveal(user, 'email');
+    if (!email) {
+      return res.status(400).json({ message: 'El mentor no tiene un correo electrónico configurado' });
+    }
+    if (user.qrUrl && !force) {
+      await sendMentorQREmail(email, `${user.nombre} ${user.apellido}`, user.qrUrl);
+      return res.json({
+        message: 'El mentor ya tiene un QR generado. Se reenvió al correo registrado.',
+        qrUrl: user.qrUrl,
+        generated: false,
+      });
+    }
+
+    user.qrUrl = await generateMentorQR(user.ID);
+    await userRepository().save(user);
+    await sendMentorQREmail(email, `${user.nombre} ${user.apellido}`, user.qrUrl);
+
+    res.json({
+      message: force ? 'QR de mentor regenerado y enviado correctamente.' : 'QR de mentor generado y enviado correctamente.',
+      qrUrl: user.qrUrl,
+      generated: true,
+    });
+  } catch (error) {
+    console.error('[QR] Error al generar QR de mentor:', error.message);
+    res.status(500).json({ message: 'Error al generar el QR de mentor', error: error.message });
+  }
+}
+
+async function resendMentorQR(req, res) {
+  try {
+    const user = await getMentorOrRespond(req.params.id, res);
+    if (!user) return;
+
+    if (!user.qrUrl) {
+      return res.status(409).json({ message: 'El mentor aún no tiene un QR generado. Usa Generar QR primero.' });
+    }
+    const email = reveal(user, 'email');
+    if (!email) {
+      return res.status(400).json({ message: 'El mentor no tiene un correo electrónico configurado' });
+    }
+
+    await sendMentorQREmail(email, `${user.nombre} ${user.apellido}`, user.qrUrl);
+    res.json({ message: `QR enviado correctamente a ${email}` });
+  } catch (error) {
+    console.error('[QR] Error al reenviar QR de mentor:', error.message);
+    res.status(500).json({ message: 'Error al enviar el QR de mentor', error: error.message });
+  }
+}
+
+async function getOwnQR(req, res) {
+  try {
+    const user = await userRepository().findOne({ where: { ID: req.user.id } });
+    if (!user) return res.status(404).json({ message: 'Usuario no encontrado' });
+    if (!['voluntario', 'admin'].includes(user.rol)) {
+      return res.status(403).json({ message: 'Tu usuario no tiene un QR de asistencia de equipo' });
+    }
+    if (!user.qrUrl) {
+      return res.status(404).json({ message: 'Aún no tienes un QR generado. Solicítalo a un administrador.' });
+    }
+    res.json({ qrUrl: user.qrUrl });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener tu QR', error: error.message });
+  }
+}
+
+module.exports = { getAll, create, update, remove, generateMentorQRForUser, resendMentorQR, getOwnQR };

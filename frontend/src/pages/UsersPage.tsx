@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { colors } from '../config';
 import type { Season, Team, TeamMentor } from '../types';
+import { toast } from '../App';
+import { useAuth } from '../context/AuthContext';
+import TeamAttendanceAdminTab from '../components/TeamAttendanceAdminTab';
 
 interface User {
   ID: number;
@@ -11,10 +14,12 @@ interface User {
   email: string;
   rol: 'superadmin' | 'admin' | 'voluntario';
   temporadas: number[];
+  qrUrl?: string | null;
 }
 
 export default function UsersPage() {
   const navigate = useNavigate();
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
@@ -27,6 +32,9 @@ export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSeason, setSelectedSeason] = useState('');
   const [selectedRole, setSelectedRole] = useState('');
+  const [openQrMenuId, setOpenQrMenuId] = useState<number | null>(null);
+  const [mentorQrAction, setMentorQrAction] = useState<{ userId: number; action: 'enviar' | 'generar' | 'regenerar' } | null>(null);
+  const [activeTab, setActiveTab] = useState<'usuarios' | 'asistencia'>('usuarios');
   const [formData, setFormData] = useState({
     nombre: '',
     apellido: '',
@@ -38,6 +46,18 @@ export default function UsersPage() {
 
   useEffect(() => {
     loadData();
+  }, []);
+
+  useEffect(() => {
+    const closeQrMenu = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.mentor-qr-menu')) {
+        setOpenQrMenuId(null);
+      }
+    };
+
+    document.addEventListener('click', closeQrMenu);
+    return () => document.removeEventListener('click', closeQrMenu);
   }, []);
 
   const loadData = async () => {
@@ -153,6 +173,26 @@ export default function UsersPage() {
     voluntario: 'Voluntario',
   };
 
+  const handleMentorQrAction = async (user: User, action: 'enviar' | 'generar' | 'regenerar') => {
+    setOpenQrMenuId(null);
+    setMentorQrAction({ userId: user.ID, action });
+    try {
+      if (action === 'enviar') {
+        const response = await api.post(`/users/${user.ID}/resend-qr`);
+        toast.success(response.data.message);
+      } else {
+        const response = await api.post(`/users/${user.ID}/generate-qr`, { force: action === 'regenerar' });
+        toast.success(response.data.message);
+        await loadUsers();
+      }
+    } catch (error: any) {
+      console.error('Error procesando QR de mentor:', error);
+      toast.error(error.response?.data?.message || 'No fue posible procesar el QR del mentor');
+    } finally {
+      setMentorQrAction(null);
+    }
+  };
+
   const normalizedSearchTerm = searchTerm.trim().toLocaleLowerCase('es-CL');
   const filteredUsers = users.filter((user) => {
     const fullName = `${user.nombre} ${user.apellido}`.toLocaleLowerCase('es-CL');
@@ -179,7 +219,7 @@ export default function UsersPage() {
           </button>
           <h1 className="text-2xl font-bold text-text">Gestión de Usuarios</h1>
         </div>
-        <button
+        {activeTab === 'usuarios' && <button
           onClick={() => {
             setShowForm(true);
             setEditingUser(null);
@@ -189,7 +229,7 @@ export default function UsersPage() {
           style={{ backgroundColor: colors.primary }}
         >
           Nuevo Usuario
-        </button>
+        </button>}
       </div>
 
       {showForm && (
@@ -339,6 +379,12 @@ export default function UsersPage() {
         </div>
       )}
 
+      <div className="flex gap-1 border-b border-gray-200">
+        <button onClick={() => setActiveTab('usuarios')} className={`border-b-2 px-4 py-2 text-sm font-medium ${activeTab === 'usuarios' ? 'border-violet-600 text-violet-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>Usuarios</button>
+        {['admin', 'superadmin'].includes(currentUser?.rol || '') && <button onClick={() => setActiveTab('asistencia')} className={`border-b-2 px-4 py-2 text-sm font-medium ${activeTab === 'asistencia' ? 'border-violet-600 text-violet-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>Asistencia</button>}
+      </div>
+
+      {activeTab === 'asistencia' ? <TeamAttendanceAdminTab /> : <>
       <div className="bg-surface rounded-lg shadow p-4">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_auto_auto] md:items-end">
           <div>
@@ -452,6 +498,54 @@ export default function UsersPage() {
                     : 'Sin equipo'}
                 </td>
                 <td className="px-4 py-3 text-right">
+                  {(user.rol === 'voluntario' || user.rol === 'admin') && (
+                    <div className="mentor-qr-menu relative inline-block text-left mr-3">
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setOpenQrMenuId((currentId) => currentId === user.ID ? null : user.ID);
+                        }}
+                        aria-haspopup="menu"
+                        aria-expanded={openQrMenuId === user.ID}
+                        className="px-2 py-1 text-xs font-medium bg-violet-100 text-violet-700 rounded hover:bg-violet-200 transition-colors"
+                      >
+                        {mentorQrAction?.userId === user.ID ? 'Procesando...' : <>QR <span aria-hidden="true">▾</span></>}
+                      </button>
+                      {openQrMenuId === user.ID && (
+                        <div
+                          role="menu"
+                          aria-label={`Acciones QR para ${user.nombre} ${user.apellido}`}
+                          className="absolute right-0 z-20 mt-2 w-52 overflow-hidden rounded-lg border border-gray-200 bg-white py-1 text-left shadow-lg"
+                        >
+                          <button
+                            type="button"
+                            role="menuitem"
+                            onClick={() => handleMentorQrAction(user, 'enviar')}
+                            className="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                          >
+                            Enviar QR
+                          </button>
+                          <button
+                            type="button"
+                            role="menuitem"
+                            onClick={() => handleMentorQrAction(user, 'generar')}
+                            className="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                          >
+                            Generar QR
+                          </button>
+                          <button
+                            type="button"
+                            role="menuitem"
+                            onClick={() => handleMentorQrAction(user, 'regenerar')}
+                            className="block w-full px-4 py-2 text-sm text-red-700 hover:bg-red-50"
+                          >
+                            Volver a generar QR
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                   <button
                     onClick={() => handleEdit(user)}
                     className="text-blue-600 hover:text-blue-800 text-sm mr-3"
@@ -478,6 +572,7 @@ export default function UsersPage() {
           </tbody>
         </table>
       </div>
+      </>}
     </div>
   );
 }
