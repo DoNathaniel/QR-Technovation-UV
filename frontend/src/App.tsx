@@ -19,6 +19,8 @@ import AttendancePage from './pages/AttendancePage';
 import AttendanceReportPage from './pages/AttendanceReportPage';
 import SensitiveDataPage from './pages/SensitiveDataPage';
 import StudentImportPage from './pages/StudentImportPage';
+import MentorAttendancePage from './pages/MentorAttendancePage';
+import MyTeamAttendancePage from './pages/MyTeamAttendancePage';
 import SeasonSelector from './components/SeasonSelector';
 import { useState } from 'react';
 
@@ -120,6 +122,8 @@ function AppLayout() {
           <Route path="/estudiantes" element={<StudentsPage />} />
           <Route path="/equipos" element={<TeamsPage />} />
           <Route path="/asistencia" element={<AttendancePage />} />
+          <Route path="/asistencia-mentores" element={<MentorAttendancePage />} />
+          <Route path="/yo" element={<MyTeamAttendancePage />} />
           <Route path="/informe-asistencia" element={<AttendanceReportPage />} />
           <Route path="/administracion/cifrado-datos" element={<SensitiveDataPage />} />
           <Route path="/administracion/importar-estudiantes" element={<StudentImportPage />} />
