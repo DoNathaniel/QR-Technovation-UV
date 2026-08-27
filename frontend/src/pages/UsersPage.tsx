@@ -435,7 +435,7 @@ export default function UsersPage() {
         </div>
       </div>
 
-      <div className="bg-surface rounded-lg shadow overflow-hidden">
+      <div className="bg-surface rounded-lg shadow overflow-visible">
         <table className="w-full">
           <thead className="bg-gray-50">
             <tr>
@@ -448,7 +448,21 @@ export default function UsersPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {filteredUsers.map((user) => (
+            {filteredUsers.sort((a, b) => {
+                  const rolePriority = {
+                    admin: 1,
+                    superadmin: 3,
+                  };
+
+                  const priorityA = rolePriority[a.rol] ?? 2;
+                  const priorityB = rolePriority[b.rol] ?? 2;
+
+                  if (priorityA !== priorityB) {
+                    return priorityA - priorityB;
+                  }
+
+                  return a.apellido.localeCompare(b.apellido);
+                }).map((user) => (
               <tr key={user.ID} className="hover:bg-gray-50">
                 <td className="px-4 py-3 text-sm text-text">
                   {user.nombre} {user.apellido}
