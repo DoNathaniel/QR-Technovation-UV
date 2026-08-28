@@ -138,6 +138,20 @@ export default function Dashboard() {
         {canAccess(['superadmin', 'admin']) && (
           <>
             <Link
+              to="/administracion/auditoria-correos"
+              className="group bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-lg hover:border-cyan-200 transition-all"
+            >
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl" style={{ backgroundColor: '#0891b2' + '20' }}>
+                  <svg className="w-7 h-7" style={{ color: '#0891b2' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4h16v16H4V4zm4 4h8m-8 4h8m-8 4h5" /></svg>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg text-gray-800 group-hover:text-cyan-700 transition-colors">Auditoría de correos</h3>
+                  <p className="text-sm text-gray-500">Revisar envíos, fallos y desuscripciones</p>
+                </div>
+              </div>
+            </Link>
+            <Link
               to="/estudiantes"
               className="group bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-lg hover:border-purple-200 transition-all"
             >
