@@ -3,11 +3,16 @@ const { AppDataSource } = require('../database/data-source');
 const AttendanceSchema = require('../entities/Attendance');
 const SeasonDateSchema = require('../entities/SeasonDate');
 const StudentSchema = require('../entities/Student');
-const { serializeSensitive, revealGuardianData } = require('../services/sensitiveDataService');
+const GuardianSchema = require('../entities/Guardian');
+const { serializeSensitive, reveal, revealGuardianData } = require('../services/sensitiveDataService');
+const { buildStudentAttendanceEmail } = require('../services/emailService');
+const { enqueueEmail, recordSkippedEmail, uniqueEmails } = require('../services/emailQueueService');
+const { createUnsubscribeToken, buildUnsubscribeUrl, isUnsubscribed } = require('../services/notificationPreferenceService');
 
 const attendanceRepository = () => AppDataSource.getRepository(AttendanceSchema);
 const seasonDateRepository = () => AppDataSource.getRepository(SeasonDateSchema);
 const studentRepository = () => AppDataSource.getRepository(StudentSchema);
+const guardianRepository = () => AppDataSource.getRepository(GuardianSchema);
 
 function serializeStudent(student) {
   const result = serializeSensitive(student, ['email', 'rut']);
@@ -17,6 +22,50 @@ function serializeStudent(student) {
 
 function serializeAttendance(attendance) {
   return { ...attendance, student: attendance.student ? serializeStudent(attendance.student) : attendance.student };
+}
+
+async function queueStudentAttendanceNotifications({ student, attendance, fecha }) {
+  let guardianEmail = null;
+  if (student.guardianID) {
+    const guardian = await guardianRepository().findOne({ where: { ID: student.guardianID } });
+    guardianEmail = guardian ? reveal(guardian, 'email') : null;
+  }
+  guardianEmail ||= revealGuardianData(student.datosApoderado)?.email || null;
+
+  const recipients = uniqueEmails(reveal(student, 'email'), guardianEmail);
+  const results = await Promise.allSettled(recipients.map(async (recipientEmail) => {
+    const unsubscribeUrl = buildUnsubscribeUrl(createUnsubscribeToken({ email: recipientEmail }));
+    const message = buildStudentAttendanceEmail(
+      `${student.nombres} ${student.apellidos}`,
+      attendance.tipo,
+      fecha,
+      attendance.hora,
+      unsubscribeUrl,
+    );
+    const auditData = {
+      recipientEmail,
+      ...message,
+      category: 'student_attendance',
+      relatedEntityType: 'Attendance',
+      relatedEntityID: attendance.ID,
+      studentID: student.ID,
+    };
+    if (await isUnsubscribed(recipientEmail)) {
+      await recordSkippedEmail(auditData);
+      return 'skipped';
+    }
+    await enqueueEmail(auditData);
+    return 'queued';
+  }));
+  const failures = results.filter(({ status }) => status === 'rejected');
+  for (const failure of failures) {
+    console.error(`[Asistencia] No se pudo preparar correo de asistencia de estudiante ${student.ID}:`, failure.reason?.message);
+  }
+  return {
+    queued: results.filter(({ status, value }) => status === 'fulfilled' && value === 'queued').length,
+    skipped: results.filter(({ status, value }) => status === 'fulfilled' && value === 'skipped').length,
+    failed: failures.length,
+  };
 }
 
 async function register(req, res) {
@@ -57,6 +106,16 @@ async function register(req, res) {
 
     const result = await attendanceRepository().save(attendance);
 
+    let notifications = { queued: 0, skipped: 0, failed: 0 };
+    if (tipo === 'entrada' || tipo === 'salida') {
+      try {
+        notifications = await queueStudentAttendanceNotifications({ student, attendance: result, fecha: seasonDate.fecha });
+      } catch (notificationError) {
+        console.error(`[Asistencia] No se pudieron preparar correos de asistencia para estudiante ${student.ID}:`, notificationError.message);
+        notifications = { queued: 0, skipped: 0, failed: 1 };
+      }
+    }
+
     // Attach student data + retiredApoderado flag for the socket event and response
     result.student = serializeStudent(student);
     result.retiradoApoderado = student.retiradoApoderado;
@@ -75,6 +134,8 @@ async function register(req, res) {
         .map(s => ({ ID: s.ID, nombres: s.nombres, apellidos: s.apellidos }));
     }
     result.sisters = sisters;
+    result.notificationsQueued = notifications.queued;
+    result.notificationsSkipped = notifications.skipped;
 
     // Emit real-time event to all clients in the season room
     if (req.io) {
