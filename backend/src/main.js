@@ -7,6 +7,7 @@ const cors = require('cors');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 const { AppDataSource } = require('./database/data-source');
+const { startEmailQueueWorker, stopEmailQueueWorker } = require('./services/emailQueueService');
 
 // ROUTES
 const authRoutes = require('./routes/auth');
@@ -20,6 +21,8 @@ const teamsRoutes = require('./routes/teams');
 const sensitiveDataAdminRoutes = require('./routes/sensitiveDataAdmin');
 const studentImportRoutes = require('./routes/studentImport');
 const mentorAttendanceRoutes = require('./routes/mentorAttendance');
+const notificationPreferencesRoutes = require('./routes/notificationPreferences');
+const mailAuditRoutes = require('./routes/mailAudit');
 
 // SERVER
 const app = express();
@@ -61,6 +64,8 @@ app.use('/api/teams', teamsRoutes);
 app.use('/api/admin/sensitive-data', sensitiveDataAdminRoutes);
 app.use('/api/admin/student-import', studentImportRoutes);
 app.use('/api/mentor-attendance', mentorAttendanceRoutes);
+app.use('/api/notification-preferences', notificationPreferencesRoutes);
+app.use('/api/admin/mail-audit', mailAuditRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -85,6 +90,7 @@ const HOST = process.env.APP_URL;
 AppDataSource.initialize()
   .then(() => {
     console.log('Database connected');
+    startEmailQueueWorker();
 
     httpServer.listen(PORT, HOST, () => {
       console.log(`Server running on ${HOST}:${PORT}`);
@@ -94,3 +100,11 @@ AppDataSource.initialize()
     console.error('Database connection failed:', error);
     process.exit(1);
   });
+
+function shutdown() {
+  stopEmailQueueWorker();
+  httpServer.close(() => AppDataSource.destroy().finally(() => process.exit(0)));
+}
+
+process.once('SIGINT', shutdown);
+process.once('SIGTERM', shutdown);
