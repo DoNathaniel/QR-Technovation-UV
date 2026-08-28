@@ -4,7 +4,8 @@ const MentorAttendanceSchema = require('../entities/MentorAttendance');
 const UserSchema = require('../entities/User');
 const SeasonDateSchema = require('../entities/SeasonDate');
 const { reveal, serializeSensitive } = require('../services/sensitiveDataService');
-const { sendMentorAttendanceEmail } = require('../services/emailService');
+const { buildMentorAttendanceEmail } = require('../services/emailService');
+const { enqueueEmail } = require('../services/emailQueueService');
 const { normalizeSeasonIds } = require('../utils/seasonAccess');
 
 const attendanceRepository = () => AppDataSource.getRepository(MentorAttendanceSchema);
@@ -90,14 +91,19 @@ async function registerFromQR(req, res) {
     try {
       const mentorEmail = reveal(mentor, 'email');
       if (!mentorEmail) throw new Error('El integrante no tiene correo configurado');
-      await sendMentorAttendanceEmail(
-        mentorEmail,
+      await enqueueEmail({
+        recipientEmail: mentorEmail,
+        ...buildMentorAttendanceEmail(
         `${mentor.nombre} ${mentor.apellido}`,
         tipo,
         hora.slice(0, 5),
         `${scannedBy.nombre} ${scannedBy.apellido}`,
         esFechaPlanificada,
-      );
+        ),
+        category: 'mentor_attendance',
+        relatedEntityType: 'MentorAttendance',
+        relatedEntityID: attendance.ID,
+      });
     } catch (emailError) {
       emailSent = false;
       console.error('[Asistencia mentores] No se pudo enviar el correo:', emailError.message);
@@ -109,8 +115,8 @@ async function registerFromQR(req, res) {
       ...serializeAttendance(attendance),
       emailSent,
       message: emailSent
-        ? `${tipo === 'entrada' ? 'Entrada' : 'Salida'} registrada y correo enviado.`
-        : `${tipo === 'entrada' ? 'Entrada' : 'Salida'} registrada, pero no se pudo enviar el correo.`,
+        ? `${tipo === 'entrada' ? 'Entrada' : 'Salida'} registrada y correo en cola.`
+        : `${tipo === 'entrada' ? 'Entrada' : 'Salida'} registrada, pero no se pudo encolar el correo.`,
     });
   } catch (error) {
     console.error('[Asistencia mentores] Error al registrar:', error.message);

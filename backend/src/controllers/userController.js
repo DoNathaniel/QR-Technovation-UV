@@ -10,7 +10,8 @@ const {
 } = require('../utils/seasonAccess');
 const { protect, reveal, serializeSensitive } = require('../services/sensitiveDataService');
 const { generateMentorQR } = require('../services/qrService');
-const { sendMentorQREmail } = require('../services/emailService');
+const { buildMentorQREmail } = require('../services/emailService');
+const { enqueueEmail } = require('../services/emailQueueService');
 
 const userRepository = () => AppDataSource.getRepository(UserSchema);
 const seasonRepository = () => AppDataSource.getRepository(SeasonSchema);
@@ -169,9 +170,13 @@ async function generateMentorQRForUser(req, res) {
       return res.status(400).json({ message: 'El mentor no tiene un correo electrónico configurado' });
     }
     if (user.qrUrl && !force) {
-      await sendMentorQREmail(email, `${user.nombre} ${user.apellido}`, user.qrUrl);
+      await enqueueEmail({
+        recipientEmail: email,
+        ...buildMentorQREmail(`${user.nombre} ${user.apellido}`, user.qrUrl),
+        category: 'mentor_qr', relatedEntityType: 'User', relatedEntityID: user.ID,
+      });
       return res.json({
-        message: 'El mentor ya tiene un QR generado. Se reenvió al correo registrado.',
+        message: 'El mentor ya tiene un QR generado. El correo quedó en cola.',
         qrUrl: user.qrUrl,
         generated: false,
       });
@@ -179,10 +184,14 @@ async function generateMentorQRForUser(req, res) {
 
     user.qrUrl = await generateMentorQR(user.ID);
     await userRepository().save(user);
-    await sendMentorQREmail(email, `${user.nombre} ${user.apellido}`, user.qrUrl);
+    await enqueueEmail({
+      recipientEmail: email,
+      ...buildMentorQREmail(`${user.nombre} ${user.apellido}`, user.qrUrl),
+      category: 'mentor_qr', relatedEntityType: 'User', relatedEntityID: user.ID,
+    });
 
     res.json({
-      message: force ? 'QR de mentor regenerado y enviado correctamente.' : 'QR de mentor generado y enviado correctamente.',
+      message: force ? 'QR de mentor regenerado y correo en cola.' : 'QR de mentor generado y correo en cola.',
       qrUrl: user.qrUrl,
       generated: true,
     });
@@ -205,8 +214,12 @@ async function resendMentorQR(req, res) {
       return res.status(400).json({ message: 'El mentor no tiene un correo electrónico configurado' });
     }
 
-    await sendMentorQREmail(email, `${user.nombre} ${user.apellido}`, user.qrUrl);
-    res.json({ message: `QR enviado correctamente a ${email}` });
+    await enqueueEmail({
+      recipientEmail: email,
+      ...buildMentorQREmail(`${user.nombre} ${user.apellido}`, user.qrUrl),
+      category: 'mentor_qr', relatedEntityType: 'User', relatedEntityID: user.ID,
+    });
+    res.json({ message: `QR dejado en cola para ${email}` });
   } catch (error) {
     console.error('[QR] Error al reenviar QR de mentor:', error.message);
     res.status(500).json({ message: 'Error al enviar el QR de mentor', error: error.message });
