@@ -21,6 +21,8 @@ import SensitiveDataPage from './pages/SensitiveDataPage';
 import StudentImportPage from './pages/StudentImportPage';
 import MentorAttendancePage from './pages/MentorAttendancePage';
 import MyTeamAttendancePage from './pages/MyTeamAttendancePage';
+import UnsubscribeNotificationsPage from './pages/UnsubscribeNotificationsPage';
+import MailAuditPage from './pages/MailAuditPage';
 import SeasonSelector from './components/SeasonSelector';
 import { useState } from 'react';
 
@@ -127,6 +129,7 @@ function AppLayout() {
           <Route path="/informe-asistencia" element={<AttendanceReportPage />} />
           <Route path="/administracion/cifrado-datos" element={<SensitiveDataPage />} />
           <Route path="/administracion/importar-estudiantes" element={<StudentImportPage />} />
+          <Route path="/administracion/auditoria-correos" element={<MailAuditPage />} />
           <Route path="*" element={<Navigate to="/panel" replace />} />
         </Routes>
       </main>
@@ -147,6 +150,7 @@ function AppRoutes() {
 
   return (
     <Routes>
+      <Route path="/notificaciones/desuscribir" element={<UnsubscribeNotificationsPage />} />
       <Route 
         path="/iniciar-sesion" 
         element={isAuthenticated ? <Navigate to="/panel" replace /> : <Login />} 
