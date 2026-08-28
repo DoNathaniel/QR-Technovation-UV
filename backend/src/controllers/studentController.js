@@ -2,7 +2,8 @@
 const { AppDataSource } = require('../database/data-source');
 const StudentSchema = require('../entities/Student');
 const { generateQR } = require('../services/qrService');
-const { sendQREmail } = require('../services/emailService');
+const { buildQREmail } = require('../services/emailService');
+const { enqueueEmail } = require('../services/emailQueueService');
 const GuardianSchema = require('../entities/Guardian');
 const { blindIndex, protect, reveal, serializeSensitive, protectGuardianData, revealGuardianData } = require('../services/sensitiveDataService');
 
@@ -183,7 +184,13 @@ async function create(req, res) {
 
       for (const email of recipients) {
         try {
-          await sendQREmail(email, studentName, cdnUrl);
+          await enqueueEmail({
+            recipientEmail: email,
+            ...buildQREmail(studentName, cdnUrl),
+            category: 'student_qr',
+            relatedEntityType: 'Student',
+            relatedEntityID: result.ID,
+          });
         } catch (emailError) {
           console.error(`[Email] Error enviando QR a ${email}:`, emailError.message);
           // No bloquear la creacion del estudiante si falla el email
@@ -347,12 +354,18 @@ async function resendQR(req, res) {
     const studentName = `${student.nombres} ${student.apellidos}`;
     const sent = [];
     for (const email of recipients) {
-      await sendQREmail(email, studentName, qrUrl);
+      await enqueueEmail({
+        recipientEmail: email,
+        ...buildQREmail(studentName, qrUrl),
+        category: 'student_qr',
+        relatedEntityType: 'Student',
+        relatedEntityID: student.ID,
+      });
       sent.push(email);
     }
 
-    console.log(`[QR] Reenviado para estudiante ID: ${id} - ${studentName} a ${sent.join(', ')} (destino: ${dest})`);
-    res.json({ message: `QR reenviado exitosamente a ${sent.join(', ')}` });
+    console.log(`[QR] Encolado para estudiante ID: ${id} - ${studentName} a ${sent.join(', ')} (destino: ${dest})`);
+    res.json({ message: `QR dejado en cola para ${sent.join(', ')}` });
   } catch (error) {
     console.log(error)
     console.error('[QR] Error al reenviar QR:', error.message);
