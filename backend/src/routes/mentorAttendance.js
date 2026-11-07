@@ -7,6 +7,8 @@ const router = express.Router();
 
 router.use(authenticateToken);
 router.get('/mine', controller.getMine);
+router.get('/mine/status', controller.getCheckInStatus);
+router.post('/mine/entry', controller.registerMyEntry);
 router.use(checkRole('superadmin', 'admin'));
 router.get('/dashboard', controller.getDashboard);
 router.get('/', controller.getByDate);
