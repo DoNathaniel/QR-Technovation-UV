@@ -227,7 +227,14 @@ async function getCheckInStatus(req, res) {
     if (!context) return;
     const { mentor, seasonID, fecha } = context;
     const existing = await attendanceRepository().findOne({ where: { mentorID: mentor.ID, seasonID, fecha, tipo: 'entrada' } });
-    res.json({ fecha, alreadyCheckedIn: Boolean(existing), configured: Boolean(readGeofence()) });
+    const geofence = readGeofence();
+    res.json({
+      fecha,
+      alreadyCheckedIn: Boolean(existing),
+      configured: Boolean(geofence),
+      maxAccuracy: geofence?.maxAccuracy ?? null,
+      venue: geofence ? { latitude: geofence.latitude, longitude: geofence.longitude, radius: geofence.radius } : null,
+    });
   } catch (error) {
     console.error('[Autorregistro] Estado:', error.message);
     res.status(500).json({ message: 'No fue posible consultar tu entrada.' });
