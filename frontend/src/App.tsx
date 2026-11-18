@@ -24,7 +24,39 @@ import MyTeamAttendancePage from './pages/MyTeamAttendancePage';
 import UnsubscribeNotificationsPage from './pages/UnsubscribeNotificationsPage';
 import MailAuditPage from './pages/MailAuditPage';
 import SeasonSelector from './components/SeasonSelector';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import api from './services/api';
+import MaintenancePage from './pages/MaintenancePage';
+import { colors } from './config';
+
+function MaintenanceNotice({ onLogout }: { onLogout: () => void }) {
+  return (
+    <div className="min-h-screen bg-background">
+      <header className="shadow-md" style={{ backgroundColor: '#1e3a5f' }}>
+        <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
+          <img src="/escuela-informatica-blanco.png" alt="Escuela de Informática" className="h-10 sm:h-12" />
+          <img src="/technovationgirls-chile.png" alt="Technovation Girls Chile" className="h-9 sm:h-10" />
+        </div>
+      </header>
+      <main className="flex min-h-[calc(100vh-64px)] items-center justify-center p-5 sm:p-8">
+        <section className="w-full max-w-2xl overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
+          <div className="h-2" style={{ background: `linear-gradient(90deg, ${colors.primary}, ${colors.secondary}, ${colors.accentAlt})` }} />
+          <div className="p-7 text-center sm:p-10">
+            <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 text-primary">
+              <svg className="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 8v4l2.5 1.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">Sistema de Asistencia</p>
+            <h1 className="mt-2 text-2xl font-bold text-primary sm:text-3xl">Estamos preparando las próximas temporadas</h1>
+            <p className="mx-auto mt-4 max-w-lg leading-relaxed text-text-muted">Actualmente, la página se encuentra en mantenimiento para futuras temporadas. Vuelve a intentarlo más adelante.</p>
+            <button onClick={onLogout} className="mt-7 rounded-lg px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:opacity-90" style={{ backgroundColor: colors.primary }}>Cerrar sesión</button>
+          </div>
+        </section>
+      </main>
+    </div>
+  );
+}
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, currentSeasonId, temporadas, setCurrentSeason, user, logout } = useAuth();
@@ -51,7 +83,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-function AppLayout() {
+function AppLayout({ maintenanceEnabled, onMaintenanceChange }: { maintenanceEnabled: boolean; onMaintenanceChange: (enabled: boolean) => void }) {
   const { user, logout, temporadas, currentSeasonId, setCurrentSeason } = useAuth();
   const navigate = useNavigate();
   const [showSeasonModal, setShowSeasonModal] = useState(false);
@@ -76,8 +108,9 @@ function AppLayout() {
 
   return (
     <div className="min-h-screen bg-background">
+      {maintenanceEnabled && <div className="sticky top-0 z-40 bg-amber-100 px-4 py-2 text-center text-sm font-semibold text-amber-950" role="status">Mantenimiento activo: el acceso está limitado a administradores y superadministradores.</div>}
       {/* Header */}
-      <header className="shadow-md sticky top-0 z-30" style={{ backgroundColor: '#1e3a5f' }}>
+      <header className={`shadow-md sticky z-30 ${maintenanceEnabled ? 'top-9' : 'top-0'}`} style={{ backgroundColor: '#1e3a5f' }}>
         <div className="flex items-center justify-between px-4 py-3">
           {/* Logos */}
           <div className="flex items-center gap-3">
@@ -134,6 +167,7 @@ function AppLayout() {
           <Route path="/administracion/cifrado-datos" element={<SensitiveDataPage />} />
           <Route path="/administracion/importar-estudiantes" element={<StudentImportPage />} />
           <Route path="/administracion/auditoria-correos" element={<MailAuditPage />} />
+          <Route path="/administracion/mantenimiento" element={<MaintenancePage onStatusChange={onMaintenanceChange} />} />
           <Route path="*" element={<Navigate to="/panel" replace />} />
         </Routes>
       </main>
@@ -150,7 +184,24 @@ function AppLayout() {
 }
 
 function AppRoutes() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
+  const [maintenanceEnabled, setMaintenanceEnabled] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (!isAuthenticated) { setMaintenanceEnabled(false); return; }
+    let active = true;
+    const refreshMaintenance = async () => {
+      try {
+        const response = await api.get<{ enabled: boolean }>('/maintenance/status');
+        if (active) setMaintenanceEnabled(Boolean(response.data.enabled));
+      } catch {
+        if (active) setMaintenanceEnabled(false);
+      }
+    };
+    void refreshMaintenance();
+    const timer = window.setInterval(refreshMaintenance, 15000);
+    return () => { active = false; window.clearInterval(timer); };
+  }, [isAuthenticated]);
 
   return (
     <Routes>
@@ -162,9 +213,11 @@ function AppRoutes() {
       <Route 
         path="/*" 
         element={
-          <ProtectedRoute>
-            <AppLayout />
-          </ProtectedRoute>
+          isAuthenticated && maintenanceEnabled === null
+            ? <div className="flex min-h-screen items-center justify-center text-sm text-gray-500">Cargando estado del sistema…</div>
+            : maintenanceEnabled && user?.rol === 'voluntario'
+              ? <MaintenanceNotice onLogout={logout} />
+              : <ProtectedRoute><AppLayout maintenanceEnabled={Boolean(maintenanceEnabled)} onMaintenanceChange={setMaintenanceEnabled} /></ProtectedRoute>
         } 
       />
     </Routes>

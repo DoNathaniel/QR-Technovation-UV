@@ -8,6 +8,7 @@ const { createServer } = require('http');
 const { Server } = require('socket.io');
 const { AppDataSource } = require('./database/data-source');
 const { startEmailQueueWorker, stopEmailQueueWorker } = require('./services/emailQueueService');
+const { maintenanceGate } = require('./middleware');
 
 // ROUTES
 const authRoutes = require('./routes/auth');
@@ -23,6 +24,7 @@ const studentImportRoutes = require('./routes/studentImport');
 const mentorAttendanceRoutes = require('./routes/mentorAttendance');
 const notificationPreferencesRoutes = require('./routes/notificationPreferences');
 const mailAuditRoutes = require('./routes/mailAudit');
+const maintenanceRoutes = require('./routes/maintenance');
 
 // SERVER
 const app = express();
@@ -54,6 +56,13 @@ app.use((req, res, next) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/maintenance', maintenanceRoutes);
+
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+app.use(maintenanceGate);
 app.use('/api/seasons', seasonRoutes);
 app.use('/api/seasons', seasonDatesRoutes);
 app.use('/api/users', userRoutes);
@@ -66,10 +75,6 @@ app.use('/api/admin/student-import', studentImportRoutes);
 app.use('/api/mentor-attendance', mentorAttendanceRoutes);
 app.use('/api/notification-preferences', notificationPreferencesRoutes);
 app.use('/api/admin/mail-audit', mailAuditRoutes);
-
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
 
 io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
