@@ -50,9 +50,11 @@ export default function Dashboard() {
           Hola, {user?.nombre}! 👋
         </h2>
         <p className="opacity-90 text-lg">
-          {roleLabels[user?.rol || 'voluntario']} · {currentSeason?.nombre}
+          {roleLabels[user?.rol || 'voluntario']} · {currentSeason?.nombre || (user?.rol === 'superadmin' ? 'Gestión del sistema' : 'Sin temporadas asignadas')}
         </p>
       </div>
+
+      {user?.rol !== 'superadmin' && temporadas.length === 0 && <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900" role="status">Sin temporadas asignadas</div>}
 
       {currentSeasonId && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

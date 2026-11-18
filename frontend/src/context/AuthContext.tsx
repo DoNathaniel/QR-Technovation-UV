@@ -47,7 +47,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const currentSeasonId = authService.getCurrentSeasonId();
 
     if (token && user) {
-      const validSeasonId = getValidSeasonId(temporadas, currentSeasonId);
+      const assignedSeasonIds = new Set(Array.isArray(user.temporadas) ? user.temporadas : []);
+      const accessibleSeasons = user.rol === 'superadmin'
+        ? temporadas
+        : temporadas.filter(season => assignedSeasonIds.has(season.ID));
+      setTemporadas(accessibleSeasons);
+      localStorage.setItem('availableSeasons', JSON.stringify(accessibleSeasons));
+      const validSeasonId = getValidSeasonId(accessibleSeasons, currentSeasonId);
       setState({
         user,
         token,

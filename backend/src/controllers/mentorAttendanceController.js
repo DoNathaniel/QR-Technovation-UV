@@ -208,12 +208,11 @@ async function checkInContext(req, res, seasonValue) {
   if (!Number.isInteger(seasonID) || seasonID <= 0) {
     res.status(400).json({ message: 'Selecciona una temporada válida.' }); return null;
   }
-  const [mentor, season, activeSeasons] = await Promise.all([
+  const [mentor, season] = await Promise.all([
     userRepository().findOne({ where: { ID: req.user.id } }),
     AppDataSource.getRepository(SeasonSchema).findOne({ where: { ID: seasonID } }),
-    AppDataSource.getRepository(SeasonSchema).find({ where: { activa: true }, select: ['ID'] }),
   ]);
-  if (!mentor || !['voluntario', 'admin'].includes(mentor.rol) || !userHasSeasonAccess(mentor, seasonID, activeSeasons.map(s => s.ID))) {
+  if (!mentor || !['voluntario', 'admin'].includes(mentor.rol) || !userHasSeasonAccess(mentor, seasonID)) {
     res.status(403).json({ message: 'No tienes permiso para registrar asistencia en esta temporada.' }); return null;
   }
   if (!season?.activa) {

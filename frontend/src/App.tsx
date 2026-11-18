@@ -27,10 +27,14 @@ import SeasonSelector from './components/SeasonSelector';
 import { useState } from 'react';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, currentSeasonId, temporadas, setCurrentSeason } = useAuth();
+  const { isAuthenticated, currentSeasonId, temporadas, setCurrentSeason, user, logout } = useAuth();
 
   if (!isAuthenticated) {
     return <Navigate to="/iniciar-sesion" replace />;
+  }
+
+  if (user?.rol === 'voluntario' && temporadas.length === 0) {
+    return <div className="flex min-h-screen items-center justify-center bg-gray-50 p-6"><section className="max-w-md rounded-xl border border-amber-200 bg-white p-8 text-center shadow-sm"><h1 className="text-2xl font-bold text-gray-800">Sin temporadas asignadas</h1><p className="mt-2 text-sm text-gray-600">Tu cuenta todavía no tiene una temporada asignada. Contacta a un administrador.</p><button onClick={logout} className="mt-6 rounded-lg bg-violet-700 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-800">Cerrar sesión</button></section></div>;
   }
 
   if (temporadas.length > 1 && !currentSeasonId) {

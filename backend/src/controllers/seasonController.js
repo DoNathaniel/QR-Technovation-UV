@@ -1,14 +1,16 @@
 'use strict';
 const { AppDataSource } = require('../database/data-source');
 const SeasonSchema = require('../entities/Season');
+const { normalizeSeasonIds } = require('../utils/seasonAccess');
 
 const seasonRepository = () => AppDataSource.getRepository(SeasonSchema);
 
 async function getAll(req, res) {
   try {
+    const assignedSeasonIds = normalizeSeasonIds(req.user?.temporadas);
     const seasons = req.user?.rol === 'superadmin'
       ? await seasonRepository().find()
-      : await seasonRepository().find({ where: { activa: true } });
+      : assignedSeasonIds.length > 0 ? await seasonRepository().findByIds(assignedSeasonIds) : [];
     res.json(seasons);
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener temporadas', error: error.message });
