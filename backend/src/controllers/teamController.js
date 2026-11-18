@@ -138,10 +138,7 @@ const assignMentor = async (req, res) => {
       return res.status(400).json({ message: 'Solo los voluntarios pueden ser asignados como mentores' });
     }
 
-    const season = await seasonRepository().findOne({ where: { ID: seasonID } });
-    const activeSeasonIds = season?.activa ? [season.ID] : [];
-
-    if (!userHasSeasonAccess(mentor, seasonID, activeSeasonIds)) {
+    if (!userHasSeasonAccess(mentor, seasonID)) {
       return res.status(400).json({ message: 'El mentor no está configurado para esta temporada' });
     }
 

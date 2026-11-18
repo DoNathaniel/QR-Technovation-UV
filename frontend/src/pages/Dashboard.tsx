@@ -50,9 +50,11 @@ export default function Dashboard() {
           Hola, {user?.nombre}! 👋
         </h2>
         <p className="opacity-90 text-lg">
-          {roleLabels[user?.rol || 'voluntario']} · {currentSeason?.nombre}
+          {roleLabels[user?.rol || 'voluntario']} · {currentSeason?.nombre || (user?.rol === 'superadmin' ? 'Gestión del sistema' : 'Sin temporadas asignadas')}
         </p>
       </div>
+
+      {user?.rol !== 'superadmin' && temporadas.length === 0 && <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900" role="status">Sin temporadas asignadas</div>}
 
       {currentSeasonId && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -236,6 +238,21 @@ export default function Dashboard() {
                 <div>
                   <h3 className="font-semibold text-lg text-gray-800 group-hover:text-yellow-600 transition-colors">Temporadas</h3>
                   <p className="text-sm text-gray-500">Crear y editar temporadas</p>
+                </div>
+              </div>
+            </Link>
+
+            <Link
+              to="/administracion/mantenimiento"
+              className="group bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-lg hover:border-amber-200 transition-all"
+            >
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl bg-amber-100 text-amber-700">
+                  <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg text-gray-800 group-hover:text-amber-700 transition-colors">Mantenimiento</h3>
+                  <p className="text-sm text-gray-500">Limitar el acceso durante la preparación de temporadas</p>
                 </div>
               </div>
             </Link>

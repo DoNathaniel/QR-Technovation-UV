@@ -24,7 +24,7 @@ function normalizeUserSeasons(user) {
   };
 }
 
-function userHasSeasonAccess(user, seasonID, activeSeasonIds = []) {
+function userHasSeasonAccess(user, seasonID) {
   if (!user) return false;
   if (user.rol === 'superadmin') return true;
 
@@ -34,10 +34,6 @@ function userHasSeasonAccess(user, seasonID, activeSeasonIds = []) {
   const userSeasons = normalizeSeasonIds(user.temporadas);
   if (userSeasons.includes(normalizedSeasonID)) {
     return true;
-  }
-
-  if (userSeasons.length === 0) {
-    return normalizeSeasonIds(activeSeasonIds).includes(normalizedSeasonID);
   }
 
   return false;

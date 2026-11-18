@@ -67,7 +67,7 @@ async function createLoginResponse(user) {
   } else if (userTemporadas.length > 0) {
     temporadas = await seasonRepository().findByIds(userTemporadas);
   } else {
-    temporadas = await seasonRepository().find({ where: { activa: true } });
+    temporadas = [];
   }
 
   return {

@@ -14,6 +14,7 @@ const MentorAttendanceSchema = new EntitySchema({
     esFechaPlanificada: { type: 'boolean', default: false },
     mentorID: { type: 'int' },
     scannedByUserID: { type: 'int' },
+    metodo: { type: 'varchar', length: 20, default: 'qr' },
     emailSent: { type: 'boolean', default: false },
     createdAt: { type: 'timestamp', createDate: true },
   },
