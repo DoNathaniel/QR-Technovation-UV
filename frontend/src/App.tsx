@@ -27,6 +27,7 @@ import SeasonSelector from './components/SeasonSelector';
 import { useEffect, useState } from 'react';
 import api from './services/api';
 import MaintenancePage from './pages/MaintenancePage';
+import ChecklistsPage from './pages/ChecklistsPage';
 import { colors } from './config';
 
 function MaintenanceNotice({ onLogout }: { onLogout: () => void }) {
@@ -163,6 +164,8 @@ function AppLayout({ maintenanceEnabled, onMaintenanceChange }: { maintenanceEna
           <Route path="/asistencia" element={<AttendancePage />} />
           <Route path="/asistencia-mentores" element={<MentorAttendancePage />} />
           <Route path="/yo" element={<MyTeamAttendancePage />} />
+          <Route path="/administracion/checklists" element={['admin', 'superadmin'].includes(user?.rol || '') ? <ChecklistsPage mode="admin" /> : <Navigate to="/mi-checklist" replace />} />
+          <Route path="/mi-checklist" element={user?.rol === 'voluntario' ? <ChecklistsPage mode="mentor" /> : <Navigate to="/administracion/checklists" replace />} />
           <Route path="/informe-asistencia" element={<AttendanceReportPage />} />
           <Route path="/administracion/cifrado-datos" element={<SensitiveDataPage />} />
           <Route path="/administracion/importar-estudiantes" element={<StudentImportPage />} />

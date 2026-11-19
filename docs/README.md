@@ -27,6 +27,7 @@ Documentacion de cada modulo funcional del sistema.
 | Apoderados | Gestion de apoderados/tutores | [Ver detalle](modulos/apoderados.md) |
 | Estudiantes | Gestion de estudiantes y QR | [Ver detalle](modulos/estudiantes.md) |
 | Equipos | Gestion de equipos y asignaciones | [Ver detalle](modulos/equipos.md) |
+| Checklists | Vinculacion y revision manual de checklists de equipos | [Ver detalle](modulos/checklists.md) |
 | Asistencia | Registro de asistencia via QR | [Ver detalle](modulos/asistencia.md) |
 | Dashboard | Panel principal con estadisticas | [Ver detalle](modulos/dashboard.md) |
 | Informe Asistencia | Reportes de asistencia | [Ver detalle](modulos/informe-asistencia.md) |
