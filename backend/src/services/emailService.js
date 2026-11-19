@@ -130,6 +130,43 @@ function buildStudentArrivalEmail(studentName, fecha, hora, unsubscribeUrl) {
   return buildStudentAttendanceEmail(studentName, 'entrada', fecha, hora, unsubscribeUrl);
 }
 
+function buildChecklistMentorEmail(mentorName, teamName, percent, completedCount, applicableCount, changes, checklistUrl, items = []) {
+  const escapeHtml = (value) => String(value ?? '').replace(/[&<>\"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', "'": '&#39;' }[character]));
+  const safeName = escapeHtml(mentorName);
+  const safeTeam = escapeHtml(teamName);
+  const safeUrl = escapeHtml(checklistUrl);
+  const pendingItems = (Array.isArray(items) ? items : []).filter((item) => item.status === 'pending');
+  const pendingContent = pendingItems.length
+    ? `<p style="margin:0 0 10px;"><strong>Tienes pendiente completar los siguientes ítems:</strong></p><ul style="margin:0;padding-left:22px;">${pendingItems.slice(0, 20).map((item) => `<li style="margin:0 0 7px;"><strong>${escapeHtml(item.code)}</strong> ${escapeHtml(item.label)}</li>`).join('')}</ul>${pendingItems.length > 20 ? `<p style="font-size:13px;color:#667;">Y ${pendingItems.length - 20} ítems pendientes más.</p>` : ''}`
+    : '<p style="margin:0;"><strong>No tienes ítems pendientes.</strong> El checklist está al día.</p>';
+  const changedItems = Array.isArray(changes) && changes.length
+    ? `<ul>${changes.slice(0, 25).map((change) => {
+      const labels = { complete: 'Completo', pending: 'Pendiente', optional: 'Opcional', not_applicable: 'No aplica' };
+      return `<li><strong>${escapeHtml(change.code)}</strong> ${escapeHtml(change.label)}: ${escapeHtml(labels[change.from] || change.from)} → ${escapeHtml(labels[change.to] || change.to)}</li>`;
+    }).join('')}</ul>`
+    : changes === null ? '' : '<p>No hubo cambios de estado desde la revisión anterior.</p>';
+  return {
+    subject: `Avance del checklist · ${String(teamName || '').replace(/[\r\n]/g, ' ').slice(0, 150)}`,
+    htmlBody: `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f7f9fb;border-radius:16px;padding:32px 24px 18px;box-shadow:0 3px 18px #0001;color:#1a365d;">
+        <div style="text-align:center;margin-bottom:22px;"><img src="https://cdn.donath.us/cdn/uploads/_UV_QR-TECHNOVATION_/DATA/uv.png" alt="Logo UV" style="height:55px;"></div>
+        <h2 style="text-align:center;font-weight:700;letter-spacing:-.5px;margin:0 0 20px;">Technovation Girls Chile</h2>
+        <p style="font-size:17px;margin:0 0 12px;">Hola <strong>${safeName}</strong>,</p>
+        <p style="margin:0 0 18px;">Revisamos el avance del equipo <strong>${safeTeam}</strong>.</p>
+        <div style="background:#fff;border:1px solid #dbeafe;border-radius:12px;padding:18px 20px;margin:24px 0;box-shadow:0 6px 26px #20629b19;">
+          <p style="font-size:18px;font-weight:700;text-align:center;color:#1a365d;margin:0 0 8px;">Avance actual: ${Number(percent) || 0}%</p>
+          <p style="text-align:center;color:#566;margin:0 0 18px;">${Number(completedCount) || 0} de ${Number(applicableCount) || 0} ítems aplicables completados</p>
+          <div style="color:#1a365d;line-height:1.5;">${pendingContent}</div>
+        </div>
+        ${changes === null ? '' : `<div style="margin:0 0 20px;"><h3 style="font-size:16px;margin:0 0 8px;">Cambios desde la revisión anterior</h3>${changedItems}</div>`}
+        <p style="text-align:center;margin:26px 0;"><a href="${safeUrl}" style="display:inline-block;background:#5b3cc4;color:#fff;text-decoration:none;font-weight:700;padding:12px 20px;border-radius:8px;">Abrir Mi checklist</a></p>
+        <p style="color:#566;font-size:13px;text-align:center;margin:0 0 6px;">Este es un aviso automático sobre el avance del equipo.</p>
+        <hr style="border:none;border-top:1px solid #dbeafe;margin:24px 0 10px;">
+        <div style="text-align:center;"><img src="https://cdn.donath.us/cdn/uploads/_UV_QR-TECHNOVATION_/DATA/escuela-informatica.png" alt="Escuela de Ingeniería Informática" style="height:105px;margin-top:8px;"><p style="color:#999;font-size:12px;margin:6px 0 0;">Universidad de Valparaíso — Escuela de Ingeniería Informática</p></div>
+      </div>`,
+  };
+}
+
 async function deliverEmail({ to, subject, htmlBody }) {
   if (!process.env.ZEPTOMAIL_API_TOKEN) {
     throw new Error('ZEPTOMAIL_API_TOKEN no configurada en .env');
@@ -143,4 +180,4 @@ async function deliverEmail({ to, subject, htmlBody }) {
   return response.data;
 }
 
-module.exports = { buildQREmail, buildMentorQREmail, buildMentorAttendanceEmail, buildStudentAttendanceEmail, buildStudentArrivalEmail, deliverEmail };
+module.exports = { buildQREmail, buildMentorQREmail, buildMentorAttendanceEmail, buildStudentAttendanceEmail, buildStudentArrivalEmail, buildChecklistMentorEmail, deliverEmail };

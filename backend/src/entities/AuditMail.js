@@ -17,6 +17,7 @@ module.exports = new EntitySchema({
     },
     relatedEntityType: { type: 'varchar', length: 100, nullable: true },
     relatedEntityID: { type: 'int', nullable: true },
+    idempotencyKey: { type: 'varchar', length: 180, nullable: true, unique: true },
     studentID: { type: 'int', nullable: true },
     attempts: { type: 'int', default: 0 },
     maxAttempts: { type: 'int', default: 3 },

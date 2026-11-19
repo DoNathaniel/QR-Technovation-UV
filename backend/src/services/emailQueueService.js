@@ -30,7 +30,7 @@ function serializeError(error) {
   return String(error?.message || error || 'Error desconocido').slice(0, 65_000);
 }
 
-async function enqueueEmail({ recipientEmail, subject, htmlBody, category = 'system', relatedEntityType = null, relatedEntityID = null, studentID = null, maxAttempts = 3 }) {
+async function enqueueEmail({ recipientEmail, subject, htmlBody, category = 'system', relatedEntityType = null, relatedEntityID = null, studentID = null, maxAttempts = 3, idempotencyKey = null }) {
   const normalizedRecipient = normalizeEmail(recipientEmail);
   if (!normalizedRecipient) throw new Error('No se puede encolar un correo sin destinatario');
   if (!subject || !htmlBody) throw new Error('El correo requiere asunto y contenido HTML');
@@ -42,6 +42,7 @@ async function enqueueEmail({ recipientEmail, subject, htmlBody, category = 'sys
     category,
     relatedEntityType,
     relatedEntityID,
+    idempotencyKey,
     studentID,
     maxAttempts: Math.max(1, Number(maxAttempts) || 3),
     status: 'pending',
@@ -50,7 +51,21 @@ async function enqueueEmail({ recipientEmail, subject, htmlBody, category = 'sys
   return repository().save(job);
 }
 
-async function recordSkippedEmail({ recipientEmail, subject, htmlBody, category = 'system', relatedEntityType = null, relatedEntityID = null, studentID = null }) {
+async function enqueueEmailOnce(options) {
+  if (!options?.idempotencyKey) throw new Error('Se requiere una clave de idempotencia');
+  const existing = await repository().findOne({ where: { idempotencyKey: options.idempotencyKey } });
+  if (existing) return existing;
+  try {
+    return await enqueueEmail(options);
+  } catch (error) {
+    // The unique key also protects against two application instances racing.
+    const saved = await repository().findOne({ where: { idempotencyKey: options.idempotencyKey } });
+    if (saved) return saved;
+    throw error;
+  }
+}
+
+async function recordSkippedEmail({ recipientEmail, subject, htmlBody, category = 'system', relatedEntityType = null, relatedEntityID = null, studentID = null, idempotencyKey = null }) {
   const normalizedRecipient = normalizeEmail(recipientEmail);
   if (!normalizedRecipient) throw new Error('No se puede auditar un correo omitido sin destinatario');
   const job = repository().create({
@@ -60,6 +75,7 @@ async function recordSkippedEmail({ recipientEmail, subject, htmlBody, category 
     category,
     relatedEntityType,
     relatedEntityID,
+    idempotencyKey,
     studentID,
     status: 'skipped_unsubscribed',
     nextAttemptAt: null,
@@ -162,6 +178,6 @@ function stopEmailQueueWorker() {
 }
 
 module.exports = {
-  enqueueEmail, recordSkippedEmail, processEmailQueue, startEmailQueueWorker, stopEmailQueueWorker,
+  enqueueEmail, enqueueEmailOnce, recordSkippedEmail, processEmailQueue, startEmailQueueWorker, stopEmailQueueWorker,
   normalizeEmail, uniqueEmails, retryDelay, recoverStaleJobs,
 };

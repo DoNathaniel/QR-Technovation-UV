@@ -8,6 +8,7 @@ const { createServer } = require('http');
 const { Server } = require('socket.io');
 const { AppDataSource } = require('./database/data-source');
 const { startEmailQueueWorker, stopEmailQueueWorker } = require('./services/emailQueueService');
+const { startChecklistRunWorker, stopChecklistRunWorker } = require('./services/teamChecklistRunService');
 const { maintenanceGate } = require('./middleware');
 
 // ROUTES
@@ -25,6 +26,7 @@ const mentorAttendanceRoutes = require('./routes/mentorAttendance');
 const notificationPreferencesRoutes = require('./routes/notificationPreferences');
 const mailAuditRoutes = require('./routes/mailAudit');
 const maintenanceRoutes = require('./routes/maintenance');
+const teamChecklistsRoutes = require('./routes/teamChecklists');
 
 // SERVER
 const app = express();
@@ -70,6 +72,7 @@ app.use('/api/guardians', guardianRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/teams', teamsRoutes);
+app.use('/api/checklists', teamChecklistsRoutes);
 app.use('/api/admin/sensitive-data', sensitiveDataAdminRoutes);
 app.use('/api/admin/student-import', studentImportRoutes);
 app.use('/api/mentor-attendance', mentorAttendanceRoutes);
@@ -96,6 +99,7 @@ AppDataSource.initialize()
   .then(() => {
     console.log('Database connected');
     startEmailQueueWorker();
+    startChecklistRunWorker();
 
     httpServer.listen(PORT, HOST, () => {
       console.log(`Server running on ${HOST}:${PORT}`);
@@ -108,6 +112,7 @@ AppDataSource.initialize()
 
 function shutdown() {
   stopEmailQueueWorker();
+  stopChecklistRunWorker();
   httpServer.close(() => AppDataSource.destroy().finally(() => process.exit(0)));
 }
 
