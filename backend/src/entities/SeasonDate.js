@@ -17,6 +17,10 @@ const SeasonDateSchema = new EntitySchema({
       type: 'boolean',
       default: true,
     },
+    checklistPoint: {
+      type: 'int',
+      nullable: true,
+    },
     seasonID: {
       type: 'int',
     },

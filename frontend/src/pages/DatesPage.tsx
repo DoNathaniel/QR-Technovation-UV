@@ -8,6 +8,7 @@ interface SeasonDate {
   fecha: string;
   activa: boolean;
   seasonID?: number;
+  checklistPoint: number | null;
 }
 
 interface Season {
@@ -25,8 +26,9 @@ export default function DatesPage() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [showBulkForm, setShowBulkForm] = useState(false);
-  const [formData, setFormData] = useState({ fecha: '' });
+  const [formData, setFormData] = useState({ fecha: '', checklistPoint: '' });
   const [bulkData, setBulkData] = useState({ fechaInicio: '', fechaFin: '' });
+  const [savingChecklistPointID, setSavingChecklistPointID] = useState<number | null>(null);
 
   useEffect(() => {
     loadSeasons();
@@ -69,14 +71,31 @@ export default function DatesPage() {
       const fechaLocal = new Date(formData.fecha + 'T00:00:00');
       const fechaISO = fechaLocal.toISOString().split('T')[0];
       
-      await api.post(`/seasons/${selectedSeason}/dates`, { fecha: fechaISO });
+      await api.post(`/seasons/${selectedSeason}/dates`, {
+        fecha: fechaISO,
+        checklistPoint: formData.checklistPoint === '' ? null : Number(formData.checklistPoint),
+      });
       loadDates();
       setShowForm(false);
-      setFormData({ fecha: '' });
+      setFormData({ fecha: '', checklistPoint: '' });
     } catch (error) {
       console.error('Error adding date:', error);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const saveChecklistPoint = async (dateID: number, value: string) => {
+    if (!selectedSeason) return;
+    setSavingChecklistPointID(dateID);
+    const checklistPoint = value === '' ? null : Number(value);
+    try {
+      const response = await api.put(`/seasons/${selectedSeason}/dates/${dateID}`, { checklistPoint });
+      setDates((current) => current.map((date) => date.ID === dateID ? { ...date, checklistPoint: response.data.checklistPoint } : date));
+    } catch (error: any) {
+      window.alert(error.response?.data?.message || 'No se pudo guardar el punto del checklist.');
+    } finally {
+      setSavingChecklistPointID(null);
     }
   };
 
@@ -178,6 +197,21 @@ export default function DatesPage() {
                 required
               />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-text mb-1">Punto del checklist al cierre de esta clase</label>
+              <select
+                value={formData.checklistPoint}
+                onChange={(e) => setFormData({ ...formData, checklistPoint: e.target.value })}
+                className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg"
+              >
+                <option value="">Automático según el orden de las fechas</option>
+                <option value="0">Sin puntos exigibles todavía</option>
+                {Array.from({ length: 11 }, (_, index) => index + 1).map((point) => (
+                  <option key={point} value={point}>Hasta el punto {point}</option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-text-muted">Puedes asignar un punto distinto a cada clase. Las fechas importadas en rango usan el modo automático.</p>
+            </div>
             <div className="flex gap-2">
               <button
                 type="submit"
@@ -255,14 +289,16 @@ export default function DatesPage() {
               <th className="px-4 py-3 text-left text-sm font-medium text-text-muted">Fecha</th>
               <th className="px-4 py-3 text-left text-sm font-medium text-text-muted">Día</th>
               <th className="px-4 py-3 text-left text-sm font-medium text-text-muted">Estado</th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-text-muted">Avance exigible</th>
               <th className="px-4 py-3 text-right text-sm font-medium text-text-muted">Acciones</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
             {dates
               .sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
-              .map((date) => {
+              .map((date, index) => {
                 const dateObj = new Date(date.fecha + 'T12:00:00');
+                const automaticPoint = Math.min(index, 11);
                 return (
                 <tr key={date.ID} className="hover:bg-gray-50">
                   <td className="px-4 py-3 text-sm text-text">
@@ -275,6 +311,21 @@ export default function DatesPage() {
                     <span className={`px-2 py-1 text-xs rounded ${date.activa ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
                       {date.activa ? 'Activa' : 'Inactiva'}
                     </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <select
+                      aria-label={`Punto de checklist para ${dateObj.toLocaleDateString('es-CL')}`}
+                      value={date.checklistPoint === null || date.checklistPoint === undefined ? '' : String(date.checklistPoint)}
+                      onChange={(event) => void saveChecklistPoint(date.ID, event.target.value)}
+                      disabled={savingChecklistPointID === date.ID}
+                      className="w-full min-w-48 rounded-lg border border-gray-300 px-2 py-1.5 text-sm disabled:opacity-50"
+                    >
+                      <option value="">Automático · punto {automaticPoint}</option>
+                      <option value="0">Sin puntos exigibles</option>
+                      {Array.from({ length: 11 }, (_, pointIndex) => pointIndex + 1).map((point) => (
+                        <option key={point} value={point}>Hasta el punto {point}</option>
+                      ))}
+                    </select>
                   </td>
                   <td className="px-4 py-3 text-right">
                     <button
@@ -289,7 +340,7 @@ export default function DatesPage() {
               )})}
             {dates.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-text-muted">
+                <td colSpan={5} className="px-4 py-8 text-center text-text-muted">
                   No hay fechas registradas para esta temporada
                 </td>
               </tr>

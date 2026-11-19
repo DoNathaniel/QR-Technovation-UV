@@ -11,6 +11,7 @@ Base URL: `/api`
 - [Apoderados](#apoderados)
 - [Estudiantes](#estudiantes)
 - [Equipos](#equipos)
+- [Checklists](#checklists)
 - [Asistencia](#asistencia)
 - [Health Check](#health-check)
 
@@ -38,6 +39,7 @@ Base URL: `/api`
 |---|--------|------|-----------|---------|-------------|
 | 7 | GET | `/api/seasons/:seasonID/dates` | `authenticateToken` | Inline (seasonDates.js) | Listar fechas |
 | 8 | POST | `/api/seasons/:seasonID/dates` | `authenticateToken`, `checkRole('superadmin')` | Inline (seasonDates.js) | Crear fecha |
+| 8a | PUT | `/api/seasons/:seasonID/dates/:id` | `authenticateToken`, `checkRole('superadmin')` | Inline (seasonDates.js) | Configurar el punto exigible del checklist para una fecha |
 | 9 | POST | `/api/seasons/:seasonID/dates/bulk` | `authenticateToken`, `checkRole('superadmin')` | Inline (seasonDates.js) | Crear fechas en bloque |
 | 10 | DELETE | `/api/seasons/:seasonID/dates/:id` | **SIN MIDDLEWARE** | Inline (seasonDates.js) | Eliminar fecha |
 
@@ -88,6 +90,18 @@ Base URL: `/api`
 | 36 | POST | `/api/teams` | `authenticateToken`, `checkRole('superadmin', 'admin')` | `teamController.create` | Crear equipo |
 | 37 | PUT | `/api/teams/:id` | `authenticateToken`, `checkRole('superadmin', 'admin')` | `teamController.update` | Actualizar equipo |
 | 38 | DELETE | `/api/teams/:id` | `authenticateToken`, `checkRole('superadmin', 'admin')` | `teamController.remove` | Eliminar equipo |
+
+| # | Metodo | Ruta | Middleware | Controlador | Descripcion |
+|---|--------|------|-----------|-------------|-------------|
+| 44 | GET | `/api/checklists?seasonID=:id` | `authenticateToken`, rol | `teamChecklistController.list` | Listar resumen por temporada, restringido a equipos asignados para mentores |
+| 45 | PUT | `/api/checklists/:teamID` | `authenticateToken`, `checkRole('superadmin', 'admin')` | `teamChecklistController.setLink` | Vincular o actualizar el enlace |
+| 46 | DELETE | `/api/checklists/:teamID` | `authenticateToken`, `checkRole('superadmin', 'admin')` | `teamChecklistController.unlink` | Desvincular el checklist |
+| 47 | POST | `/api/checklists/:teamID/refresh` | `authenticateToken`, `checkRole('superadmin', 'admin')` | `teamChecklistController.refresh` | Leer y guardar avance manualmente |
+| 48 | POST | `/api/checklists/verify-all` | `authenticateToken`, `checkRole('superadmin', 'admin')` | `teamChecklistController.verifyAll` | Iniciar revisión masiva manual sin correos |
+| 49 | GET | `/api/checklists/runs/overview?seasonID=:id` | `authenticateToken`, `checkRole('superadmin', 'admin')` | `teamChecklistController.getRunOverview` | Consultar última revisión masiva y siguiente automática |
+| 50 | GET | `/api/checklists/runs/active?seasonID=:id` | `authenticateToken`, `checkRole('superadmin', 'admin')` | `teamChecklistController.getActiveRun` | Consultar ejecución activa |
+| 51 | GET | `/api/checklists/runs/:runID` | `authenticateToken`, `checkRole('superadmin', 'admin')` | `teamChecklistController.getRun` | Consultar avance, cambios y errores de ejecución |
+| 52 | POST | `/api/checklists/:teamID/send-status` | `authenticateToken`, `checkRole('superadmin', 'admin')` | `teamChecklistController.sendStatusToMentors` | Encolar el estado actualizado del equipo a sus mentores |
 
 ## Asistencia
 

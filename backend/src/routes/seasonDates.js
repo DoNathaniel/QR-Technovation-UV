@@ -2,6 +2,7 @@
 const express = require('express');
 const { AppDataSource } = require('../database/data-source');
 const SeasonDateSchema = require('../entities/SeasonDate');
+const { MAX_CHECKLIST_SECTION } = require('../services/teamChecklistService');
 const { authenticateToken, checkRole } = require('../middleware');
 
 const router = express.Router();
@@ -20,12 +21,34 @@ router.get('/:seasonID/dates', authenticateToken, async (req, res) => {
 router.post('/:seasonID/dates', authenticateToken, checkRole('superadmin'), async (req, res) => {
   try {
     const { seasonID } = req.params;
-    const { fecha } = req.body;
-    const date = seasonDateRepository().create({ fecha, seasonID: parseInt(seasonID) });
+    const { fecha, checklistPoint = null } = req.body;
+    if (checklistPoint !== null && (!Number.isInteger(Number(checklistPoint)) || Number(checklistPoint) < 0 || Number(checklistPoint) > MAX_CHECKLIST_SECTION)) {
+      return res.status(400).json({ message: `El punto del checklist debe estar entre 0 y ${MAX_CHECKLIST_SECTION}.` });
+    }
+    const date = seasonDateRepository().create({ fecha, seasonID: parseInt(seasonID), checklistPoint: checklistPoint === null ? null : Number(checklistPoint) });
     const result = await seasonDateRepository().save(date);
     res.status(201).json(result);
   } catch (error) {
     res.status(500).json({ message: 'Error al crear fecha', error: error.message });
+  }
+});
+
+router.put('/:seasonID/dates/:id', authenticateToken, checkRole('superadmin'), async (req, res) => {
+  const seasonID = Number(req.params.seasonID);
+  const ID = Number(req.params.id);
+  const rawPoint = req.body?.checklistPoint;
+  const checklistPoint = rawPoint === null || rawPoint === '' ? null : Number(rawPoint);
+  if (rawPoint !== null && rawPoint !== '' && (!Number.isInteger(checklistPoint) || checklistPoint < 0 || checklistPoint > MAX_CHECKLIST_SECTION)) {
+    return res.status(400).json({ message: `El punto del checklist debe estar entre 0 y ${MAX_CHECKLIST_SECTION}.` });
+  }
+  try {
+    const date = await seasonDateRepository().findOne({ where: { ID, seasonID } });
+    if (!date) return res.status(404).json({ message: 'No se encontró la fecha de esta temporada.' });
+    date.checklistPoint = checklistPoint;
+    await seasonDateRepository().save(date);
+    return res.json(date);
+  } catch {
+    return res.status(500).json({ message: 'No se pudo actualizar el punto del checklist.' });
   }
 });
 
