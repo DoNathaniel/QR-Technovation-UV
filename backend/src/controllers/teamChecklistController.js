@@ -7,6 +7,7 @@ const TeamMentorSchema = require('../entities/TeamMentor');
 const TeamChecklistSchema = require('../entities/TeamChecklist');
 const SeasonDateSchema = require('../entities/SeasonDate');
 const { readChecklist, extractDriveFileId, MAX_CHECKLIST_SECTION } = require('../services/teamChecklistService');
+const { encrypt, decrypt } = require('../services/sensitiveDataService');
 const checklistRuns = require('../services/teamChecklistRunService');
 
 const teamRepository = () => AppDataSource.getRepository(TeamSchema);
@@ -15,7 +16,17 @@ const checklistRepository = () => AppDataSource.getRepository(TeamChecklistSchem
 const isAdmin = (req) => ['admin', 'superadmin'].includes(req.user?.rol);
 
 function summaryForRecord(record, { sessionNumber = 0, currentPoint = null } = {}) {
-  const items = record?.items || [];
+  const storedValues = {};
+  if (record?.valuesEncrypted) {
+    try { Object.assign(storedValues, JSON.parse(decrypt(record.valuesEncrypted))); } catch { /* A missing/rotated key hides values but keeps checklist progress readable. */ }
+  }
+  const items = (record?.items || []).map((item) => ({
+    ...item,
+    values: (storedValues[item.code] || []).map((entry) => ({
+      label: entry.label || 'Valor',
+      value: entry.password ? maskPassword(entry.value) : String(entry.value ?? ''),
+    })),
+  }));
   const sectionMap = new Map();
   for (const item of items) {
     if (!sectionMap.has(item.section)) sectionMap.set(item.section, { code: item.section, label: item.sectionLabel, items: [] });
@@ -54,6 +65,12 @@ function summaryForRecord(record, { sessionNumber = 0, currentPoint = null } = {
       percent: dateApplicableItems.length ? Math.round((dateCompletedCount / dateApplicableItems.length) * 100) : null,
     },
   };
+}
+
+function maskPassword(value) {
+  const text = String(value ?? '');
+  if (!text) return '';
+  return `${'*'.repeat(Math.max(3, text.length - 3))}${text.slice(-3)}`;
 }
 
 function localDateKey(now = new Date()) {
@@ -120,6 +137,7 @@ async function setLink(req, res) {
     if (!sameFile) {
       record.status = 'not_reviewed';
       record.items = null;
+      record.valuesEncrypted = null;
       record.completedCount = 0;
       record.applicableCount = 0;
       record.percent = 0;
@@ -154,6 +172,7 @@ async function refresh(req, res) {
     record = await repository.findOne({ where: { teamID } });
     if (!record?.fileUrl) return res.status(409).json({ message: 'Este equipo no tiene un checklist vinculado.' });
     const summary = await readChecklist(record.fileUrl);
+    record.valuesEncrypted = encrypt(JSON.stringify(summary.values || {}));
     const now = new Date();
     record.status = 'reviewed';
     record.items = summary.items;

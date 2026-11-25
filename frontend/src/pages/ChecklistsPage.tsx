@@ -14,6 +14,7 @@ interface ChecklistItem {
   label: string;
   status: ChecklistItemStatus;
   filled: boolean;
+  values?: Array<{ label: string; value: string }>;
 }
 
 interface ChecklistSection {
@@ -384,13 +385,23 @@ export default function ChecklistsPage({ mode }: { mode: 'admin' | 'mentor' }) {
           onMouseDown={(event) => { if (event.target === event.currentTarget) setSelectedTeamID(null); }}
         >
           <section role="dialog" aria-modal="true" aria-labelledby="checklist-modal-title" className="flex h-[92vh] w-full max-w-[1600px] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
-            <header className="flex shrink-0 items-start justify-between gap-4 bg-slate-800 px-5 py-4 text-white sm:px-7">
-              <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-wide text-white/65">{canManage ? 'Administración de checklist' : 'Mi equipo'}</p>
-                <h2 id="checklist-modal-title" className="mt-1 truncate text-xl font-bold sm:text-2xl">{selectedRow.team.nombre}</h2>
-                <p className="mt-1 text-sm text-white/70">Equipo #{selectedRow.team.numeroCorrelativo} · {selectedRow.team.categoria}</p>
+            <header className="flex shrink-0 items-center justify-between gap-4 border-b border-gray-200 bg-gradient-to-r from-violet-50 via-white to-white px-5 py-4 sm:px-7">
+              <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700" aria-hidden="true">
+                  <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" />
+                  </svg>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-violet-700">{canManage ? 'Checklist del equipo' : 'Mi equipo'}</p>
+                  <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                    <h2 id="checklist-modal-title" className="max-w-full truncate text-lg font-bold text-slate-900 sm:text-xl">{selectedRow.team.nombre?.trim() || `Equipo #${selectedRow.team.numeroCorrelativo}`}</h2>
+                    <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">{selectedRow.team.categoria}</span>
+                  </div>
+                  <p className="mt-0.5 text-xs text-slate-500">Equipo #{selectedRow.team.numeroCorrelativo}</p>
+                </div>
               </div>
-              <button type="button" onClick={() => setSelectedTeamID(null)} aria-label="Cerrar detalle" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-2xl text-white/80 hover:bg-white/10 hover:text-white">×</button>
+              <button type="button" onClick={() => setSelectedTeamID(null)} aria-label="Cerrar detalle" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-2xl leading-none text-gray-500 shadow-sm transition-colors hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800">×</button>
             </header>
 
             <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
@@ -398,55 +409,69 @@ export default function ChecklistsPage({ mode }: { mode: 'admin' | 'mentor' }) {
                 const { team, checklist } = selectedRow;
                 const busy = busyTeamID === team.ID;
                 const reviewedAt = formatDate(checklist.lastSuccessfulReviewAt);
+                const hasReviewResult = checklist.status === 'reviewed' || checklist.hasLastSuccessfulResult;
                 return (
                   <div className="space-y-5">
-                    <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
-                      <div>
-                        {checklist.status === 'unlinked' && <p className="font-medium text-gray-700">Sin checklist asociado</p>}
-                        {checklist.status === 'not_reviewed' && <p className="font-medium text-amber-800">Vinculado, sin revisión</p>}
-                        {checklist.status === 'reviewed' && <p className="font-medium text-green-800">Última revisión: {reviewedAt || 'fecha no disponible'}</p>}
-                        {checklist.status === 'error' && (
-                          <div>
-                            <p className="font-medium text-red-800">Error en la última actualización</p>
-                            <p className="mt-1 text-sm text-red-700">{checklist.lastError}</p>
-                            {checklist.hasLastSuccessfulResult && <p className="mt-1 text-sm text-gray-600">Se conserva la última revisión válida del {reviewedAt || 'fecha no disponible'}.</p>}
-                          </div>
-                        )}
-                      </div>
-                      {(checklist.status === 'reviewed' || checklist.hasLastSuccessfulResult) && (
-                        <div className="grid w-full gap-3 sm:grid-cols-2 lg:w-auto">
-                          <div className="rounded-lg bg-white px-4 py-3 text-right">
-                            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Avance total</p>
-                            <p className="text-3xl font-bold text-slate-800">{checklist.status === 'error' ? `Último ${checklist.percent}%` : `${checklist.percent}%`}</p>
-                            <p className="text-sm text-gray-600">{checklist.completedCount} de {checklist.applicableCount} ítems aplicables</p>
-                          </div>
-                          <div className="rounded-lg bg-white px-4 py-3 text-right">
-                            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Avance hasta la fecha</p>
-                            <p className="mt-1 text-sm font-medium text-gray-700">{progressToDateLabel(checklist.progressToDate)}</p>
-                            <p className="text-3xl font-bold text-violet-700">{checklist.progressToDate.percent === null ? '—' : `${checklist.status === 'error' ? 'Último ' : ''}${checklist.progressToDate.percent}%`}</p>
-                            <p className="text-sm text-gray-600">{checklist.progressToDate.applicableCount ? `${checklist.progressToDate.completedCount} de ${checklist.progressToDate.applicableCount} ítems exigibles` : 'Sin puntos exigibles todavía'}</p>
-                          </div>
+                    <div className={`grid items-stretch gap-3 rounded-xl border border-gray-200 bg-slate-50 p-3 ${hasReviewResult ? 'lg:grid-cols-[minmax(0,1fr)_190px_220px_auto]' : 'lg:grid-cols-[minmax(0,1fr)_auto]'}`}>
+                      <div className="flex min-h-[88px] min-w-0 items-center gap-3 rounded-lg bg-white px-4 py-3">
+                        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${checklist.status === 'reviewed' ? 'bg-green-100 text-green-700' : checklist.status === 'error' ? 'bg-red-100 text-red-700' : checklist.status === 'not_reviewed' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500'}`} aria-hidden="true">
+                          {checklist.status === 'reviewed' ? '✓' : checklist.status === 'error' ? '!' : '·'}
+                        </span>
+                        <div className="min-w-0">
+                          <p className={`text-sm font-semibold ${checklist.status === 'reviewed' ? 'text-green-800' : checklist.status === 'error' ? 'text-red-800' : checklist.status === 'not_reviewed' ? 'text-amber-800' : 'text-gray-700'}`}>
+                            {checklist.status === 'unlinked' && 'Sin checklist asociado'}
+                            {checklist.status === 'not_reviewed' && 'Pendiente de primera revisión'}
+                            {checklist.status === 'reviewed' && 'Checklist revisado'}
+                            {checklist.status === 'error' && 'Error en la última actualización'}
+                          </p>
+                          {checklist.status === 'reviewed' && <p className="mt-1 text-xs text-gray-500">Última revisión · {reviewedAt || 'fecha no disponible'}</p>}
+                          {checklist.status === 'error' && <p className="mt-1 break-words text-xs text-red-700">{checklist.lastError}{checklist.hasLastSuccessfulResult ? ` · Último resultado válido ${reviewedAt || ''}` : ''}</p>}
+                          {checklist.status === 'not_reviewed' && <p className="mt-1 text-xs text-gray-500">El enlace está guardado, pero aún no se ha leído.</p>}
+                          {checklist.status === 'unlinked' && <p className="mt-1 text-xs text-gray-500">Vincula una planilla para revisar el avance.</p>}
                         </div>
+                      </div>
+                      {hasReviewResult && (
+                        <>
+                          <div className="flex min-h-[88px] flex-col justify-center rounded-lg border border-gray-100 bg-white px-4 py-3 text-center">
+                            <p className="text-[11px] font-bold uppercase tracking-wide text-gray-500">Avance total</p>
+                            <p className="text-2xl font-bold leading-tight text-slate-800">{checklist.status === 'error' ? `Último ${checklist.percent}%` : `${checklist.percent}%`}</p>
+                            <p className="text-xs text-gray-500">{checklist.completedCount}/{checklist.applicableCount} ítems</p>
+                          </div>
+                          <div className="flex min-h-[88px] flex-col justify-center rounded-lg border border-violet-100 bg-violet-50 px-4 py-3 text-center">
+                            <p className="text-[11px] font-bold uppercase tracking-wide text-violet-700">Avance hasta la fecha</p>
+                            <p className="mt-0.5 truncate text-xs font-medium text-slate-600">{progressToDateLabel(checklist.progressToDate)}</p>
+                            <p className="text-2xl font-bold leading-tight text-violet-700">{checklist.progressToDate.percent === null ? '—' : `${checklist.status === 'error' ? 'Último ' : ''}${checklist.progressToDate.percent}%`}</p>
+                            <p className="text-xs text-gray-600">{checklist.progressToDate.applicableCount ? `${checklist.progressToDate.completedCount}/${checklist.progressToDate.applicableCount} ítems exigibles` : 'Sin puntos exigibles'}</p>
+                          </div>
+                        </>
                       )}
-                      {checklist.fileUrl && <a href={checklist.fileUrl} target="_blank" rel="noreferrer" className="rounded-lg border border-violet-200 bg-white px-4 py-2 text-sm font-semibold text-violet-700 hover:bg-violet-50">Abrir checklist</a>}
+                      {checklist.fileUrl && <a href={checklist.fileUrl} target="_blank" rel="noreferrer" className="inline-flex min-h-[44px] items-center justify-center self-center whitespace-nowrap rounded-lg border border-violet-200 bg-white px-4 py-2 text-sm font-semibold text-violet-700 transition-colors hover:bg-violet-50">Abrir checklist ↗</a>}
                     </div>
 
                     {canManage && (
-                      <div className="rounded-xl border border-gray-200 p-4 sm:p-5">
-                        <label htmlFor={`checklist-url-${team.ID}`} className="mb-1 block text-sm font-semibold text-gray-800">Enlace de Google Drive o Google Sheets</label>
-                        <p className="mb-3 text-xs text-gray-500">El archivo debe estar visible para cualquier persona con el enlace.</p>
-                        <div className="flex flex-col gap-2 lg:flex-row">
+                      <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-5">
+                        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                          <label htmlFor={`checklist-url-${team.ID}`} className="block text-sm font-semibold text-gray-800">Enlace del checklist</label>
+                          <p className="text-xs text-gray-500">Visible para cualquiera con el enlace</p>
+                        </div>
+                        <div className="space-y-3">
                           <input
                             id={`checklist-url-${team.ID}`}
                             value={urls[team.ID] || ''}
                             onChange={(event) => setUrls((current) => ({ ...current, [team.ID]: event.target.value }))}
                             placeholder="https://drive.google.com/..."
-                            className="min-w-0 flex-1 rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                            className="w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
                           />
-                          <button type="button" onClick={() => void saveLink(team.ID)} disabled={busy || !(urls[team.ID] || '').trim()} className="rounded-lg bg-violet-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-50">{busy ? 'Guardando…' : 'Guardar enlace'}</button>
-                          {checklist.fileUrl && <button type="button" onClick={() => void unlink(team.ID)} disabled={busy} className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">Desvincular</button>}
-                          {checklist.fileUrl && <button type="button" onClick={() => void refresh(team.ID)} disabled={busy} className="rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-800 disabled:opacity-50">{busy ? 'Actualizando…' : 'Actualizar'}</button>}
-                          {checklist.fileUrl && <button type="button" onClick={() => void sendStatusToMentors(team.ID)} disabled={busy || sendingStatusTeamID === team.ID || checklist.status !== 'reviewed'} title={checklist.status !== 'reviewed' ? 'Actualiza el checklist antes de enviar su estado.' : undefined} className="rounded-lg bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50">{sendingStatusTeamID === team.ID ? 'Encolando…' : 'Enviar estado al mentor'}</button>}
+                          <div className="flex flex-col gap-3 border-t border-gray-100 pt-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex flex-wrap gap-2">
+                              {checklist.fileUrl && <button type="button" onClick={() => void refresh(team.ID)} disabled={busy} className="inline-flex min-h-10 min-w-28 items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-gray-400 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 disabled:cursor-not-allowed disabled:opacity-50">{busy ? 'Actualizando…' : 'Actualizar'}</button>}
+                              {checklist.fileUrl && <button type="button" onClick={() => void sendStatusToMentors(team.ID)} disabled={busy || sendingStatusTeamID === team.ID || checklist.status !== 'reviewed'} title={checklist.status !== 'reviewed' ? 'Actualiza el checklist antes de enviar su estado.' : undefined} className="inline-flex min-h-10 min-w-44 items-center justify-center rounded-lg border border-teal-200 bg-teal-50 px-4 py-2 text-sm font-semibold text-teal-800 transition hover:border-teal-300 hover:bg-teal-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-300 disabled:cursor-not-allowed disabled:opacity-50">{sendingStatusTeamID === team.ID ? 'Encolando…' : 'Enviar estado al mentor'}</button>}
+                            </div>
+                            <div className="flex flex-wrap gap-2 sm:justify-end">
+                              {checklist.fileUrl && <button type="button" onClick={() => void unlink(team.ID)} disabled={busy} className="inline-flex min-h-10 min-w-28 items-center justify-center rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-700 transition hover:border-red-300 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-200 disabled:cursor-not-allowed disabled:opacity-50">Desvincular</button>}
+                              <button type="button" onClick={() => void saveLink(team.ID)} disabled={busy || !(urls[team.ID] || '').trim()} className="inline-flex min-h-10 min-w-36 items-center justify-center rounded-lg bg-violet-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50">{busy ? 'Guardando…' : 'Guardar enlace'}</button>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     )}
@@ -461,8 +486,15 @@ export default function ChecklistsPage({ mode }: { mode: 'admin' | 'mentor' }) {
                             </header>
                             <ul className="divide-y divide-gray-100">
                               {section.items.map((item) => (
-                                <li key={item.code} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm">
-                                  <span className="text-gray-700"><span className="mr-2 text-xs text-gray-400">{item.code}</span>{item.label}</span>
+                                <li key={item.code} className="flex flex-wrap items-start justify-between gap-2 px-4 py-3 text-sm">
+                                  <div className="min-w-0 flex-1 text-gray-700">
+                                    <p><span className="mr-2 text-xs text-gray-400">{item.code}</span>{item.label}</p>
+                                    {item.values?.length ? (
+                                      <ul className="mt-1 space-y-1 pl-8 text-xs text-gray-600">
+                                        {item.values.map((entry, index) => <li key={`${item.code}-${index}`} className="break-all"><span className="font-medium">{entry.label}:</span> {entry.value}</li>)}
+                                      </ul>
+                                    ) : null}
+                                  </div>
                                   <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${itemStatusClass(item.status)}`}>{statusLabel(item.status, item.filled)}</span>
                                 </li>
                               ))}

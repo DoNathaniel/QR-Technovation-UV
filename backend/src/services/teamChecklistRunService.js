@@ -16,6 +16,7 @@ const { enqueueEmail, enqueueEmailOnce, recordSkippedEmail, normalizeEmail } = r
 const { isUnsubscribed } = require('./notificationPreferenceService');
 const { reveal } = require('./sensitiveDataService');
 const { buildChecklistMentorEmail } = require('./emailService');
+const { encrypt } = require('./sensitiveDataService');
 
 const EMAIL_CATEGORY = 'team_checklist';
 const RUN_INTERVAL_MS = Number(process.env.CHECKLIST_RUN_INTERVAL_MS) || 15_000;
@@ -92,6 +93,7 @@ async function processOne(item) {
   let summary;
   try {
     summary = await readChecklist(record.fileUrl);
+    record.valuesEncrypted = encrypt(JSON.stringify(summary.values || {}));
   } catch (error) {
     record.status = 'error';
     record.lastAttemptAt = new Date();

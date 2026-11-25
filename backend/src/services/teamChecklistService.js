@@ -10,7 +10,7 @@ const itemDefinitions = [
   { code: '2.2', section: '2', sectionLabel: 'Datos del equipo', label: 'Nombre y correo de al menos un integrante', cells: ['B14', 'D14', 'B15', 'D15', 'B16', 'D16', 'B17', 'D17', 'B18', 'D18'], required: true, roster: true },
   { code: '2.3', section: '2', sectionLabel: 'Datos del equipo', label: 'Profesor/a y correo personal', cells: ['B20', 'D20', 'B21', 'D21', 'B22', 'D22'], required: true, teacher: true },
   { code: '3.1', section: '3', sectionLabel: 'Correo y clave del equipo', label: 'Correo del equipo', cells: ['D24'], required: true, sensitive: true },
-  { code: '3.2', section: '3', sectionLabel: 'Correo y clave del equipo', label: 'Clave del correo', cells: ['D25'], required: true, sensitive: true },
+  { code: '3.2', section: '3', sectionLabel: 'Correo y clave del equipo', label: 'Clave del correo', cells: ['D25'], required: true, sensitive: true, password: true },
   { code: '3.3', section: '3', sectionLabel: 'Correo y clave del equipo', label: 'Verificación de la cuenta y titular', cells: ['D26'], required: true, sensitive: true },
   { code: '3.4', section: '3', sectionLabel: 'Correo y clave del equipo', label: 'Captura del código QR', cells: ['D27'], required: true, sensitive: true, imageCell: 'D27' },
   { code: '3.5', section: '3', sectionLabel: 'Correo y clave del equipo', label: 'Correo de recuperación', cells: ['D28'], required: true, sensitive: true },
@@ -26,7 +26,7 @@ const itemDefinitions = [
   { code: '7.2', section: '7', sectionLabel: 'Documento de trabajo', label: 'PDF en inglés', cells: ['D43'], required: true },
   { code: '8.1', section: '8', sectionLabel: 'App Inventor', label: 'Nombre del proyecto en App Inventor', cells: ['D45'], required: true },
   { code: '8.2', section: '8', sectionLabel: 'App Inventor', label: 'Archivo de la aplicación (.aia)', cells: ['D46'], required: true },
-  { code: '8.3', section: '8', sectionLabel: 'App Inventor', label: 'Clave de la cuenta de App Inventor', cells: ['D47'], required: true, sensitive: true },
+  { code: '8.3', section: '8', sectionLabel: 'App Inventor', label: 'Clave de la cuenta de App Inventor', cells: ['D47'], required: true, sensitive: true, password: true },
   { code: '9.1', section: '9', sectionLabel: 'Video', label: 'Guion del video', cells: ['D49'], required: true },
   { code: '9.2', section: '9', sectionLabel: 'Video', label: 'Archivo de video', cells: ['D50'], required: true },
   { code: '9.3', section: '9', sectionLabel: 'Video', label: 'Video pitch en YouTube', cells: ['D51'], required: true },
@@ -97,6 +97,46 @@ function itemFilled(sheet, definition, workbook) {
   return definition.cells.every((reference) => cellHasContent(sheet, reference));
 }
 
+function cellText(sheet, reference) {
+  const cell = sheet?.[reference];
+  if (!cell) return '';
+  const value = normalizeText(cell.v);
+  if (value) return value;
+  return typeof cell.l?.Target === 'string' ? cell.l.Target.trim() : '';
+}
+
+function itemValues(sheet, definition, workbook) {
+  if (definition.imageCell) return imageExistsAt(workbook, definition.imageCell) ? [{ label: 'Adjunto', value: 'Imagen adjunta' }] : [];
+  if (definition.roster) {
+    return [14, 15, 16, 17, 18].map((row) => {
+      const name = cellText(sheet, `B${row}`);
+      const email = cellText(sheet, `D${row}`);
+      const platformPassword = cellText(sheet, `E${row}`);
+      return [
+        name && { label: 'Nombre', value: name },
+        email && { label: 'Correo', value: email },
+        platformPassword && { label: 'Clave plataforma internacional', value: platformPassword, password: true },
+      ].filter(Boolean);
+    }).flat();
+  }
+  if (definition.teacher) {
+    return [20, 21, 22].map((row) => {
+      const name = cellText(sheet, `B${row}`);
+      const email = cellText(sheet, `D${row}`);
+      return [
+        name && { label: 'Profesor/a', value: name },
+        email && { label: 'Correo', value: email },
+      ].filter(Boolean);
+    }).flat();
+  }
+  return definition.cells.map((reference, index) => {
+    const value = cellText(sheet, reference);
+    if (!value) return null;
+    const label = definition.bilingual ? (index === 0 ? 'Español' : 'Inglés') : 'Valor';
+    return { label, value, ...(definition.password ? { password: true } : {}) };
+  }).filter(Boolean);
+}
+
 function summarizeChecklist(buffer) {
   let workbook;
   try {
@@ -105,8 +145,10 @@ function summarizeChecklist(buffer) {
     throw new Error('No se pudo abrir la planilla Excel.');
   }
   const sheet = detectSheet(workbook);
+  const values = {};
   const items = itemDefinitions.map((definition) => {
     const filled = itemFilled(sheet, definition, workbook);
+    values[definition.code] = itemValues(sheet, definition, workbook);
     let status = 'pending';
     if (!definition.required) status = 'optional';
     else if (definition.conditional && !filled) status = 'not_applicable';
@@ -137,7 +179,7 @@ function summarizeChecklist(buffer) {
         items: sectionItems,
       };
     });
-  return { items, sections, completedCount, applicableCount, percent };
+  return { items, sections, values, completedCount, applicableCount, percent };
 }
 
 function extractDriveFileId(fileUrl) {

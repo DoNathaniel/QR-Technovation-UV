@@ -10,6 +10,7 @@ module.exports = new EntitySchema({
     fileUrl: { type: 'varchar', length: 1000, nullable: true },
     status: { type: 'enum', enum: ['not_reviewed', 'reviewed', 'error', 'unlinked'], default: 'not_reviewed' },
     items: { type: 'json', nullable: true },
+    valuesEncrypted: { type: 'longtext', nullable: true },
     completedCount: { type: 'int', default: 0 },
     applicableCount: { type: 'int', default: 0 },
     percent: { type: 'int', default: 0 },

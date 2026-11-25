@@ -4,7 +4,7 @@
 
 Asocia un archivo de checklist de Google Drive o Google Sheets a cada equipo. Administración puede vincular, reemplazar o desvincular el enlace y solicitar una lectura manual. Mentores ven el resumen de los equipos que tienen asignados.
 
-La estructura de ítems se comparte entre categorías. Se guarda solamente el estado por ítem, sección y equipo, el porcentaje y las horas de intento y última lectura exitosa. No se guardan respuestas de la planilla. Para los campos sensibles, el lector calcula únicamente si están vacíos u ocupados.
+La estructura de ítems se comparte entre categorías. Se guarda el estado por ítem, sección y equipo, el porcentaje, las horas de intento y última lectura exitosa, y los valores encontrados cifrados en la base de datos. La página los muestra junto a cada ítem; las claves y contraseñas se enmascaran y solo dejan visibles sus últimos tres caracteres. El lector conserva solo presencia para las imágenes adjuntas.
 
 Los códigos de la columna A, como `2.1`, identifican ítems; no son fechas.
 
