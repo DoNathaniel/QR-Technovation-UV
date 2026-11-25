@@ -19,7 +19,7 @@ interface User {
 
 export default function UsersPage() {
   const navigate = useNavigate();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, currentSeasonId } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
@@ -30,7 +30,7 @@ export default function UsersPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedSeason, setSelectedSeason] = useState('');
+  const [selectedSeason, setSelectedSeason] = useState(() => currentSeasonId?.toString() ?? '');
   const [selectedRole, setSelectedRole] = useState('');
   const [openQrMenuId, setOpenQrMenuId] = useState<number | null>(null);
   const [mentorQrAction, setMentorQrAction] = useState<{ userId: number; action: 'enviar' | 'generar' | 'regenerar' } | null>(null);
@@ -47,6 +47,10 @@ export default function UsersPage() {
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    setSelectedSeason(currentSeasonId?.toString() ?? '');
+  }, [currentSeasonId]);
 
   useEffect(() => {
     const closeQrMenu = (event: MouseEvent) => {
@@ -384,7 +388,7 @@ export default function UsersPage() {
         {['admin', 'superadmin'].includes(currentUser?.rol || '') && <button onClick={() => setActiveTab('asistencia')} className={`border-b-2 px-4 py-2 text-sm font-medium ${activeTab === 'asistencia' ? 'border-violet-600 text-violet-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>Asistencia</button>}
       </div>
 
-      {activeTab === 'asistencia' ? <TeamAttendanceAdminTab /> : <>
+      {activeTab === 'asistencia' ? <TeamAttendanceAdminTab currentSeasonId={currentSeasonId} /> : <>
       <div className="bg-surface rounded-lg shadow p-4">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_auto_auto] md:items-end">
           <div>

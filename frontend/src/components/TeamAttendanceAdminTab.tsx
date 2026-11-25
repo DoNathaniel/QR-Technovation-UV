@@ -11,15 +11,18 @@ function localToday() {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
-export default function TeamAttendanceAdminTab() {
+export default function TeamAttendanceAdminTab({ currentSeasonId }: { currentSeasonId: number | null }) {
   const [seasons, setSeasons] = useState<Season[]>([]);
-  const [seasonFilter, setSeasonFilter] = useState('global');
+  const [seasonFilter, setSeasonFilter] = useState(() => currentSeasonId?.toString() ?? 'global');
   const [date, setDate] = useState(localToday);
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
   useEffect(() => { api.get<Season[]>('/seasons').then((response) => setSeasons(response.data)).catch(console.error); }, []);
+  useEffect(() => {
+    setSeasonFilter(currentSeasonId?.toString() ?? 'global');
+  }, [currentSeasonId]);
   useEffect(() => {
     setLoading(true);
     api.get<DashboardData>(`/mentor-attendance/dashboard?fecha=${date}&seasonID=${seasonFilter}`)
