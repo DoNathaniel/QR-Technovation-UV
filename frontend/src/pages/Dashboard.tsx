@@ -11,11 +11,22 @@ interface AttendanceStats {
   salidasHoy: number;
 }
 
+type DashboardSection = 'todas' | 'mentor' | 'admin' | 'superadmin';
+const DASHBOARD_SECTION_STORAGE_KEY = 'dashboard.activeSection';
+
+function getStoredDashboardSection(): DashboardSection {
+  const storedSection = localStorage.getItem(DASHBOARD_SECTION_STORAGE_KEY);
+  return storedSection === 'mentor' || storedSection === 'admin' || storedSection === 'superadmin'
+    ? storedSection
+    : 'todas';
+}
+
 export default function Dashboard() {
   const { user, currentSeasonId, temporadas } = useAuth();
   const currentSeason = temporadas.find(t => t.ID === currentSeasonId);
   const [stats, setStats] = useState<AttendanceStats | null>(null);
   const [loading, setLoading] = useState(false);
+  const [activeSection, setActiveSection] = useState<DashboardSection>(getStoredDashboardSection);
   const fetchedRef = useRef(false);
 
   const roleLabels = {
@@ -28,6 +39,26 @@ export default function Dashboard() {
     if (!user) return false;
     return requiredRoles.includes(user.rol);
   };
+
+  const showSection = (section: Exclude<typeof activeSection, 'todas'>) =>
+    activeSection === 'todas' || activeSection === section;
+
+  const dashboardSections = [
+    { id: 'todas' as const, label: 'Todas', roles: ['superadmin', 'admin', 'voluntario'], icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h7v7H4zM13 6h7v4h-7zM13 12h7v6h-7zM4 15h7v3H4z" /> },
+    { id: 'mentor' as const, label: 'Mentor/a', roles: ['superadmin', 'admin', 'voluntario'], icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM4 21v-1a8 8 0 0116 0v1" /> },
+    { id: 'admin' as const, label: 'Administrador/a', roles: ['superadmin', 'admin'], icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7l8-4zm-3 9l2 2 4-4" /> },
+    { id: 'superadmin' as const, label: 'Superadmin', roles: ['superadmin'], icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3l2.5 5.5 6 .7-4.5 4.1 1.2 5.9-5.2-3-5.2 3 1.2-5.9L3.5 9.2l6-.7L12 3z" /> },
+  ].filter(section => section.id === 'todas' || canAccess(section.roles));
+  const availableSectionIds = dashboardSections.map(section => section.id);
+
+  useEffect(() => {
+    if (!availableSectionIds.includes(activeSection)) {
+      setActiveSection('todas');
+      localStorage.setItem(DASHBOARD_SECTION_STORAGE_KEY, 'todas');
+      return;
+    }
+    localStorage.setItem(DASHBOARD_SECTION_STORAGE_KEY, activeSection);
+  }, [activeSection, user?.rol]);
 
   useEffect(() => {
     if (!currentSeasonId || fetchedRef.current) return;
@@ -85,7 +116,45 @@ export default function Dashboard() {
         </div>
       )}
 
+      <div className="flex gap-1 overflow-x-auto border-b border-gray-200" role="tablist" aria-label="Secciones del panel">
+        {dashboardSections.map((section) => {
+          const selected = activeSection === section.id;
+          return (
+            <button
+              key={section.id}
+              type="button"
+              role="tab"
+              aria-selected={selected}
+              aria-label={section.id === 'todas' ? 'Todas las opciones' : section.label}
+              title={section.id === 'todas' ? 'Todas las opciones' : undefined}
+              onClick={() => setActiveSection(section.id)}
+              className={`flex shrink-0 items-center gap-2 border-b-2 px-4 py-2 text-sm font-medium transition-colors ${selected ? 'border-violet-600 text-violet-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+            >
+              {section.id === 'todas' ? <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">{section.icon}</svg> : section.label}
+            </button>
+          );
+        })}
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {showSection('mentor') && <>
+        <Link to="/ruta-de-aprendizaje" className="group bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-lg hover:border-violet-200 transition-all">
+          <div className="flex items-center gap-4"><div className="p-3 rounded-xl bg-violet-100 text-violet-700"><svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v12m0-12C10 4.7 7.5 4 4 4v13c3.5 0 6 .7 8 2 2-1.3 4.5-2 8-2V4c-3.5 0-6 .7-8 2z" /></svg></div><div><h3 className="font-semibold text-lg text-gray-800 group-hover:text-violet-700 transition-colors">Ruta de aprendizaje</h3><p className="text-sm text-gray-500">Clases, agendas y recursos del semestre</p></div></div>
+        </Link>
+        {user?.rol === 'voluntario' && <Link
+          to="/mi-checklist"
+          className="group bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-lg hover:border-violet-200 transition-all"
+        >
+          <div className="flex items-center gap-4">
+            <div className="p-3 rounded-xl bg-violet-100 text-violet-700">
+              <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" /></svg>
+            </div>
+            <div>
+              <h3 className="font-semibold text-lg text-gray-800 group-hover:text-violet-700 transition-colors">Mi checklist</h3>
+              <p className="text-sm text-gray-500">Revisa el avance de tus equipos</p>
+            </div>
+          </div>
+        </Link>}
         <Link
           to="/yo"
           className="group bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-lg hover:border-blue-200 transition-all"
@@ -136,9 +205,24 @@ export default function Dashboard() {
             </div>
           </div>
         </Link>
+        </>}
 
-        {canAccess(['superadmin', 'admin']) && (
+        {showSection('admin') && canAccess(['superadmin', 'admin']) && (
           <>
+            <Link
+              to="/administracion/checklists"
+              className="group bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-lg hover:border-violet-200 transition-all"
+            >
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl bg-violet-100 text-violet-700">
+                  <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" /></svg>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg text-gray-800 group-hover:text-violet-700 transition-colors">Checklists de equipos</h3>
+                  <p className="text-sm text-gray-500">Vincular y actualizar checklists</p>
+                </div>
+              </div>
+            </Link>
             <Link
               to="/administracion/auditoria-correos"
               className="group bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-lg hover:border-cyan-200 transition-all"
@@ -206,7 +290,7 @@ export default function Dashboard() {
           </>
         )}
 
-        {canAccess(['superadmin']) && (
+        {showSection('superadmin') && canAccess(['superadmin']) && (
           <>
             <Link
               to="/equipos"
