@@ -9,6 +9,14 @@ interface Season {
   fechaInicio: string;
   fechaFin: string;
   activa: boolean;
+  learningPathFile?: string | null;
+}
+
+interface LearningPathOption {
+  filename: string;
+  title: string;
+  semester: string;
+  date_conflicts: { class_number: number; venue_group: string; notion_date: string; planning_date: string }[];
 }
 
 export default function SeasonsPage() {
@@ -23,10 +31,13 @@ export default function SeasonsPage() {
     nombre: '',
     fechaInicio: '',
     fechaFin: '',
+    learningPathFile: '',
   });
+  const [learningPaths, setLearningPaths] = useState<LearningPathOption[]>([]);
 
   useEffect(() => {
     loadSeasons();
+    api.get('/seasons/learning-paths').then((res) => setLearningPaths(res.data)).catch((error) => console.error('Error loading learning paths:', error));
   }, []);
 
   const loadSeasons = async () => {
@@ -45,14 +56,14 @@ export default function SeasonsPage() {
     setSubmitting(true);
     try {
       if (editingSeason) {
-        await api.put(`/seasons/${editingSeason.ID}`, formData);
+        await api.put(`/seasons/${editingSeason.ID}`, { ...formData, learningPathFile: formData.learningPathFile || null });
       } else {
-        await api.post('/seasons', formData);
+        await api.post('/seasons', { ...formData, learningPathFile: formData.learningPathFile || null });
       }
       loadSeasons();
       setShowForm(false);
       setEditingSeason(null);
-      setFormData({ nombre: '', fechaInicio: '', fechaFin: '' });
+      setFormData({ nombre: '', fechaInicio: '', fechaFin: '', learningPathFile: '' });
     } catch (error) {
       console.error('Error saving season:', error);
     } finally {
@@ -66,6 +77,7 @@ export default function SeasonsPage() {
       nombre: season.nombre,
       fechaInicio: season.fechaInicio,
       fechaFin: season.fechaFin,
+      learningPathFile: season.learningPathFile || '',
     });
     setShowForm(true);
   };
@@ -101,7 +113,7 @@ export default function SeasonsPage() {
           onClick={() => {
             setShowForm(true);
             setEditingSeason(null);
-            setFormData({ nombre: '', fechaInicio: '', fechaFin: '' });
+            setFormData({ nombre: '', fechaInicio: '', fechaFin: '', learningPathFile: '' });
           }}
           className="px-4 py-2 rounded text-white text-sm"
           style={{ backgroundColor: colors.primary }}
@@ -148,6 +160,16 @@ export default function SeasonsPage() {
                 />
               </div>
             </div>
+            <div>
+              <label className="block text-sm font-medium text-text mb-1" htmlFor="season-learning-path">Ruta de aprendizaje</label>
+              <select id="season-learning-path" value={formData.learningPathFile || ''} onChange={(e) => setFormData({ ...formData, learningPathFile: e.target.value })} className="w-full rounded-lg border border-gray-300 px-4 py-2">
+                <option value="">Sin ruta de aprendizaje</option>
+                {formData.learningPathFile && !learningPaths.some((path) => path.filename === formData.learningPathFile) && <option value={formData.learningPathFile}>Archivo no disponible: {formData.learningPathFile}</option>}
+                {learningPaths.map((path) => <option key={path.filename} value={path.filename}>{path.title} · {path.semester}</option>)}
+              </select>
+              {formData.learningPathFile && !learningPaths.some((path) => path.filename === formData.learningPathFile) && <p className="mt-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-900" role="status">El archivo seleccionado fue retirado o ya no es compatible. Elige otra ruta o selecciona “Sin ruta de aprendizaje”.</p>}
+              {learningPaths.find((path) => path.filename === formData.learningPathFile)?.date_conflicts?.length ? <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950"><p className="font-semibold">Fechas distintas entre Notion y planificación</p><ul className="mt-1 list-inside list-disc">{learningPaths.find((path) => path.filename === formData.learningPathFile)?.date_conflicts.map((conflict) => <li key={`${conflict.class_number}-${conflict.venue_group}`}>Clase {conflict.class_number}, {conflict.venue_group}: Notion {conflict.notion_date} · planificación {conflict.planning_date}</li>)}</ul></div> : null}
+            </div>
             <div className="flex gap-2">
               <button
                 type="submit"
@@ -178,6 +200,7 @@ export default function SeasonsPage() {
               <th className="px-4 py-3 text-left text-sm font-medium text-text-muted">Fecha Inicio</th>
               <th className="px-4 py-3 text-left text-sm font-medium text-text-muted">Fecha Fin</th>
               <th className="px-4 py-3 text-left text-sm font-medium text-text-muted">Estado</th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-text-muted">Ruta de aprendizaje</th>
               <th className="px-4 py-3 text-right text-sm font-medium text-text-muted">Acciones</th>
             </tr>
           </thead>
@@ -196,6 +219,7 @@ export default function SeasonsPage() {
                     {season.activa ? 'Activa' : 'Inactiva'}
                   </span>
                 </td>
+                <td className="px-4 py-3 text-sm text-text-muted">{learningPaths.find((path) => path.filename === season.learningPathFile) ? `${learningPaths.find((path) => path.filename === season.learningPathFile)?.title} · ${learningPaths.find((path) => path.filename === season.learningPathFile)?.semester}` : season.learningPathFile ? <span className="text-amber-800">Archivo no disponible: {season.learningPathFile}</span> : 'Sin ruta'}</td>
                 <td className="px-4 py-3 text-right">
                   <button
                     onClick={() => handleEdit(season)}
@@ -215,7 +239,7 @@ export default function SeasonsPage() {
             ))}
             {seasons.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-text-muted">
+                <td colSpan={6} className="px-4 py-8 text-center text-text-muted">
                   No hay temporadas registradas
                 </td>
               </tr>

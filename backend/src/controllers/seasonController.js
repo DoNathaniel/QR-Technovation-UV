@@ -2,6 +2,7 @@
 const { AppDataSource } = require('../database/data-source');
 const SeasonSchema = require('../entities/Season');
 const { normalizeSeasonIds } = require('../utils/seasonAccess');
+const { isCompatibleLearningPath } = require('../utils/learningPathCatalog');
 
 const seasonRepository = () => AppDataSource.getRepository(SeasonSchema);
 
@@ -32,7 +33,11 @@ async function getById(req, res) {
 
 async function create(req, res) {
   try {
-    const season = seasonRepository().create(req.body);
+    const data = { ...req.body };
+    if (data.learningPathFile && !isCompatibleLearningPath(data.learningPathFile)) {
+      return res.status(400).json({ message: 'La ruta de aprendizaje seleccionada no está disponible o no es compatible.' });
+    }
+    const season = seasonRepository().create(data);
     const result = await seasonRepository().save(season);
     res.status(201).json(result);
   } catch (error) {
@@ -47,7 +52,11 @@ async function update(req, res) {
     if (!season) {
       return res.status(404).json({ message: 'Temporada no encontrada' });
     }
-    Object.assign(season, req.body);
+    const data = { ...req.body };
+    if (Object.hasOwn(data, 'learningPathFile') && data.learningPathFile && !isCompatibleLearningPath(data.learningPathFile)) {
+      return res.status(400).json({ message: 'La ruta de aprendizaje seleccionada no está disponible o no es compatible.' });
+    }
+    Object.assign(season, data);
     const result = await seasonRepository().save(season);
     res.json(result);
   } catch (error) {

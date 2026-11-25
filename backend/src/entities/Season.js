@@ -24,6 +24,11 @@ const SeasonSchema = new EntitySchema({
       type: 'boolean',
       default: true,
     },
+    learningPathFile: {
+      type: 'varchar',
+      length: 255,
+      nullable: true,
+    },
     createdAt: {
       type: 'timestamp',
       createDate: true,

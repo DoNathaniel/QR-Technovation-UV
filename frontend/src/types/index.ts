@@ -31,6 +31,7 @@ export interface Season {
   fechaInicio: string;
   fechaFin: string;
   activa?: boolean;
+  learningPathFile?: string | null;
 }
 
 // NUEVOS TIPOS EQUIPO

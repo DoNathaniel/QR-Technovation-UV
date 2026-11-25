@@ -2,10 +2,13 @@
 const express = require('express');
 const seasonController = require('../controllers/seasonController');
 const { authenticateToken, checkRole } = require('../middleware');
+const learningPathController = require('../controllers/learningPathController');
 
 const router = express.Router();
 
 router.get('/', authenticateToken, seasonController.getAll);
+router.get('/learning-paths', authenticateToken, learningPathController.list);
+router.get('/:seasonID/learning-path', authenticateToken, learningPathController.getForSeason);
 router.get('/:id', authenticateToken, seasonController.getById);
 router.post('/', authenticateToken, checkRole('superadmin'), seasonController.create);
 router.put('/:id', authenticateToken, checkRole('superadmin'), seasonController.update);
