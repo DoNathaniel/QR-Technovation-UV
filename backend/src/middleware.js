@@ -6,7 +6,10 @@ function authenticateToken(req, res, next) {
   const token = authHeader && authHeader.split(' ')[1];
   if (!token) return res.status(401).json({ message: 'Token requerido' });
   jwt.verify(token, process.env.JWT_SECRET || 'secret_key', (err, user) => {
-    if (err) return res.status(403).json({ message: 'Token inválido' });
+    // An invalid or expired token means the user is unauthenticated. The
+    // frontend handles 401 by clearing the stale session and returning to login.
+    // Keep 403 for authenticated users who lack permission in checkRole.
+    if (err) return res.status(401).json({ message: 'Token inválido o expirado' });
     req.user = user;
     next();
   });
