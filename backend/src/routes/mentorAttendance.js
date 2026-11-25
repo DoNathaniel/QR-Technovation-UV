@@ -10,6 +10,7 @@ router.get('/mine', controller.getMine);
 router.get('/mine/status', controller.getCheckInStatus);
 router.post('/mine/entry', controller.registerMyEntry);
 router.use(checkRole('superadmin', 'admin'));
+router.get('/season', controller.getSeasonDashboard);
 router.get('/dashboard', controller.getDashboard);
 router.get('/', controller.getByDate);
 router.post('/scan', controller.registerFromQR);

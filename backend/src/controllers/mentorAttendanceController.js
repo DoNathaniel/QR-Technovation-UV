@@ -38,6 +38,10 @@ function localDateAndTime() {
   };
 }
 
+function dateOnly(value) {
+  return value instanceof Date ? value.toISOString().slice(0, 10) : String(value).slice(0, 10);
+}
+
 function serializeUser(user) {
   return serializeSensitive(user, ['email']);
 }
@@ -203,6 +207,49 @@ async function getDashboard(req, res) {
   }
 }
 
+async function getSeasonDashboard(req, res) {
+  try {
+    const seasonID = Number(req.query.seasonID);
+    if (!Number.isInteger(seasonID) || seasonID <= 0) {
+      return res.status(400).json({ message: 'Debes seleccionar una temporada válida' });
+    }
+
+    const [allUsers, configuredDates, attendances] = await Promise.all([
+      userRepository().find({ select: ['ID', 'nombre', 'apellido', 'rol', 'temporadas'] }),
+      seasonDateRepository().find({ where: { seasonID } }),
+      attendanceRepository().find({
+        where: { seasonID },
+        relations: ['scannedBy'],
+        order: { fecha: 'DESC', hora: 'ASC', ID: 'ASC' },
+      }),
+    ]);
+
+    const members = allUsers
+      .filter((user) => ['voluntario', 'admin'].includes(user.rol))
+      .filter((user) => normalizeSeasonIds(user.temporadas).includes(seasonID))
+      .map((user) => ({ ID: user.ID, nombre: user.nombre, apellido: user.apellido, rol: user.rol }));
+
+    const datesByValue = new Map();
+    for (const configuredDate of configuredDates) {
+      const fecha = dateOnly(configuredDate.fecha);
+      datesByValue.set(fecha, { fecha, configurada: Boolean(configuredDate.activa) });
+    }
+    for (const attendance of attendances) {
+      const fecha = dateOnly(attendance.fecha);
+      if (!datesByValue.has(fecha)) datesByValue.set(fecha, { fecha, configurada: false });
+    }
+
+    return res.json({
+      seasonID,
+      members,
+      dates: [...datesByValue.values()].sort((a, b) => b.fecha.localeCompare(a.fecha)),
+      attendances: attendances.map(serializeAttendance),
+    });
+  } catch (error) {
+    return res.status(500).json({ message: 'Error al obtener el historial de asistencia del equipo', error: error.message });
+  }
+}
+
 async function checkInContext(req, res, seasonValue) {
   const seasonID = Number(seasonValue);
   if (!Number.isInteger(seasonID) || seasonID <= 0) {
@@ -276,4 +323,4 @@ async function registerMyEntry(req, res) {
   }
 }
 
-module.exports = { getCheckInStatus, registerMyEntry, registerFromQR, getByDate, getMine, getDashboard };
+module.exports = { getCheckInStatus, registerMyEntry, registerFromQR, getByDate, getMine, getDashboard, getSeasonDashboard };
